@@ -1,0 +1,46 @@
+{
+  "Use_Cases": [
+    {
+      "title": "Passenger movement and behaviour digital twin",
+      "body": [
+        "OpenSpace is creating a Digital Twin platform to visualise passenger movements and behaviours in railway stations, in order to monitor station performance and help operators provide better information and improve the customer experience.",
+        "The company has developed Digital Twins for three stations on the HS1 network: St Pancras International, Stratford International and Ebbsfleet International and combined them into one 'federated' Digital Twin network to predict passenger flows at each station. The aims of the project include allowing operators to make more informed decisions during disruption, better match train service supply to demand, and provide customers with personalised journey information."
+      ]
+    },
+    {
+      "title": "Electric chargers for heavy goods vehicles",
+      "body": [
+        "Syselek is developing Digital Twin capabilities for a project designed to provide the most effective use of electric chargers for heavy goods vehicles at fleet operators' depot sites. The system will analyse when charging infrastructure is scheduled to be used and consider the recharging requirements of vehicles.",
+        "It is hoped that the Digital Twin system will help to inform investment decisions and guard against the specification of unnecessary installations. The company plans to consider preventative maintenance cycles in the model, and use it to reduce costs by ensuring that charging is encouraged at the most cost efficient times of day."
+      ]
+    },
+    {
+      "title": "EV charging infrastructure for shared autonomous vehicles",
+      "body": [
+        "Evo Track is developing a Digital Twin for building and managing electric vehicle charging infrastructure to be used by shared autonomous vehicles. It hopes to forecast demand and predict usage in order to support expansion of the public charging infrastructure, but without building too many units that are beyond what is needed.",
+        "The company uses a tool to identify charging locations likely to deliver a high return on investment. It has also developed a flood alert system for use at charging stations at risk of excess surface water, to help inform motorists if a unit is likely to be affected before flooding takes place. "
+      ]
+    },
+    {
+      "title": "Changes to highway network in urban areas",
+      "body": [
+        "Slingshot Simulations has developed a Digital Twin called Compass Engine to predict the impact of introducing changes to the highway network in urban areas. It considers whether closing certain roads to reduce emissions may lead to unintended consequences, such as increasing air pollution and noise elsewhere.",
+        "It has built a digital model of Bristol and populated it with land use layers, traffic counts and energy performance certificates of nearby buildings. Traffic simulations have been run to predict emissions and noise in areas with lower quality housing that are less likely to have double glazing and could be affected more acutely by extra traffic. "
+      ]
+    },
+    {
+      "title": "Air pollution monitoring from road traffic",
+      "body": [
+        "Digilab is building a Digital Twin called twinAir which monitors air pollution from road traffic in real time. It is also developing an associated platform called twinlab and is launching a 'digilab academy' to provide specialist training to artificial intelligence practitioners. ",
+        "The company has created what it calls a 'physics informed surrogate' for the city of Exeter that collects air quality data from the roadside. It then scales this information up in order to provide a more accurate picture of traffic related pollution right across the city throughout the day, rather than relying on data from a small number of sensors. "
+      ]
+    },
+    {
+      "title": "Underground freight transport system",
+      "body": [
+        "Mole Solutions is developing an underground freight transport system to propel goods through pipelines to help relieve congestion on the highway network, reduce air pollution and ease safety concerns associated with road haulage. The system plans to use magnetic tracks to carry driverless capsules, and could be installed between factories and distribution centres, providing a just-in-time delivery service.",
+        "Digital Twins are expected to be used to model and simulate the underground transport system prior to construction and, once built, monitor track condition and performance of the network. The use of Digital Twins could also oversee the network's propulsion system and supply chain requirements. "
+      ]
+    }
+  ]
+}

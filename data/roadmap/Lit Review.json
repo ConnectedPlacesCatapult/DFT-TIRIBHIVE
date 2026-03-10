@@ -1,0 +1,23 @@
+[
+  {
+    "Name": "Gemini Principles",
+    "Source": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+    "Author": "CDBB",
+    "Publication date": "2018-12",
+    "Description": "Founding principles to guide development of a national digital twin as ecosystem of connected digital twins"
+  },
+  {
+    "Name": "UK transport vision 2050",
+    "Source": "https://www.ukri.org/wp-content/uploads/2022/01/IUK-110122-UK-Transport-Vision-2050.pdf",
+    "Author": "UKRI",
+    "Publication date": "2021-08",
+    "Description": "A vision for a 2050 transport system"
+  },
+  {
+    "Name": "Digital Twins: Ethics and the Gemini Principles",
+    "Source": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+    "Author": "CDBB",
+    "Publication date": "2021-12",
+    "Description": "Industry paper into the ethics of connected digital twins"
+  }
+]
