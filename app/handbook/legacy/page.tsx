@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { SECTORS, ASSET_TYPES, HAZARD_CAUSES, HAZARD_EFFECTS, CASE_STUDIES } from "@/lib/hive/seed-data-legacy";
+import { NavPill } from "@/components/NavPill";
 
 // ── ICONS ─────────────────────────────────────────────────────────────────────
 
@@ -211,6 +212,7 @@ export default function TRIBHandbookLegacy() {
             TRIB - CLIMATE ADAPTATION HIVE
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+            <NavPill variant="light" />
             <a href="/hive" style={{ fontSize: 14, color: "#2e6b5e", fontWeight: 600, textDecoration: "none" }}>Explore HIVE</a>
             {["About", "Credits", "Contact Us"].map(l => (
               <a key={l} href="#" style={{ fontSize: 14, color: "#333", textDecoration: "none", fontFamily: "Arial, sans-serif" }}

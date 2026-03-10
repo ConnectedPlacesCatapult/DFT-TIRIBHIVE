@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { TribHeader } from "@/components/TribHeader";
+import { NavPill } from "@/components/NavPill";
 import { RoadmapTable } from "@/components/roadmap/RoadmapTable";
 
 type Workstream = Parameters<typeof RoadmapTable>[0]["workstreams"][number];
@@ -43,7 +43,7 @@ export function RoadmapPageClient({ workstreams }: RoadmapPageClientProps) {
           <h1 className="text-xl font-bold tracking-tight">
             TRIB - Digital Twin Roadmap 2035
           </h1>
-          <TribHeader className="!text-white" />
+          <NavPill variant="dark" />
         </div>
       </header>
 

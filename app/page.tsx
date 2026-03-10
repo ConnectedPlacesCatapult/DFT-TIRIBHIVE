@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TribHeader } from "@/components/TribHeader";
+import { NavPill } from "@/components/NavPill";
 
 const TRIB_STATIC = "https://trib.org.uk/static/media";
 const MEMBER_LOGOS = [
@@ -28,7 +28,7 @@ export default function HomePage() {
             <h1 className="text-xl font-bold tracking-tight">
               Transport Research and Innovation Board
             </h1>
-            <TribHeader className="!text-white" />
+            <NavPill variant="dark" pillClassName="border border-white/30" />
           </div>
         </div>
       </header>

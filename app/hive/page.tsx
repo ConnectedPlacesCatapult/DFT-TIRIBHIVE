@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { NavPill } from "@/components/NavPill";
 
 // ── SHARED DATA ────────────────────────────────────────────────────────────────
 
@@ -153,7 +154,8 @@ function DirectionA() {
           <div style={{ width:1, height:16, background:A.border }}/>
           <span style={{ fontSize:10, color:A.body, letterSpacing:"0.16em", textTransform:"uppercase" }}>Climate Adaptation Intelligence</span>
         </div>
-        <div style={{ display:"flex", gap:28, fontSize:12, color:A.body }}>
+        <div style={{ display:"flex", alignItems:"center", gap:28, fontSize:12, color:A.body }}>
+          <NavPill variant="dark" />
           {["Handbook","Roadmap","About"].map(l=><span key={l} style={{ cursor:"pointer" }}>{l}</span>)}
           <span style={{ cursor:"pointer", color:A.gold, fontWeight:600 }}>DfT Partner</span>
         </div>
@@ -743,6 +745,7 @@ function DirectionB() {
             <span style={{ fontSize:11,color:T.textMuted }}>Transport Climate Adaptation Intelligence</span>
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <NavPill variant={themeKey === "dark" ? "dark" : "light"} />
             <div style={{ display:"flex",gap:2,background:T.surfaceAlt,borderRadius:20,padding:3,border:`1px solid ${T.border}` }}>
               {Object.values(B_THEMES).map(th=>(
                 <button key={th.key} onClick={()=>setThemeKey(th.key)} style={{ fontSize:11,fontWeight:700,padding:"5px 12px",borderRadius:16,border:"none",cursor:"pointer",transition:"all 0.2s",fontFamily:"'DM Sans',sans-serif",background:themeKey===th.key?T.accent:"transparent",color:themeKey===th.key?"#fff":T.textSecondary }}>
@@ -1043,7 +1046,8 @@ function DirectionC() {
             <div style={{ width:1,height:16,background:C.tealBorder }}/>
             <span style={{ fontSize:11,letterSpacing:"0.14em",textTransform:"uppercase",color:C.textMid }}>Transport Intelligence Platform</span>
           </div>
-          <div style={{ display:"flex",gap:8 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <NavPill variant="dark" />
             {Object.entries(mCol).map(([m,col])=><span key={m} style={{ fontSize:11,padding:"4px 12px",borderRadius:20,border:`1px solid ${col}44`,color:col,cursor:"pointer" }}>{m}</span>)}
           </div>
         </nav>
@@ -1099,6 +1103,7 @@ function DirectionD() {
       <nav style={{ background:F.forest,padding:"0 44px",height:54,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
         <div style={{ display:"flex",alignItems:"center",gap:36 }}>
           <span style={{ fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800,letterSpacing:"0.06em",color:"#FFF" }}>HIVE</span>
+          <NavPill variant="dark" />
           {["Handbook","Roadmap","About"].map(l=><span key={l} style={{ fontSize:13,color:"rgba(255,255,255,0.55)",cursor:"pointer",marginLeft:24 }}>{l}</span>)}
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
