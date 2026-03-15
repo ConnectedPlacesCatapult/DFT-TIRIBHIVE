@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { useChatContext, type ChatMessage } from "./ChatContext";
+import { useChatContext, type ChatMessage, type ChatActionPayload } from "./ChatContext";
 
 interface ChatPanelProps {
   context: string;
@@ -106,6 +106,39 @@ function SourceChip({ id }: { id: string }) {
   );
 }
 
+/** Plain-English description of what Apply will do (safe agency: user must confirm) */
+function getActionDescription(action: ChatActionPayload): string {
+  switch (action.type) {
+    case "add_to_brief": {
+      const ids = (action.payload?.article_ids as string[]) ?? [];
+      return ids.length > 0
+        ? `Add ${ids.length} case${ids.length === 1 ? "" : "s"} to your brief: ${ids.slice(0, 3).join(", ")}${ids.length > 3 ? "…" : ""}.`
+        : "Add the suggested case(s) to your brief.";
+    }
+    case "suggest_cases": {
+      const ids = (action.payload?.case_ids as string[]) ?? [];
+      return ids.length > 0
+        ? `Highlight ${ids.length} case${ids.length === 1 ? "" : "s"} in the results: ${ids.slice(0, 3).join(", ")}${ids.length > 3 ? "…" : ""}.`
+        : "Highlight suggested cases in the case list.";
+    }
+    case "update_filters": {
+      const p = action.payload ?? {};
+      const parts = [
+        p.sector && `sector: ${p.sector}`,
+        p.hazard_cause && `hazard: ${p.hazard_cause}`,
+        p.hazard_effect && `effect: ${p.hazard_effect}`,
+      ].filter(Boolean);
+      return parts.length > 0
+        ? `Apply filters: ${parts.join("; ")}.`
+        : "Apply the suggested filter(s) to the case list.";
+    }
+    case "update_brief_section":
+      return "Replace the brief section with the AI-suggested text (you can revert after).";
+    default:
+      return "Apply this suggestion.";
+  }
+}
+
 function MessageText({ text }: { text: string }) {
   const parts = text.split(/\b(ID_[\w]+)\b/);
   return (
@@ -192,14 +225,151 @@ function TypingDots() {
   );
 }
 
+const SECTION_LABELS: Record<string, string> = {
+  executive_summary: "Executive Summary",
+  climate_drivers: "Climate Drivers",
+  adaptation_approaches: "Adaptation Approaches",
+  costs_and_resourcing: "Costs & Resourcing",
+  uk_applicability: "UK Applicability",
+  key_insight: "Key Insight",
+  sources: "Source References",
+};
+
+function SectionUpdateCard({
+  action,
+  onApply,
+  onDismiss,
+}: {
+  action: ChatActionPayload;
+  onApply: () => void;
+  onDismiss: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (action.type === "update_brief_section") {
+    const sectionKey = (action.payload?.section_key as string) ?? "";
+    const newContent = (action.payload?.new_content as string) ?? "";
+    const reason = (action.payload?.reason as string) ?? "";
+    const sectionLabel = SECTION_LABELS[sectionKey] ?? sectionKey;
+    const words = newContent.split(/\s+/);
+    const truncated = words.length > 100 && !expanded;
+    const displayContent = truncated ? words.slice(0, 100).join(" ") + "..." : newContent;
+
+    return (
+      <div style={{ marginTop: 10, padding: "12px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 12, color: "#334155", lineHeight: 1.5 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <span style={{ fontSize: 14 }}>&#9998;</span>
+          <span style={{ fontWeight: 700, color: "#1e293b" }}>Update: {sectionLabel}</span>
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b", marginBottom: 4 }}>Proposed change:</div>
+          <div style={{ padding: "8px 10px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 12, lineHeight: 1.6, color: "#334155", whiteSpace: "pre-wrap" }}>
+            {displayContent}
+          </div>
+          {words.length > 100 && (
+            <button onClick={() => setExpanded(!expanded)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#1d70b8", fontWeight: 600, padding: "4px 0", marginTop: 2 }}>
+              {expanded ? "Show less" : "Show full version"}
+            </button>
+          )}
+        </div>
+        {reason && (
+          <p style={{ margin: "0 0 10px", fontSize: 11, color: "#64748b" }}>
+            <strong style={{ color: "#475569" }}>Reason:</strong> &ldquo;{reason}&rdquo;
+          </p>
+        )}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={onApply} style={{ padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "none", background: "#1d70b8", color: "#fff", fontFamily: "inherit" }}>Apply</button>
+          <button onClick={onDismiss} style={{ padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid #cbd5e1", background: "transparent", color: "#475569", fontFamily: "inherit" }}>Dismiss</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, padding: "10px 12px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 12, color: "#334155", lineHeight: 1.5 }}>
+      <p style={{ margin: "0 0 10px", fontWeight: 500 }}>{getActionDescription(action)}</p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button onClick={onApply} style={{ padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "none", background: "#1d70b8", color: "#fff", fontFamily: "inherit" }}>Apply</button>
+        <button onClick={onDismiss} style={{ padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "1px solid #cbd5e1", background: "transparent", color: "#475569", fontFamily: "inherit" }}>Dismiss</button>
+      </div>
+    </div>
+  );
+}
+
 export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
-  const { messages, setMessages, sessionIntent, setRetrievalMode, retrievalMode } =
-    useChatContext();
+  const {
+    messages,
+    setMessages,
+    sessionIntent,
+    setRetrievalMode,
+    retrievalMode,
+    addToBrief,
+    setSuggestedCaseIds,
+    setPendingFilterUpdate,
+    briefSections,
+    onBriefSectionUpdate,
+  } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const config = getConfig(context);
+
+  const handleApplyAction = useCallback(
+    (action: ChatActionPayload, messageIndex: number) => {
+      switch (action.type) {
+        case "add_to_brief": {
+          let ids = (action.payload?.article_ids as string[]) ?? [];
+          if (ids.length === 0 && context.startsWith("case:")) {
+            const currentId = context.replace("case:", "");
+            if (currentId) ids = [currentId];
+          }
+          ids.forEach((id) => addToBrief(id));
+          break;
+        }
+        case "suggest_cases": {
+          const ids = (action.payload?.case_ids as string[]) ?? [];
+          setSuggestedCaseIds(ids);
+          break;
+        }
+        case "update_filters": {
+          setPendingFilterUpdate(action.payload ?? {});
+          break;
+        }
+        case "update_brief_section": {
+          const sectionKey = action.payload?.section_key as string | undefined;
+          const newContent = action.payload?.new_content as string | undefined;
+          if (sectionKey && newContent && onBriefSectionUpdate) {
+            onBriefSectionUpdate(sectionKey, newContent);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      setMessages((prev) =>
+        prev.map((msg, i) =>
+          i === messageIndex && msg.action
+            ? { ...msg, actionDismissed: true }
+            : msg
+        )
+      );
+    },
+    [addToBrief, setSuggestedCaseIds, setPendingFilterUpdate, setMessages, context, onBriefSectionUpdate]
+  );
+
+  const handleDismissAction = useCallback(
+    (messageIndex: number) => {
+      setMessages((prev) =>
+        prev.map((msg, i) =>
+          i === messageIndex && msg.action
+            ? { ...msg, actionDismissed: true }
+            : msg
+        )
+      );
+    },
+    [setMessages]
+  );
 
   useEffect(() => {
     if (open && messages.length === 0) {
@@ -232,6 +402,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           messages: updatedMessages,
           context,
           session_intent: sessionIntent || undefined,
+          brief_sections: context.startsWith("brief:") && briefSections ? briefSections : undefined,
         }),
       });
       const data = await res.json();
@@ -244,6 +415,8 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         actions: data.actions,
         sources: data.sources,
         retrieval_mode: data.retrieval_mode,
+        action: data.action,
+        actionDismissed: false,
       };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
@@ -488,6 +661,14 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                       </button>
                     ))}
                   </div>
+                )}
+                {/* Action card: Apply/Dismiss only — nothing auto-applies */}
+                {m.role === "ai" && m.action && !m.actionDismissed && (
+                  <SectionUpdateCard
+                    action={m.action}
+                    onApply={() => handleApplyAction(m.action!, messages.indexOf(m))}
+                    onDismiss={() => handleDismissAction(messages.indexOf(m))}
+                  />
                 )}
               </div>
             </div>

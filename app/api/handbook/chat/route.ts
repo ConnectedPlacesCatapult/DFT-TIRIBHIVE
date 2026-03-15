@@ -28,6 +28,15 @@ export async function POST(req: NextRequest) {
       context.session_intent = body.session_intent;
     }
 
+    if (body.brief_sections && Array.isArray(body.brief_sections) && context.mode === "synthesis") {
+      context.brief_sections = body.brief_sections.map(
+        (s: { section_key?: string; section?: string; content: string }) => ({
+          section: s.section_key ?? s.section ?? "",
+          content: s.content ?? "",
+        })
+      );
+    }
+
     const response: ChatApiResponse = await getAIResponse(messages, context);
     return NextResponse.json(response);
   } catch (err) {

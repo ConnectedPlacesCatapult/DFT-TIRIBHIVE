@@ -110,6 +110,11 @@ export default function AdminSourcesPage() {
           {/* Header */}
           <div style={{ marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
+              <nav style={{ marginBottom: 8, fontSize: 12 }}>
+                <a href="/admin/evals" style={{ color: "#1d70b8", textDecoration: "none", fontWeight: 500 }}>Eval runs</a>
+                <span style={{ color: "#d1d5db", margin: "0 6px" }}>·</span>
+                <span style={{ color: "#6b7280" }}>Source candidates</span>
+              </nav>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>
                 Source Candidates
               </h1>

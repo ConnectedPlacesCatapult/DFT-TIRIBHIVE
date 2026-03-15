@@ -12,6 +12,11 @@ import {
 } from "react";
 import { THEMES, type ThemeKey, type Theme } from "@/lib/hive/themes";
 
+export type ChatActionPayload = {
+  type: "update_filters" | "add_to_brief" | "update_brief_section" | "suggest_cases";
+  payload: Record<string, unknown>;
+};
+
 export type ChatMessage = {
   role: "user" | "ai";
   text: string;
@@ -20,6 +25,9 @@ export type ChatMessage = {
   actions?: Array<{ label: string; primary?: boolean; demo?: boolean }>;
   sources?: string[];
   retrieval_mode?: "rag" | "fallback";
+  /** Structured action from API — requires explicit Apply before any state change */
+  action?: ChatActionPayload;
+  actionDismissed?: boolean;
 };
 
 type HandbookContextType = {
@@ -42,6 +50,18 @@ type HandbookContextType = {
   setSessionIntent: (intent: string) => void;
   retrievalMode: "rag" | "fallback" | null;
   setRetrievalMode: (mode: "rag" | "fallback" | null) => void;
+  /** For suggest_cases Apply: pages can highlight/filter to these IDs */
+  suggestedCaseIds: string[];
+  setSuggestedCaseIds: (ids: string[]) => void;
+  /** For update_filters Apply: pages can apply these filter values */
+  pendingFilterUpdate: Record<string, unknown> | null;
+  setPendingFilterUpdate: (payload: Record<string, unknown> | null) => void;
+  /** Brief sections for synthesis mode — set by brief page, read by ChatPanel */
+  briefSections: Array<{ section_key: string; content: string }> | null;
+  setBriefSections: (sections: Array<{ section_key: string; content: string }> | null) => void;
+  /** Callback to update a single brief section — set by brief page, called by ChatPanel on Apply */
+  onBriefSectionUpdate: ((key: string, content: string) => void) | null;
+  setOnBriefSectionUpdate: (fn: ((key: string, content: string) => void) | null) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -58,6 +78,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [retrievalMode, setRetrievalMode] = useState<
     "rag" | "fallback" | null
   >(null);
+  const [suggestedCaseIds, setSuggestedCaseIds] = useState<string[]>([]);
+  const [pendingFilterUpdate, setPendingFilterUpdate] = useState<
+    Record<string, unknown> | null
+  >(null);
+  const [briefSections, setBriefSections] = useState<
+    Array<{ section_key: string; content: string }> | null
+  >(null);
+  const [onBriefSectionUpdate, setOnBriefSectionUpdateRaw] = useState<
+    ((key: string, content: string) => void) | null
+  >(null);
+  const setOnBriefSectionUpdate = useCallback(
+    (fn: ((key: string, content: string) => void) | null) => {
+      setOnBriefSectionUpdateRaw(() => fn);
+    },
+    []
+  );
   const theme = THEMES[themeKey];
 
   useEffect(() => {
@@ -115,6 +151,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setSessionIntent,
         retrievalMode,
         setRetrievalMode,
+        suggestedCaseIds,
+        setSuggestedCaseIds,
+        pendingFilterUpdate,
+        setPendingFilterUpdate,
+        briefSections,
+        setBriefSections,
+        onBriefSectionUpdate,
+        setOnBriefSectionUpdate,
       }}
     >
       {children}

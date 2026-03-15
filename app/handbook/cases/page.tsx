@@ -522,7 +522,16 @@ function SuggestSourceDrawer({ open, onClose }) {
 
 // ── MAIN PAGE (uses useSearchParams — must be inside Suspense) ─────────────────
 function CasesPageContent() {
-  const { themeKey, setThemeKey } = useChatContext();
+  const { themeKey, setThemeKey, suggestedCaseIds, pendingFilterUpdate, setPendingFilterUpdate } = useChatContext();
+  const effectiveHighlighted = suggestedCaseIds?.length > 0 ? suggestedCaseIds : highlighted;
+
+  useEffect(() => {
+    if (!pendingFilterUpdate || typeof pendingFilterUpdate !== "object") return;
+    if (pendingFilterUpdate.sector) setSectors(Array.isArray(pendingFilterUpdate.sector) ? pendingFilterUpdate.sector : [pendingFilterUpdate.sector]);
+    if (pendingFilterUpdate.hazard_cause) setHazards(Array.isArray(pendingFilterUpdate.hazard_cause) ? pendingFilterUpdate.hazard_cause : [pendingFilterUpdate.hazard_cause]);
+    if (pendingFilterUpdate.hazard_effect) setHazards(prev => [...prev, ...(Array.isArray(pendingFilterUpdate.hazard_effect) ? pendingFilterUpdate.hazard_effect : [pendingFilterUpdate.hazard_effect])]);
+    setPendingFilterUpdate(null);
+  }, [pendingFilterUpdate, setPendingFilterUpdate]);
   const T = THEMES[themeKey] ?? THEMES.light;
 
   // Filters
@@ -778,7 +787,7 @@ function CasesPageContent() {
                       onClick={setSelectedCase}
                       onAddToBrief={toggleBrief}
                       inBrief={brief.some(b => b.id === item.article.id)}
-                      highlighted={highlighted.includes(item.article.id)}
+                      highlighted={effectiveHighlighted.includes(item.article.id)}
                     />
                   ) : (
                     <MeasureCard
@@ -788,7 +797,7 @@ function CasesPageContent() {
                       onClick={setSelectedCase}
                       onAddToBrief={toggleBrief}
                       inBrief={brief.some(b => b.id === item.article.id)}
-                      highlighted={highlighted.includes(item.article.id)}
+                      highlighted={effectiveHighlighted.includes(item.article.id)}
                     />
                   )}
                 </div>

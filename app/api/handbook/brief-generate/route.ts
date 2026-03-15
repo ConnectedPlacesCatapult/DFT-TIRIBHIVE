@@ -16,6 +16,7 @@ import {
   createSynthesisSession,
   type ReportSection,
 } from "@/lib/handbook/db";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 const BRIEF_SYSTEM_PROMPT = `You are an expert climate adaptation analyst for UK transport infrastructure. You produce structured intelligence briefs from case study evidence.
 
@@ -30,7 +31,7 @@ Generate a structured brief with these sections in order:
 
 1. executive_summary — 3-4 sentences. The strongest cross-cutting finding across all cases. Cite every case that supports the finding.
 2. climate_drivers — 2-3 sentences. The climate hazards and trends these cases respond to. Cite each case per hazard.
-3. adaptation_approaches — 3-5 bullet points. Key adaptation measures, how often they appear, and what pattern they suggest. Cite each.
+3. adaptation_approaches — Return a markdown table with three columns: Approach, Case Studies (comma-separated [ID_xx] citations), and Notes (one-line observation). Use pipe-delimited format: | Approach | Case Studies | Notes | with a separator row. Include 3-6 rows covering the key adaptation measures across the cases.
 4. costs_and_resourcing — 2-3 sentences. Cost ranges, funding models, and investment patterns. Use exact figures from cases and cite. If cost data is limited, say so.
 5. uk_applicability — 2-3 sentences. How well these cases transfer to UK transport. Rate each case cited.
 6. key_insight — 2 sentences. The single most generalisable finding — the thing worth quoting. Cite all supporting cases.
@@ -154,25 +155,10 @@ async function retrieveChunksForArticles(
   articleIds: string[]
 ): Promise<{ chunks: string; mode: "rag" | "fallback" }> {
   try {
-    const supabaseUrl =
-      process.env.HIVE_SUPABASE_URL ??
-      process.env.SUPABASE_URL ??
-      process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey =
-      process.env.HIVE_SUPABASE_ANON_KEY ??
-      process.env.SUPABASE_ANON_KEY ??
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const sb = getSupabaseClient();
 
-    if (!supabaseUrl || !supabaseKey) throw new Error("No Supabase creds");
-
-    const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(supabaseUrl, supabaseKey, {
-      db: { schema: "hive" },
-    });
-
-    // Fetch all chunks for these articles directly
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (sb as any)
+    // Fetch all chunks for these articles directly (schema: hive set in client)
+    const { data, error } = await sb
       .from("document_chunks")
       .select("article_id, section_key, chunk_text")
       .in("article_id", articleIds)

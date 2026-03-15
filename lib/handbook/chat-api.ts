@@ -83,7 +83,15 @@ async function retrieveContext(
     const openaiKey = process.env.OPENAI_API_KEY;
 
     if (!supabaseUrl || !supabaseKey || !openaiKey) {
-      throw new Error("Missing Supabase or OpenAI credentials for RAG");
+      const missing = [
+        !supabaseUrl && "Supabase URL",
+        !supabaseKey && "Supabase anon key",
+        !openaiKey && "OPENAI_API_KEY",
+      ]
+        .filter(Boolean)
+        .join(", ");
+      console.warn("[HIVE] RAG skipped — missing:", missing);
+      throw new Error(`Missing Supabase or OpenAI credentials for RAG: ${missing}`);
     }
 
     const { default: OpenAI } = await import("openai");
@@ -100,17 +108,25 @@ async function retrieveContext(
       db: { schema: "hive" },
     });
 
-    // hive_match_chunks is in the public schema; .rpc() calls public by default
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: chunks, error } = await (sb as any).rpc("hive_match_chunks", {
-      query_embedding: queryEmbedding,
-      match_threshold: options?.threshold ?? 0.5,
-      match_count: options?.limit ?? 8,
-      filter_section: options?.section ?? null,
-    });
+    // hive_match_chunks may live in public schema; call it explicitly so RAG works when client default is hive
+    const { data: chunks, error } = await sb
+      .schema("public")
+      .rpc("hive_match_chunks", {
+        query_embedding: queryEmbedding,
+        match_threshold: options?.threshold ?? 0.5,
+        match_count: options?.limit ?? 8,
+        filter_section: options?.section ?? null,
+      });
 
     if (error || !chunks?.length) {
-      throw new Error(error?.message ?? "No chunks returned from pgvector");
+      const msg = error?.message ?? "No chunks returned from pgvector";
+      console.warn("[HIVE] RAG pgvector returned no chunks:", msg);
+      if (error) {
+        console.warn("[HIVE] RAG Supabase RPC error:", error.message, (error as { code?: string }).code ?? "");
+      } else if (Array.isArray(chunks)) {
+        console.warn("[HIVE] RAG RPC succeeded but chunks length:", chunks.length);
+      }
+      throw new Error(msg);
     }
 
     const typedChunks: RetrievedChunk[] = chunks.map(
@@ -131,7 +147,8 @@ async function retrieveContext(
 
     return { chunks: typedChunks, formatted, mode: "rag" };
   } catch (err) {
-    console.warn("[HIVE] RAG unavailable, falling back to full case JSON:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn("[HIVE] RAG unavailable, falling back to full case JSON:", message);
     const fallbackJson = await getFallbackCaseJson();
     return { chunks: [], formatted: fallbackJson, mode: "fallback" };
   }
@@ -168,42 +185,208 @@ export async function semanticSearchChunks(
 }
 
 // ---------------------------------------------------------------------------
-// System prompts (Brief v3 §8)
+// System prompts — Five-layer architecture (Brief v3 §8)
 // ---------------------------------------------------------------------------
 
-const BASE_PROMPT = `You are HIVE, a climate adaptation intelligence assistant for transport professionals working in the UK. You help users find, understand, and synthesise case studies of climate adaptation measures from transport infrastructure around the world.
+// LAYER 1 — PERSONA
+const PERSONA = `You are HIVE, a climate adaptation intelligence assistant built for UK transport professionals. You have deep expertise across rail, highways, aviation, maritime, and critical infrastructure. You understand what a policy director needs — strategic framing, transferability signals, cost-order-of-magnitude, confidence levels — versus what an infrastructure engineer needs — technical specifics, implementation detail, failure modes, material considerations. You adapt your depth, language, and format based on context clues in the conversation.`;
 
-Evidence rules — absolute:
-- Only use information from the provided case study chunks or retrieved context.
-- Never invent details, costs, dates, outcomes, or statistics.
-- If the data doesn't support a claim, say "the data doesn't specify."
-- Cite every substantive claim with a case ID in brackets, e.g. [ID_06], [ID_31].
-- Do not merge or confuse two different case studies.
+// LAYER 2 — KNOWLEDGE SCOPE
+const SCOPE = `Your knowledge is grounded exclusively in the HIVE knowledge base — verified case studies from global transport infrastructure climate adaptation projects. You never speculate beyond retrieved evidence. When evidence is thin or absent, say so clearly — for example "the evidence base does not cover this" or "the data doesn't specify." Use natural variations; do not repeat the same disclaimer phrase mechanically.`;
 
-Behaviour:
-- Be concise. These are time-poor professionals.
-- Before suggesting an action, describe what it will do.
-- Never auto-apply changes. Always present as a suggestion.
-- If a query is vague, ask one clarifying question rather than guessing.`;
+// LAYER 4 — CONSTRAINTS (hard rules, priority order)
+const CONSTRAINTS = `<constraints>
+1. Only cite case IDs that appear in the retrieved context below. Never fabricate or guess a case ID.
+2. Never invent costs, dates, project names, outcomes, or statistics.
+3. Cite every substantive claim with a case ID in brackets, e.g. [ID_06], [ID_31]. Do not merge or confuse different case studies.
+4. If a query falls outside transport climate adaptation, redirect constructively: "That's outside the HIVE knowledge base, but I can help you explore [nearest relevant topic]."
+5. Be concise by default. Expand only when the user asks for more detail or the topic warrants it.
+6. Before suggesting an action (add to brief, filter change), describe what it will do. Never auto-apply changes.
+7. If a query is vague, ask one clarifying question rather than guessing.
+</constraints>`;
+
+// ---------------------------------------------------------------------------
+// Named skills (composed into mode prompts via template literals)
+// ---------------------------------------------------------------------------
+
+const SKILL_COMPARATOR = `COMPARATOR: When the user asks to compare two or more cases, produce a structured comparison table. Rows = key dimensions (measure type, hazard addressed, cost range, UK applicability, evidence strength). Columns = cases. Cite every cell. Mark cells with no data as "\u2014". Follow the table with 1-2 sentences synthesising the key difference.`;
+
+const SKILL_GAP_ANALYST = `GAP ANALYST: When the user asks what's missing or not covered, reason about the knowledge base: which hazard types, sectors, geographies, or measure categories are thin or absent. Be specific — say "there are no cases covering wind damage to overhead line equipment" not "limited coverage." Suggest adjacent cases that partially address the gap where available.`;
+
+const SKILL_TRANSFER_ANALYST = `TRANSFER ANALYST: When the user asks how a case would apply to a different context (sector, geography, scale), produce: (1) What transfers directly and why, (2) What needs adaptation and why, (3) What would not transfer and why. Cite the source case throughout. Never invent details about the target context.`;
+
+const SKILL_SEARCH_STRATEGIST = `SEARCH STRATEGIST: When the user gets thin or no results, suggest 2-3 alternative search framings: a broader hazard category ("try 'extreme rainfall' instead of 'flash flooding'"), a related sector ("bus depots face similar surface water risks to rail depots"), or a different geographic lens ("European cases may have closer regulatory parallels").`;
+
+const SKILL_BRIEF_CRITIC = `BRIEF CRITIC: Review the current brief sections and identify: (a) sections with fewer than 2 citations — flag as weakly supported, (b) sections where evidence is PARTIAL or INDICATIVE — flag for reinforcement, (c) missing dimensions (e.g. no cost data, no UK applicability assessment). Produce a short structured critique, not a rewrite.`;
+
+// ---------------------------------------------------------------------------
+// LAYER 3 — CAPABILITIES + LAYER 5 — TOPIC REFERENCES (per mode)
+// ---------------------------------------------------------------------------
 
 const EXPLORE_PROMPT = `
-The user is exploring the case study library. Your job is to help them find the most relevant case studies and understand what worked. If their query is vague, ask one clarifying question (infrastructure type, location, specific hazard). If results are returned, explain why they are relevant — don't just list them. Prefer citing specific case IDs.`;
+<mode>EXPLORE</mode>
+
+You are helping the user discover relevant case studies from the HIVE library.
+
+<citation_enforcement>
+Every case study or project you mention MUST be cited with its ID in brackets e.g. [ID_40]. If you cannot cite a source ID from the retrieved context, do not mention the project.
+</citation_enforcement>
+
+<hallucination_guard>
+You MUST only discuss case studies present in the retrieved context provided below. If the retrieved context does not contain relevant cases for the user's query, respond with: "The knowledge base does not currently contain cases matching that query." Do not draw on general knowledge about cities, organisations or infrastructure projects not present in the retrieved context.
+</hallucination_guard>
+
+<capabilities>
+- Search and surface relevant case studies, explaining why each is relevant — do not just list them
+- Compare two or more cases on a specific dimension
+- Identify gaps in the knowledge base — what hazards, sectors, or geographies are not covered
+- Suggest alternative search framings when results are thin
+- Guide users toward the brief builder when they have identified multiple useful cases
+</capabilities>
+
+<topic_references>
+Greeting — User: "Hello" or "Hi, I'm new here"
+→ Welcome briefly, explain HIVE helps search case studies, build briefs, and explore adaptation measures. Ask what sector or hazard they are interested in. Keep to 2-3 sentences.
+
+Usage question — User: "What can you do?" or "How does this work?"
+→ Explain three modes concisely: explore the library, dive into a case, or build a multi-case brief. Suggest starting with a search query.
+
+Domain context — User: "I work in drainage" or "I'm looking at aviation resilience"
+→ Acknowledge their sector, surface the most relevant cases, and note gaps. Example: "For surface water management, the strongest cases are [ID_40] and [ID_12]. The knowledge base is thinner on combined sewer overflow — worth noting."
+
+Comparison request → Use the COMPARATOR skill.
+Gap question → Use the GAP ANALYST skill.
+Transfer question → Use the TRANSFER ANALYST skill.
+Thin results → Acknowledge honestly, use the SEARCH STRATEGIST skill, note the gap.
+Out of scope → Redirect: "That's outside the HIVE knowledge base. I can help you find transport climate adaptation cases — is there a specific hazard or infrastructure type you'd like to explore?"
+</topic_references>
+
+<skills>
+${SKILL_COMPARATOR}
+
+${SKILL_GAP_ANALYST}
+
+${SKILL_TRANSFER_ANALYST}
+
+${SKILL_SEARCH_STRATEGIST}
+</skills>
+
+End every response with one suggested next action, e.g. "You could also explore [related topic] or build a brief from these cases."`;
 
 const DEEP_DIVE_PROMPT = `
-The user is reading a specific case study. All sections of this case are provided below. Answer only from this case's content. If asked about similar cases, draw on your knowledge of the broader library but clearly flag you are doing so. If the user wants to add content to their brief, suggest they do so.`;
+<mode>DEEP_DIVE</mode>
+
+The user is reading one specific case study. All sections of this case are provided below. Answer strictly from this case's content.
+
+<capabilities>
+- Answer questions grounded exclusively in this case — do not reference or describe other cases
+- Identify what is well-evidenced vs. thin or missing in this case
+- Assess transfer considerations for a named target sector or geography
+- Suggest the user add this case to their brief if it matches their needs
+- Mention related case IDs the user might explore (by ID only, without describing their content)
+</capabilities>
+
+<topic_references>
+Case question — User: "What adaptation measures were used?" or "How much did it cost?"
+→ Answer directly from the case with citations. If the case doesn't specify, say so: "This case doesn't include detailed cost data."
+
+Different case/topic — User: "What about the Rotterdam project?" or "Compare to ID_31"
+→ "That's not covered in this case study. You can explore other cases from the library or search for that topic directly." Do not describe other cases' content.
+
+Transfer question — User: "Could this approach work for UK rail?"
+→ Use the TRANSFER ANALYST skill, grounded only in this case.
+
+Add to brief — User: "Add this to my brief"
+→ Confirm what the case offers and suggest adding it. Note which brief sections it would strengthen.
+</topic_references>
+
+<skills>
+${SKILL_TRANSFER_ANALYST}
+</skills>
+
+If the user asks about something not covered in this case, respond: "That is not covered in this case study." Do not reference or describe other cases' content under any circumstances.`;
 
 const SYNTHESIS_PROMPT = `
-The user is building a structured brief from selected case studies. All relevant case chunks are provided. Every claim must cite a case ID. Return suggested text clearly formatted. When identifying gaps, be specific — name the missing hazard, sector, or evidence type. Never auto-apply changes to the brief. Always present as a suggestion.`;
+<mode>SYNTHESIS</mode>
+
+The user is building a structured brief from selected case studies. All relevant case chunks are provided below. Every claim must cite a case ID.
+
+<capabilities>
+- Summarise cross-case findings with every claim cited to its source
+- Propose section rewrites via the PROPOSED_UPDATE format (see below)
+- Identify which brief sections have strong vs. weak evidence
+- Critique the brief: flag sections needing more supporting cases
+- Spot gaps in hazard coverage, sector breadth, or geographic diversity
+</capabilities>
+
+<topic_references>
+Section rewrite — User: "Rewrite the executive summary for a non-technical audience"
+→ Explain what you changed and why, then include a PROPOSED_UPDATE block. Never auto-apply.
+
+Gap identification — User: "What's missing from this brief?"
+→ Use the GAP ANALYST and BRIEF CRITIC skills. Be specific about weak sections and what evidence would strengthen them.
+
+Add more cases — User: "Should I add more cases?"
+→ Identify weakest brief sections (fewest citations, narrowest evidence) and suggest specific case IDs from retrieved context.
+
+Brief quality check — User: "Is this brief good enough to present?"
+→ Use the BRIEF CRITIC skill.
+
+Cross-case synthesis — User: "What are the main themes across these cases?"
+→ Synthesise across all included cases. Cite each claim. Use prose, not bullets, unless listing 3+ distinct items.
+</topic_references>
+
+<proposed_update_format>
+When the user asks you to rewrite, refocus, simplify, or otherwise update a specific section of the brief, include a PROPOSED UPDATE block at the end of your reply in exactly this format (no extra blank lines inside the block, one newline after each field label):
+
+---PROPOSED_UPDATE---
+section_key: executive_summary
+reason: Rewritten for non-technical audience — simplified flood risk terminology.
+content: The replacement text for that section goes here, with citations like [ID_06].
+---END_UPDATE---
+
+Rules for the update block:
+- section_key must be one of: executive_summary, climate_drivers, adaptation_approaches, costs_and_resourcing, uk_applicability, key_insight
+- reason is one sentence explaining what changed and why
+- content is the full replacement text, with [ID_xx] citations
+- Only include one block per response
+- Only include it when the user is clearly asking for a section change — not for questions, gap analysis, or general discussion
+</proposed_update_format>
+
+<skills>
+${SKILL_COMPARATOR}
+
+${SKILL_GAP_ANALYST}
+
+${SKILL_TRANSFER_ANALYST}
+
+${SKILL_BRIEF_CRITIC}
+</skills>
+
+Return suggested text clearly formatted. Never auto-apply changes to the brief — always present as a suggestion.`;
 
 function buildSystemPrompt(
   context: ChatContext,
   retrievedContent: string,
-  retrievalMode: "rag" | "fallback"
+  retrievalMode: "rag" | "fallback",
+  retrievedCaseIds?: string[],
 ): string {
   const dataLabel =
     retrievalMode === "rag"
       ? "Retrieved case study evidence (from knowledge base):"
       : "Case study data (full library — RAG was unavailable):";
+
+  // Citation allowlist: collect all valid case IDs from retrieval + context
+  const validIds = new Set<string>();
+  if (retrievedCaseIds) retrievedCaseIds.forEach((id) => validIds.add(id));
+  if (context.article_id) validIds.add(context.article_id);
+  if (context.brief_case_ids) context.brief_case_ids.forEach((id) => validIds.add(id));
+  if (context.result_set) context.result_set.forEach((r) => validIds.add(r.id));
+  if (context.brief_case_chunks) context.brief_case_chunks.forEach((c) => validIds.add(c.article_id));
+
+  const citationAllowlist = validIds.size > 0
+    ? `\n<citation_allowlist>Valid case IDs you may cite: ${[...validIds].join(", ")}. Do not cite any other IDs.</citation_allowlist>`
+    : "";
 
   let modePrompt: string;
   let modeContext = "";
@@ -266,7 +449,10 @@ function buildSystemPrompt(
     : "";
 
   return [
-    BASE_PROMPT,
+    PERSONA,
+    SCOPE,
+    CONSTRAINTS,
+    citationAllowlist,
     modePrompt,
     modeContext,
     intentLine,
@@ -335,18 +521,20 @@ type MockResponse = {
   chips?: string[];
   gap?: string | null;
   actions?: Array<{ label: string; primary?: boolean; demo?: boolean }>;
+  action?: ChatAction;
 };
 
 const MOCK: Record<string, MockResponse[]> = {
   explore: [
     {
-      text: "The HIVE knowledge base has strong evidence for flooding adaptation on urban transport corridors. Sheffield Grey to Green [ID_40] reduced river discharge from a 1-in-100-year event by 87% using SuDS alongside a city-centre rail and tram network. Heathrow's balancing ponds [ID_32] demonstrate complementary dual-resilience — addressing both flooding and drought.",
+      text: "The HIVE knowledge base has strong evidence for flooding adaptation on urban transport corridors. Sheffield Grey to Green [ID_40] reduced river discharge from a 1-in-100-year event by 87% using SuDS alongside a city-centre rail and tram network. Heathrow's balancing ponds [ID_32] demonstrate complementary dual-resilience — addressing both flooding and drought. Would you like to add these to your brief?",
       chips: ["ID_40", "ID_32"],
       gap: null,
       actions: [
         { label: "Add both to Brief", primary: true },
         { label: "Tell me about costs" },
       ],
+      action: { type: "add_to_brief", payload: { article_ids: ["ID_40", "ID_32"] } },
     },
     {
       text: "Cost data: Sheffield ran £3.6m–£6.3m per phase (ERDF + local authority funded). Heathrow's retaining walls cost ~£2.1m but adaptation was integrated into planned business development — making the marginal climate cost minimal. Both report significant avoided costs that were not formally quantified.",
@@ -369,12 +557,14 @@ const MOCK: Record<string, MockResponse[]> = {
   ],
   deep_dive: [
     {
-      text: "This case has **high UK transferability** — the measures have been applied in UK conditions and the costs are in sterling. The key applicability insight is that the approach can be embedded into planned maintenance cycles rather than treated as standalone climate spend, significantly reducing effective cost.",
+      text: "This case has **high UK transferability** — the measures have been applied in UK conditions and the costs are in sterling. The key applicability insight is that the approach can be embedded into planned maintenance cycles rather than treated as standalone climate spend. Would you like to add it to your brief?",
       gap: null,
       actions: [
         { label: "Add to Brief", primary: true },
         { label: "Show related cases" },
       ],
+      // article_ids filled by API when in deep_dive using context.article_id; mock has none
+      action: { type: "add_to_brief", payload: { article_ids: [] } },
     },
   ],
   synthesis: [
@@ -403,6 +593,7 @@ function getMockResponse(mode: string): ChatApiResponse {
     chips: mock.chips,
     gap: mock.gap,
     actions: mock.actions,
+    action: mock.action,
     retrieval_mode: "fallback",
   };
 }
@@ -429,9 +620,14 @@ export function parseStringContext(raw: string): ChatContext {
 // Main AI response
 // ---------------------------------------------------------------------------
 
+export type GetAIResponseOptions = {
+  max_tokens?: number;
+};
+
 export async function getAIResponse(
   messages: ChatMessageIn[],
-  context: ChatContext
+  context: ChatContext,
+  options?: GetAIResponseOptions
 ): Promise<ChatApiResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -441,20 +637,52 @@ export async function getAIResponse(
   const lastUserMessage =
     [...messages].reverse().find((m) => m.role === "user")?.text ?? "";
 
-  // Retrieve context via RAG (or fallback)
-  const retrieval = await retrieveContext(lastUserMessage, {
-    limit: context.mode === "deep_dive" ? 12 : 8,
-    threshold: 0.5,
-  });
+  // Synthesis with pre-loaded brief chunks/sections: skip retrieveContext (meta-instructions don't match vector search)
+  const synthesisHasPreloaded =
+    context.mode === "synthesis" &&
+    (context.brief_case_chunks?.length || context.brief_sections?.length);
+
+  let retrieval: { chunks: RetrievedChunk[]; formatted: string; mode: "rag" | "fallback" };
+  if (synthesisHasPreloaded && context.brief_case_chunks?.length) {
+    const formatted = context.brief_case_chunks
+      .map((c) => `[${c.article_id}] (${c.section_key}):\n${c.chunk_text}`)
+      .join("\n\n---\n\n");
+    retrieval = {
+      chunks: context.brief_case_chunks.map((c) => ({
+        article_id: c.article_id,
+        section_key: c.section_key,
+        chunk_text: c.chunk_text,
+      })),
+      formatted,
+      mode: "rag",
+    };
+  } else if (synthesisHasPreloaded && context.brief_sections?.length) {
+    const formatted = context.brief_sections
+      .map((s) => `## ${s.section}\n${s.content}`)
+      .join("\n\n");
+    retrieval = { chunks: [], formatted, mode: "rag" };
+  } else {
+    retrieval = await retrieveContext(lastUserMessage, {
+      limit: context.mode === "deep_dive" ? 12 : 8,
+      threshold: 0.5,
+    });
+  }
+
+  const retrievedCaseIds = [...new Set(retrieval.chunks.map((c) => c.article_id))];
 
   const systemPrompt = buildSystemPrompt(
     context,
     retrieval.formatted,
-    retrieval.mode
+    retrieval.mode,
+    retrievedCaseIds,
   );
 
   const { default: OpenAI } = await import("openai");
   const openai = new OpenAI({ apiKey });
+
+  const maxTokens =
+    options?.max_tokens ??
+    (context.mode === "synthesis" ? 1200 : 600);
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -466,12 +694,36 @@ export async function getAIResponse(
       })),
     ],
     temperature: 0.4,
-    max_tokens: 600,
+    max_tokens: maxTokens,
   });
 
-  const text =
+  let rawText =
     completion.choices[0]?.message?.content ??
     "I couldn't generate a response.";
+
+  // Parse ---PROPOSED_UPDATE--- block if present (synthesis mode section rewrites)
+  let action: ChatApiResponse["action"];
+  const updateMatch = rawText.match(
+    /---\s*PROPOSED[_ ]UPDATE\s*---\s*[\r\n]+\s*section[_ ]key\s*:\s*(.+?)[\r\n]+\s*reason\s*:\s*(.+?)[\r\n]+\s*content\s*:\s*([\s\S]*?)[\r\n]+\s*---\s*END[_ ]UPDATE\s*---/i
+  );
+  if (updateMatch) {
+    action = {
+      type: "update_brief_section",
+      payload: {
+        section_key: updateMatch[1].trim(),
+        reason: updateMatch[2].trim(),
+        new_content: updateMatch[3].trim(),
+      },
+    };
+    rawText = rawText.replace(/---\s*PROPOSED[_ ]UPDATE\s*---[\s\S]*?---\s*END[_ ]UPDATE\s*---/i, "").trim();
+  } else if (/---\s*PROPOSED[_ ]?UPDATE/i.test(rawText)) {
+    console.warn(
+      "[HIVE] PROPOSED_UPDATE block found but failed to parse:",
+      rawText.substring(rawText.search(/---\s*PROPOSED/i), rawText.search(/---\s*PROPOSED/i) + 500)
+    );
+  }
+
+  const text = rawText;
 
   // Extract cited case IDs from both LLM output and retrieved chunks
   const chipMatches = text.match(/\[?(ID_[\w]+)\]?/g);
@@ -483,11 +735,22 @@ export async function getAIResponse(
     ? [...new Set(retrieval.chunks.map((c) => c.article_id))]
     : chips;
 
+  // Infer structured action for Apply/Dismiss card when no explicit update block was parsed
+  if (!action && chips && chips.length > 0) {
+    const lower = text.toLowerCase();
+    if (/\badd to (your )?brief\b|\badd (these |them )?to (your )?brief\b/i.test(lower)) {
+      action = { type: "add_to_brief", payload: { article_ids: chips } };
+    } else if (/\bsimilar cases\b|\bsuggest.*cases\b|\bconsider these\b|\bhighlight (these )?cases\b/i.test(lower)) {
+      action = { type: "suggest_cases", payload: { case_ids: chips } };
+    }
+  }
+
   return {
     message: text,
     text,
     chips,
     sources,
     retrieval_mode: retrieval.mode,
+    action,
   };
 }

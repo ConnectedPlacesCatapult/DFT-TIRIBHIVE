@@ -1,10 +1,18 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CASE_STUDIES as SEED_CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
+
+const TRIB_MEASURES: Array<{
+  trib_article_id: string;
+  project_title: string;
+  measures: Array<{ name: string; description: string }>;
+}> = require("@/data/trib-measures.json");
+
+const TOTAL_MEASURE_COUNT = TRIB_MEASURES.reduce((s, a) => s + a.measures.length, 0);
 
 // ── ALL 50 MARQUEE CASE STUDIES ──
 // caseStudyId = links marquee card directly to a rich result card
@@ -97,6 +105,27 @@ const PLACEHOLDER_CASES = {
     transferability: '—', transferabilityNote: '—', ukApplicability: [], insight: '—',
   },
 };
+
+// ── CASE-STUDY-LEVEL MARQUEE — deduplicated by caseStudyId for "Cases" marquee view ──
+const MARQUEE_CASE_STUDIES = (() => {
+  const seen = new Set<string>();
+  return MARQUEE_CASES
+    .filter(c => {
+      if (!c.caseStudyId || seen.has(c.caseStudyId)) return false;
+      seen.add(c.caseStudyId);
+      return true;
+    })
+    .map(c => {
+      const rich = SEED_CASE_STUDIES.find(cs => cs.id === c.caseStudyId);
+      return {
+        ...c,
+        title: rich?.title ?? c.title,
+        measure: rich ? `${rich.measures?.length ?? 0} adaptation measures` : c.measure,
+        hook: rich?.hook ?? c.hook,
+        hazards: rich ? [...rich.hazards.cause.slice(0, 2)] : c.hazards,
+      };
+    });
+})();
 
 // ── CASE STUDIES FROM DATA LAYER (37 from JSON, enriched with hand-curated overrides) ──
 const CASE_STUDIES = SEED_CASE_STUDIES;
@@ -529,6 +558,50 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => 
   </div>
 );
 
+const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAddToBrief, inBrief, matchReasons }) => {
+  const sectorStyle = SECTOR_STYLES[cs.sector] || DEFAULT_SECTOR_STYLE;
+  return (
+    <div onClick={() => onClick(cs)}
+      className="hive-card"
+      style={{ cursor: "pointer", borderRadius: 16, border: "1px solid", transition: "all 0.2s", padding: 20, display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, border: "1px solid", ...sectorStyle }}>{cs.sector}</span>
+        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)", background: "var(--surface-alt)", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 4 }}>Measure</span>
+      </div>
+      <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.375, marginBottom: 6, transition: "color 0.2s" }}>{measureName}</h3>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8, fontWeight: 500 }}>Part of: {cs.title}</p>
+      {measureDescription && (
+        <p className="line-clamp-2" style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12, flex: 1 }}>{measureDescription}</p>
+      )}
+      {matchReasons && matchReasons.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Matched on:</span>
+          {matchReasons.map(r => <span key={r} style={{ fontSize: 12, background: "var(--accent-bg)", color: "var(--accent-text)", border: "1px solid", borderColor: "var(--accent)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 6, fontWeight: 500 }}>{r}</span>)}
+        </div>
+      )}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+        {cs.hazards.cause.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="cause" />)}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4, borderTop: "1px solid", borderColor: "var(--border)" }}>
+        <TransferabilityBadge level={cs.transferability} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onAddToBrief(cs); }}
+            style={{ fontSize: 12, fontWeight: 500, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 9999, border: "1px solid", transition: "all 0.2s",
+              ...(inBrief ? { background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" } : { borderColor: "var(--border)", color: "var(--text-secondary)" }),
+            }}>
+            {inBrief ? "✓ In brief" : "+ Add to brief"}
+          </button>
+          <span style={{ fontSize: 12, fontWeight: 500, color: "var(--accent)", display: "flex", alignItems: "center", gap: 4 }}>
+            View case
+            <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CaseStudyDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
   <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={onClose}>
     <div className="hive-modal" style={{ borderRadius: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxWidth: 672, width: "100%", maxHeight: "88vh", overflowY: "auto", fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
@@ -863,7 +936,7 @@ function HandbookLandingPageContent() {
   const semanticTimerRef = useRef(null);
   useEffect(() => {
     if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current);
-    if (!query.trim() || query.trim().length < 4) {
+    if (!query.trim() || query.trim().length < 5) {
       setSemanticPrompt(null);
       setSemanticScenario(null);
       return;
@@ -891,13 +964,18 @@ function HandbookLandingPageContent() {
     return () => { if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current); };
   }, [query]);
 
-  // Store session intent when user starts searching
+  // Store session intent when user pauses typing (debounced, 5+ chars)
+  const intentTimerRef = useRef(null);
   useEffect(() => {
-    if (query.trim().length >= 3) {
+    if (intentTimerRef.current) clearTimeout(intentTimerRef.current);
+    if (query.trim().length < 5) return;
+    intentTimerRef.current = setTimeout(() => {
       setSessionIntent(query.trim());
-    }
+    }, 400);
+    return () => { if (intentTimerRef.current) clearTimeout(intentTimerRef.current); };
   }, [query, setSessionIntent]);
   const [marqueeView, setMarqueeView] = useState("marquee");
+  const [viewMode, setViewMode] = useState<'cases' | 'measures'>('cases');
   const [marqueeSelectedId, setMarqueeSelectedId] = useState(null); // caseStudyId or 'PH_SECTOR'
   const [brief, setBrief] = useState([]);
   const [briefOpen, setBriefOpen] = useState(false);
@@ -966,6 +1044,22 @@ function HandbookLandingPageContent() {
     }, 800);
     return () => clearTimeout(timer);
   }, [hasActiveFilters, query, selectedHazards, selectedSectors]);
+
+  const measureDisplayItems = useMemo(() => {
+    return results.flatMap(a => {
+      const measuresData = TRIB_MEASURES.find(m => m.trib_article_id === a.id);
+      if (!measuresData?.measures?.length) {
+        const fallbackName = Array.isArray(a.measures) && a.measures.length > 0
+          ? a.measures.join(", ") : a.title;
+        return [{ key: `${a.id}_0`, article: a, measureName: fallbackName, measureDescription: a.summary }];
+      }
+      return measuresData.measures.map((m, mi) => ({
+        key: `${a.id}_${mi}`, article: a, measureName: m.name, measureDescription: m.description,
+      }));
+    });
+  }, [results]);
+
+  const activeMarqueeCases = viewMode === 'measures' ? MARQUEE_CASES : MARQUEE_CASE_STUDIES;
 
   const toggle = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
   const toggleBrief = (cs) => setBrief(prev => prev.some(x => x.id === cs.id) ? prev.filter(x => x.id !== cs.id) : [...prev, cs]);
@@ -1186,7 +1280,7 @@ function HandbookLandingPageContent() {
           <div className="fade-up" style={{ maxWidth: 768 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, marginBottom: 20, letterSpacing: "0.05em", textTransform: "uppercase", background: T.accentBg, color: T.accentText }}>
               <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: 9999, background: T.accent }} />
-              Prototype · {CASE_STUDIES.length} case studies loaded
+              Prototype · {viewMode === 'measures' ? `${TOTAL_MEASURE_COUNT} measures` : `${CASE_STUDIES.length} case studies`} loaded
             </div>
             <h1 style={{ fontSize: "2.25rem", fontWeight: 400, lineHeight: 1.25, marginBottom: 12, fontFamily: "'DM Serif Display', serif", color: T.textPrimary }}>
               What risk are you
@@ -1326,27 +1420,41 @@ function HandbookLandingPageContent() {
 
         {/* ── MARQUEE — always visible, responds to filters in place ── */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
               <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)" }}>From the knowledge base</p>
               <p style={{ fontSize: 14, marginTop: 2, color: "var(--text-secondary)" }}>
                 {marqueeHasFilters
-                  ? `Showing ${marqueeMatchingSectors.length > 0 ? marqueeMatchingSectors.join(", ") : "matching"} cases — click any to view`
-                  : `${MARQUEE_CASES.length} curated adaptation examples — click any card to explore`}
+                  ? `Showing ${marqueeMatchingSectors.length > 0 ? marqueeMatchingSectors.join(", ") : "matching"} ${viewMode === 'measures' ? 'measures' : 'cases'} — click any to view`
+                  : viewMode === 'measures'
+                    ? `${MARQUEE_CASES.length} curated adaptation measures — click any card to explore`
+                    : `${MARQUEE_CASE_STUDIES.length} case studies — click any card to explore`}
               </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
-              {[{ id: "marquee", label: "Marquee" }, { id: "velocity", label: "Scroll velocity" }].map(v => (
-                <button key={v.id} onClick={() => setMarqueeView(v.id)}
-                  style={{ fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", background: marqueeView === v.id ? "var(--text-primary)" : "transparent", color: marqueeView === v.id ? "var(--surface)" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
-                  {v.label}
-                </button>
-              ))}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Cases / Measures toggle */}
+              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
+                {[{ id: "cases" as const, label: `Cases (${CASE_STUDIES.length})` }, { id: "measures" as const, label: `Measures (${TOTAL_MEASURE_COUNT})` }].map(v => (
+                  <button key={v.id} onClick={() => setViewMode(v.id)}
+                    style={{ fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", background: viewMode === v.id ? "var(--accent)" : "transparent", color: viewMode === v.id ? "#fff" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+              {/* Animation style toggle */}
+              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
+                {[{ id: "marquee", label: "Marquee" }, { id: "velocity", label: "Scroll velocity" }].map(v => (
+                  <button key={v.id} onClick={() => setMarqueeView(v.id)}
+                    style={{ fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", background: marqueeView === v.id ? "var(--text-primary)" : "transparent", color: marqueeView === v.id ? "var(--surface)" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           {marqueeView === "marquee"
-            ? <Marquee2D cases={MARQUEE_CASES} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
-            : <ScrollVelocityMarquee cases={MARQUEE_CASES} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
+            ? <Marquee2D cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
+            : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
           }
           <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginTop: 16 }}>
             <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Hover to pause · Click any card to view case study · Search above to find specific cases</p>
@@ -1402,7 +1510,10 @@ function HandbookLandingPageContent() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingTop: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
-                      {results.length} case {results.length === 1 ? "study" : "studies"} matched
+                      {viewMode === 'measures'
+                        ? <><strong style={{ color: "var(--text-primary)" }}>{measureDisplayItems.length}</strong> {measureDisplayItems.length === 1 ? "measure" : "measures"} across <strong>{results.length}</strong> case {results.length === 1 ? "study" : "studies"}</>
+                        : <>{results.length} case {results.length === 1 ? "study" : "studies"} matched</>
+                      }
                     </span>
                     <button onClick={clearAll} style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "underline" }}>Clear all</button>
                   </div>
@@ -1432,7 +1543,9 @@ function HandbookLandingPageContent() {
                 {results.length > 0 && (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                     <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
-                      {results.length} case {results.length === 1 ? "study" : "studies"} below
+                      {viewMode === 'measures'
+                        ? `${measureDisplayItems.length} ${measureDisplayItems.length === 1 ? "measure" : "measures"} below`
+                        : `${results.length} case ${results.length === 1 ? "study" : "studies"} below`}
                     </span>
                     <Link
                       href={(() => {
@@ -1454,6 +1567,23 @@ function HandbookLandingPageContent() {
                 )}
 
                 {results.length > 0 ? (
+                  viewMode === 'measures' ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+                      {measureDisplayItems.map((item, i) => (
+                        <div key={item.key} className="card-enter" style={{ animationDelay: `${Math.min(i, 20) * 0.04}s` }}>
+                          <MeasureResultCard
+                            measureName={item.measureName}
+                            measureDescription={item.measureDescription}
+                            cs={item.article}
+                            onClick={setSelectedCase}
+                            onAddToBrief={toggleBrief}
+                            inBrief={brief.some(b => b.id === item.article.id)}
+                            matchReasons={activeMatchReasons[item.article.id]}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
                     {results.map((cs, i) => (
                       <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
@@ -1461,6 +1591,7 @@ function HandbookLandingPageContent() {
                       </div>
                     ))}
                   </div>
+                  )
                 ) : (
                   <div className="fade-in" style={{ textAlign: "center", paddingTop: 80, paddingBottom: 80 }}>
                     <div style={{ width: 48, height: 48, borderRadius: 16, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
@@ -1495,7 +1626,9 @@ function HandbookLandingPageContent() {
           <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingBottom: 80 }}>
             <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
               {[
-                { label: "Case Studies", value: String(SEED_CASE_STUDIES.length), sub: "fully loaded from TRIB database" },
+                viewMode === 'measures'
+                  ? { label: "Adaptation Measures", value: String(TOTAL_MEASURE_COUNT), sub: `across ${SEED_CASE_STUDIES.length} case studies` }
+                  : { label: "Case Studies", value: String(SEED_CASE_STUDIES.length), sub: "fully loaded from TRIB database" },
                 { label: "Transport Sectors", value: "5", sub: "rail, aviation, maritime, highways, critical infrastructure" },
                 { label: "Climate Hazards", value: "12+", sub: "first and second order covered" },
                 { label: "UK Regions", value: "8", sub: "with geography-specific applicability" },
