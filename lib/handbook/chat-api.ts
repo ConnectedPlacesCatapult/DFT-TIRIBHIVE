@@ -129,15 +129,39 @@ async function retrieveContext(
       throw new Error(msg);
     }
 
-    const typedChunks: RetrievedChunk[] = chunks.map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (c: any) => ({
-        article_id: c.article_id,
-        section_key: c.section_key ?? "general",
-        chunk_text: c.chunk_text,
-        similarity: c.similarity,
-      })
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawChunks = chunks.map((c: any) => ({
+      article_id: c.article_id as string,
+      section_key: (c.section_key ?? "general") as string,
+      chunk_text: c.chunk_text as string,
+      similarity: c.similarity as number | undefined,
+    }));
+
+    // Resolve UUIDs → trib_article_id (e.g. ID_40) so the AI cites human-readable IDs
+    const uniqueUuids = [...new Set(rawChunks.map((c) => c.article_id))];
+    let uuidToTrib: Map<string, string> = new Map();
+    try {
+      const { data: articles } = await sb
+        .from("articles")
+        .select("id, trib_article_id")
+        .in("id", uniqueUuids);
+      if (articles?.length) {
+        uuidToTrib = new Map(
+          articles
+            .filter((a: { id: string; trib_article_id: string | null }) => a.trib_article_id)
+            .map((a: { id: string; trib_article_id: string }) => [a.id, a.trib_article_id])
+        );
+      }
+    } catch (lookupErr) {
+      console.warn("[HIVE] trib_article_id lookup failed (non-blocking):", lookupErr);
+    }
+
+    const typedChunks: RetrievedChunk[] = rawChunks.map((c) => ({
+      article_id: uuidToTrib.get(c.article_id) ?? c.article_id,
+      section_key: c.section_key,
+      chunk_text: c.chunk_text,
+      similarity: c.similarity,
+    }));
 
     const formatted = typedChunks
       .map(
@@ -192,7 +216,7 @@ export async function semanticSearchChunks(
 const CITATION_RULE = `<citation_rule>
 MANDATORY: Every case study, project, or organisation you mention MUST include its case ID in square brackets immediately after the name — e.g. "Sheffield Grey to Green [ID_40]", "Austrian Federal Railways [ID_06]". Every factual claim about a case (cost, measure, outcome, hazard) MUST end with a citation in brackets.
 
-If you cannot find a matching ID in the retrieved context below, DO NOT mention that project. Uncited case references are forbidden. This rule overrides all other instructions.
+Use the case ID format shown in the retrieved context (e.g. [ID_40], [ID_06]). NEVER cite raw database UUIDs. If you cannot find a matching ID in the retrieved context below, DO NOT mention that project. Uncited case references are forbidden. This rule overrides all other instructions.
 </citation_rule>`;
 
 // LAYER 1 — PERSONA
