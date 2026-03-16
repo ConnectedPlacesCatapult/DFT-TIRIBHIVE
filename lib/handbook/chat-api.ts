@@ -113,7 +113,7 @@ async function retrieveContext(
       .schema("public")
       .rpc("hive_match_chunks", {
         query_embedding: queryEmbedding,
-        match_threshold: options?.threshold ?? 0.5,
+        match_threshold: options?.threshold ?? 0.4,
         match_count: options?.limit ?? 8,
         filter_section: options?.section ?? null,
       });
@@ -705,7 +705,7 @@ export async function getAIResponse(
   } else {
     retrieval = await retrieveContext(lastUserMessage, {
       limit: context.mode === "deep_dive" ? 12 : 8,
-      threshold: 0.5,
+      threshold: 0.4,
     });
   }
 
@@ -734,7 +734,7 @@ export async function getAIResponse(
         content: m.text,
       })),
     ],
-    temperature: 0.4,
+    temperature: 0.2,
     max_tokens: maxTokens,
   });
 
