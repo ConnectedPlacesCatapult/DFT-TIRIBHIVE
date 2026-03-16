@@ -930,20 +930,79 @@ function HandbookLandingPageContent() {
   // Semantic search state (scenarios A/B/C)
   const [semanticPrompt, setSemanticPrompt] = useState(null);
   const [semanticScenario, setSemanticScenario] = useState(null);
-  const { setSessionIntent, openChat, setChatContext, setMessages } = useChatContext();
+  const { setSessionIntent, openChat, setChatContext, setMessages, setRetrievalMode } = useChatContext();
+
+  // Detect conversational / non-search queries that should route to the AI chat
+  const CONVERSATIONAL_RE = /^(h(i|ello|ey)|how are you|how do(es)? (you|this|hive|it) work|what (can|do) you do|help me|what is hive|tell me about|who are you|good (morning|afternoon|evening)|thanks|thank you|help$)/i;
+  function isConversationalQuery(q: string): boolean {
+    return CONVERSATIONAL_RE.test(q.trim());
+  }
+
+  // Route a query through the chat API (opens panel, sends user message, gets AI response)
+  const chatRoutingRef = useRef(false);
+  async function routeQueryToChat(q: string) {
+    if (chatRoutingRef.current) return;
+    chatRoutingRef.current = true;
+    openChat("browse");
+    const userMsg = { role: "user" as const, text: q };
+    setMessages([userMsg]);
+    try {
+      const res = await fetch("/api/handbook/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", text: q }],
+          context: "browse",
+          session_intent: q,
+        }),
+      });
+      const data = await res.json();
+      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+      setMessages([
+        userMsg,
+        {
+          role: "ai" as const,
+          text: data.message ?? data.text ?? "",
+          chips: data.chips,
+          gap: data.gap,
+          actions: data.actions,
+          sources: data.sources,
+          retrieval_mode: data.retrieval_mode,
+          action: data.action,
+          actionDismissed: false,
+        },
+      ]);
+    } catch {
+      setMessages([userMsg, { role: "ai" as const, text: "Something went wrong. Please try again." }]);
+    } finally {
+      chatRoutingRef.current = false;
+    }
+  }
 
   // Semantic search: fire on debounced query, supplements client-side search
   const semanticTimerRef = useRef(null);
   useEffect(() => {
     if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current);
-    if (!query.trim() || query.trim().length < 5) {
+    if (!query.trim() || query.trim().length < 3) {
       setSemanticPrompt(null);
       setSemanticScenario(null);
       return;
     }
     semanticTimerRef.current = setTimeout(async () => {
+      const trimmed = query.trim();
+
+      // Conversational queries bypass semantic search and go straight to chat AI
+      if (isConversationalQuery(trimmed)) {
+        setSemanticPrompt(null);
+        setSemanticScenario(null);
+        await routeQueryToChat(trimmed);
+        return;
+      }
+
+      if (trimmed.length < 5) return;
+
       try {
-        const res = await fetch(`/api/handbook/semantic-search?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`/api/handbook/semantic-search?q=${encodeURIComponent(trimmed)}`);
         if (!res.ok) return;
         const data = await res.json();
         setSemanticScenario(data.scenario);
@@ -952,10 +1011,7 @@ function HandbookLandingPageContent() {
           setSemanticPrompt(`Found ${topIds.length} relevant cases — want me to explain how they apply? [Ask HIVE →]`);
         } else if (data.scenario === "C") {
           setSemanticPrompt(null);
-          openChat("browse");
-          setMessages(prev => prev.length === 0 ? [
-            { role: "ai", text: `I couldn't find a strong match for "${query}". Could you tell me more about the infrastructure type, location, or specific hazard you're interested in?` }
-          ] : prev);
+          await routeQueryToChat(trimmed);
         } else {
           setSemanticPrompt(null);
         }
@@ -1208,72 +1264,6 @@ function HandbookLandingPageContent() {
       `}</style>
 
       <div className="hive-root" style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
-
-        {/* Nav — DfT theme: green stripe at top per GOV.UK / DfT branding */}
-        {themeKey === "dft" && <div aria-hidden="true" style={{ height: "5px", background: "#006853", position: "relative", zIndex: 41 }} />}
-        <nav style={{ position: "sticky", top: 0, zIndex: 40, borderBottom: "1px solid", borderColor: T.border, background: T.navBg, backdropFilter: "blur(12px)" }}>
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: T.accent }}>
-                <svg style={{ width: 16, height: 16, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                </svg>
-              </div>
-              <span style={{ fontWeight: 600, letterSpacing: "-0.025em", color: T.textPrimary }}>HIVE</span>
-              <span className="show-from-sm-block" style={{ fontSize: 12, color: T.textMuted }}>Transport Climate Adaptation Intelligence</span>
-            </div>
-            {/* Theme picker */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="show-from-sm-block" style={{ fontSize: 12, color: T.textMuted }}>Theme:</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid", borderColor: T.border, background: T.surfaceAlt }}>
-                {Object.values(THEMES).map(th => (
-                  <button key={th.key} onClick={() => setThemeKey(th.key)}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      paddingLeft: 12,
-                      paddingRight: 12,
-                      paddingTop: 6,
-                      paddingBottom: 6,
-                      borderRadius: 9999,
-                      transition: "all 0.2s",
-                      background: themeKey === th.key ? T.accent : "transparent",
-                      color: themeKey === th.key ? "#ffffff" : T.textSecondary,
-                    }}>
-                    {th.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <button onClick={() => { clearAll(); inputRef.current?.focus(); }}
-                className="show-from-md-flex"
-                style={{ fontSize: 14, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", alignItems: "center", gap: 6, color: T.textSecondary }}>
-                <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                Search
-              </button>
-              <a
-                href={brief.length === 0 ? "/handbook/brief" : "#"}
-                className="show-from-md-flex"
-                onClick={(e) => {
-                  if (brief.length > 0) {
-                    e.preventDefault();
-                    sessionStorage.setItem("hiveBriefCases", JSON.stringify(brief.map((c: { id: string }) => c.id)));
-                    sessionStorage.setItem("hiveBriefTheme", themeKey);
-                    window.location.href = "/handbook/brief?tutorial=false";
-                  }
-                }}
-                style={{ fontSize: 14, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", alignItems: "center", gap: 6, color: brief.length > 0 ? T.accent : T.textSecondary, fontWeight: brief.length > 0 ? 600 : 400, textDecoration: "none", display: "flex" }}>
-                <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                AI Brief
-                {brief.length > 0 && (
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, marginLeft: 4, background: T.accent }}>{brief.length}</span>
-                )}
-              </a>
-              <button style={{ fontSize: 14, fontWeight: 500, color: "#fff", paddingLeft: 16, paddingRight: 16, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "background 0.2s, color 0.2s", marginLeft: 8, background: T.accent }}>DfT Partner</button>
-            </div>
-          </div>
-        </nav>
 
         {/* Hero */}
         <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingTop: 56, paddingBottom: 24 }}>

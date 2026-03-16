@@ -1,4 +1,4 @@
-const CASE_TIMEOUT_MS = 15_000;
+const CASE_TIMEOUT_MS = 30_000;
 
 /**
  * POST /api/handbook/eval/run
@@ -57,6 +57,9 @@ type EvalRunInsert = {
   citation_count: number;
   admitted_no_data: boolean;
   proposed_update_fired: boolean;
+  word_count: number;
+  mentions_brief: boolean;
+  expected_signals: unknown;
   score_citations: number | null;
   score_relevant: boolean | null;
   reviewer_notes: string | null;
@@ -71,13 +74,19 @@ const ADMITTED_PHRASES = [
   "not enough evidence",
 ];
 
+const BRIEF_PHRASES = ["brief", "build a brief", "brief builder"];
+
 function autoScore(responseText: string, responseAction: ChatApiResponse["action"]) {
   const citationCount = (responseText.match(/\[ID_\w+\]/g) || []).length;
   const admittedNoData = ADMITTED_PHRASES.some((phrase) =>
     responseText.toLowerCase().includes(phrase)
   );
   const proposedUpdateFired = responseAction?.type === "update_brief_section";
-  return { citationCount, admittedNoData, proposedUpdateFired };
+  const wordCount = responseText.trim().split(/\s+/).filter(Boolean).length;
+  const mentionsBrief = BRIEF_PHRASES.some((phrase) =>
+    responseText.toLowerCase().includes(phrase)
+  );
+  return { citationCount, admittedNoData, proposedUpdateFired, wordCount, mentionsBrief };
 }
 
 function parseMessages(messages: unknown): ChatMessageIn[] {
@@ -200,7 +209,7 @@ export async function POST(req: NextRequest) {
             threshold,
           });
           const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Case timeout (15s)")), CASE_TIMEOUT_MS)
+            setTimeout(() => reject(new Error(`Case timeout (${CASE_TIMEOUT_MS / 1000}s)`)), CASE_TIMEOUT_MS)
           );
           const { chunks, mode } = await Promise.race([searchPromise, timeoutPromise]);
           retrievalMode = mode;
@@ -238,6 +247,9 @@ export async function POST(req: NextRequest) {
             citation_count: 0,
             admitted_no_data: false,
             proposed_update_fired: false,
+            word_count: responseText.trim().split(/\s+/).filter(Boolean).length,
+            mentions_brief: false,
+            expected_signals: row.expected_signals ?? null,
             score_citations: null,
             score_relevant: null,
             reviewer_notes: null,
@@ -293,7 +305,7 @@ export async function POST(req: NextRequest) {
             max_tokens: maxTokens,
           });
           const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Case timeout (15s)")), CASE_TIMEOUT_MS)
+            setTimeout(() => reject(new Error(`Case timeout (${CASE_TIMEOUT_MS / 1000}s)`)), CASE_TIMEOUT_MS)
           );
           lastResponse = await Promise.race([chatPromise, timeoutPromise]);
         } catch (err) {
@@ -305,10 +317,8 @@ export async function POST(req: NextRequest) {
 
       if (!lastResponse) continue;
 
-      const { citationCount, admittedNoData, proposedUpdateFired } = autoScore(
-        lastResponse.text,
-        lastResponse.action
-      );
+      const { citationCount, admittedNoData, proposedUpdateFired, wordCount, mentionsBrief } =
+        autoScore(lastResponse.text, lastResponse.action);
       citationCounts.push(citationCount);
 
       const run: EvalRunInsert = {
@@ -328,6 +338,9 @@ export async function POST(req: NextRequest) {
         citation_count: citationCount,
         admitted_no_data: admittedNoData,
         proposed_update_fired: proposedUpdateFired,
+        word_count: wordCount,
+        mentions_brief: mentionsBrief,
+        expected_signals: row.expected_signals ?? null,
         score_citations: citationCount,
         score_relevant: null,
         reviewer_notes: null,
