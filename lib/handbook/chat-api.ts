@@ -138,7 +138,7 @@ async function retrieveContext(
     }));
 
     // Resolve UUIDs → trib_article_id (e.g. ID_40) so the AI cites human-readable IDs
-    const uniqueUuids = [...new Set(rawChunks.map((c) => c.article_id))];
+    const uniqueUuids = [...new Set(rawChunks.map((c: { article_id: string }) => c.article_id))];
     let uuidToTrib: Map<string, string> = new Map();
     try {
       const { data: articles } = await sb
@@ -156,7 +156,8 @@ async function retrieveContext(
       console.warn("[HIVE] trib_article_id lookup failed (non-blocking):", lookupErr);
     }
 
-    const typedChunks: RetrievedChunk[] = rawChunks.map((c) => ({
+    type RawChunkItem = { article_id: string; section_key: string; chunk_text: string; similarity: number | undefined };
+    const typedChunks: RetrievedChunk[] = rawChunks.map((c: RawChunkItem) => ({
       article_id: uuidToTrib.get(c.article_id) ?? c.article_id,
       section_key: c.section_key,
       chunk_text: c.chunk_text,

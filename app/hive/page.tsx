@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NavPill } from "@/components/NavPill";
+import { CaseStudyDetail as B_CaseStudyDetailShared } from "@/components/hive/CaseStudyDetail";
 
 // ── SHARED DATA ────────────────────────────────────────────────────────────────
 
@@ -130,8 +131,7 @@ function SignalCard({ cs }) {
         <span style={{ fontSize:10, color:A.gold, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em" }}>UK applicability · </span>
         <span style={{ fontSize:11, color:A.body }}>{cs.transferabilityNote?.slice(0,80)}…</span>
       </div>
-      <div style={{ paddingTop:12, borderTop:`1px solid ${A.border}`, display:"flex", justifyContent:"space-between" }}>
-        <span style={{ fontSize:10, fontWeight:700, color:cs.transferability==="High"?"#4ade80":"#fbbf24", textTransform:"uppercase", letterSpacing:"0.08em" }}>● {cs.transferability} transferability</span>
+      <div style={{ paddingTop:12, borderTop:`1px solid ${A.border}`, display:"flex", justifyContent:"flex-end" }}>
         <span style={{ fontSize:11, color:A.gold, cursor:"pointer", fontWeight:600 }}>Read case →</span>
       </div>
     </div>
@@ -567,59 +567,7 @@ const B_CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) =
   </div>
 );
 
-const B_CaseStudyDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
-  <div style={{ position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)" }} onClick={onClose}>
-    <div style={{ background:'var(--b-surface)',borderRadius:24,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",maxWidth:640,width:"100%",maxHeight:"88vh",overflowY:"auto",fontFamily:"'DM Sans',sans-serif" }} onClick={e=>e.stopPropagation()}>
-      <div style={{ position:"sticky",top:0,background:'var(--b-surface)',borderBottom:`1px solid var(--b-border)`,padding:"16px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between",borderRadius:"24px 24px 0 0" }}>
-        <div style={{ flex:1,paddingRight:16 }}>
-          <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4 }}>
-            <span style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:'var(--b-accent)' }}>{cs.sector}</span>
-            <span style={{ color:'var(--b-text-muted)' }}>·</span>
-            <span style={{ fontSize:11,color:'var(--b-text-secondary)' }}>{cs.location}</span>
-          </div>
-          <h2 style={{ fontSize:20,fontWeight:400,lineHeight:1.3,color:'var(--b-text-primary)',fontFamily:"'DM Serif Display',serif" }}>{cs.title}</h2>
-          <p style={{ fontSize:13,fontWeight:600,color:'var(--b-accent)',marginTop:4 }}>{cs.hook}</p>
-        </div>
-        <button onClick={onClose} style={{ width:32,height:32,borderRadius:"50%",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:'var(--b-surface-alt)',marginTop:4 }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color:'var(--b-text-secondary)' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div style={{ padding:24,display:"flex",flexDirection:"column",gap:20 }}>
-        <div style={{ background:'var(--b-accent-bg)',border:`1px solid var(--b-accent)`,borderRadius:16,padding:16 }}>
-          <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color:'var(--b-accent)' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:'var(--b-accent)' }}>Key insight</span>
-          </div>
-          <p style={{ fontSize:13,lineHeight:1.65,fontWeight:500,color:'var(--b-text-primary)' }}>{cs.insight}</p>
-        </div>
-        <div style={{ background:'var(--b-surface-alt)',borderRadius:16,padding:16 }}>
-          <p style={{ fontSize:13,lineHeight:1.65,color:'var(--b-text-secondary)' }}>{cs.summary}</p>
-        </div>
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16 }}>
-          <div><h4 style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:'var(--b-text-muted)',marginBottom:8 }}>Climate drivers</h4><div style={{ display:"flex",flexWrap:"wrap",gap:4 }}>{cs.hazards.cause.map(h=><B_HazardBadge key={h} hazard={h} type="cause"/>)}</div></div>
-          <div><h4 style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:'var(--b-text-muted)',marginBottom:8 }}>Impacts</h4><div style={{ display:"flex",flexWrap:"wrap",gap:4 }}>{cs.hazards.effect.map(h=><B_HazardBadge key={h} hazard={h} type="effect"/>)}</div></div>
-        </div>
-        <div>
-          <h4 style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:'var(--b-text-muted)',marginBottom:8 }}>Adaptation measures</h4>
-          <ul style={{ listStyle:"none",padding:0,margin:0,display:"flex",flexDirection:"column",gap:6 }}>{cs.measures.map(m=><li key={m} style={{ display:"flex",alignItems:"flex-start",gap:8,fontSize:13,color:'var(--b-text-secondary)' }}><span style={{ width:6,height:6,borderRadius:"50%",background:'var(--b-accent)',flexShrink:0,marginTop:5 }}/>{m}</li>)}</ul>
-        </div>
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
-          <div style={{ background:'var(--b-surface-alt)',borderRadius:12,padding:12,border:`1px solid var(--b-border)` }}><h4 style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:'var(--b-text-muted)',marginBottom:4 }}>Investment</h4><p style={{ fontSize:13,fontWeight:600,color:'var(--b-text-primary)' }}>{cs.cost}</p><p style={{ fontSize:11,color:'var(--b-text-muted)',marginTop:2 }}>Band: {cs.costBand}</p></div>
-          <div style={{ background:'var(--b-surface-alt)',borderRadius:12,padding:12,border:`1px solid var(--b-border)` }}><h4 style={{ fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:'var(--b-text-muted)',marginBottom:4 }}>Delivery period</h4><p style={{ fontSize:13,fontWeight:600,color:'var(--b-text-primary)' }}>{cs.year}</p></div>
-        </div>
-        <div style={{ border:`1px solid var(--b-accent)`,borderRadius:12,padding:16,background:'var(--b-accent-bg)',opacity:0.9 }}>
-          <div style={{ marginBottom:8 }}><B_TransferabilityBadge level={cs.transferability}/></div>
-          <p style={{ fontSize:13,lineHeight:1.65,color:'var(--b-text-secondary)',marginBottom:10 }}>{cs.transferabilityNote}</p>
-          <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>{cs.ukApplicability.map(a=><span key={a} style={{ fontSize:11,background:'var(--b-surface)',border:`1px solid var(--b-accent)`,borderRadius:20,padding:"2px 10px",fontWeight:500,color:'var(--b-accent-text)' }}>{a}</span>)}</div>
-        </div>
-        <p style={{ fontSize:11,color:'var(--b-text-muted)',paddingTop:4,borderTop:`1px solid var(--b-border)` }}>Ref: {cs.id} · {cs.organisation} · Curated & verified by HIVE</p>
-        <button onClick={()=>{onAddToBrief(cs);onClose();}} style={{ width:"100%",padding:"12px 0",borderRadius:16,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all 0.2s",background:inBrief?'var(--b-surface-alt)':"var(--b-accent)",color:inBrief?'var(--b-text-muted)':"#fff",border:inBrief?`1px solid var(--b-border)`:"none" }}>
-          {inBrief?"✓ Already in your AI brief":"＋ Add to AI brief"}
-        </button>
-      </div>
-    </div>
-  </div>
-);
+const B_CaseStudyDetail = B_CaseStudyDetailShared;
 
 const B_SynthesisPanel = ({ synthesis }) => (
   <div style={{ borderRadius:16,border:`1px solid var(--b-accent)`,background:`linear-gradient(135deg,var(--b-accent-bg) 0%,var(--b-surface) 100%)`,padding:20,marginBottom:20,fontFamily:"'DM Sans',sans-serif" }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CaseStudy } from "@/lib/hive/seed-data";
+import { getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 
 interface CaseBodyProps {
   cs: CaseStudy;
@@ -272,27 +273,25 @@ export function CaseBody({ cs }: CaseBodyProps) {
         </div>
       )}
 
-      {/* Source link */}
-      {cs.source_pdf_url && (
-        <a
-          href={cs.source_pdf_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 13,
-            fontWeight: 600,
-            color: "#1d70b8",
-            textDecoration: "none",
-            padding: "10px 0",
-            borderTop: "1px solid #f3f4f6",
-          }}
-        >
-          View original TRIB case study →
-        </a>
-      )}
+      {/* Original PDF link */}
+      <a
+        href={getCaseStudyPdfUrl(cs)}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#1d70b8",
+          textDecoration: "none",
+          padding: "10px 0",
+          borderTop: "1px solid #f3f4f6",
+        }}
+      >
+        View original PDF →
+      </a>
 
       {/* Reference */}
       <p style={{ fontSize: 11, color: "#9ca3af", borderTop: "1px solid #f3f4f6", paddingTop: 12 }}>

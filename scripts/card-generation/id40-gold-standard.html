@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ID_40 Gold Standard Card — Sheffield Grey to Green</title>
+<style>
+  /* ─── GOLD STANDARD REFERENCE — HIVE Expanded Case Study Card ───────────────
+     This file is the design and content reference for all 37 article cards.
+     Cursor: match this layout, structure and content depth for every article.
+     Data source: hive.article_cards table, generated from hive.document_chunks.
+  ─────────────────────────────────────────────────────────────────────────── */
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f7f5f0;
+    padding: 2rem;
+    color: #1a1a1a;
+  }
+
+  .card-outer {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  /* ── Header ── */
+  .header { margin-bottom: 1rem; }
+
+  .header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .badge-sector { background: #FAEEDA; color: #633806; }
+  .badge-high-transfer { background: #E1F5EE; color: #085041; }
+  .badge-medium-transfer { background: #FAEEDA; color: #633806; }
+  .badge-low-transfer { background: #FCEBEB; color: #791F1F; }
+  .badge-evidence-strong { background: #E6F1FB; color: #0C447C; }
+  .badge-evidence-moderate { background: #FAEEDA; color: #633806; }
+  .badge-evidence-limited { background: #F1EFE8; color: #444441; }
+
+  .ref-line { font-size: 12px; color: #888; }
+
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 0; }
+
+  /* ── Metrics grid ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 1rem 0;
+  }
+
+  .metric {
+    background: #f7f5f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .metric-value {
+    font-size: 20px;
+    font-weight: 500;
+    color: #1a1a1a;
+    line-height: 1.2;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  /* ── Section labels ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  /* ── Key insight ── */
+  .insight-box {
+    background: #E1F5EE;
+    border-radius: 8px;
+    padding: 12px 16px;
+    border-left: 3px solid #1D9E75;
+    margin-bottom: 1rem;
+  }
+
+  .insight-box .section-label { color: #0F6E56; }
+
+  .insight-box p {
+    font-size: 14px;
+    color: #085041;
+    line-height: 1.6;
+  }
+
+  /* ── Divider ── */
+  hr {
+    border: none;
+    border-top: 0.5px solid rgba(0,0,0,0.1);
+    margin: 1rem 0;
+  }
+
+  /* ── Bullet lists ── */
+  .bullet-list {
+    padding-left: 16px;
+    margin-bottom: 1rem;
+  }
+
+  .bullet-list li {
+    font-size: 13px;
+    color: #1a1a1a;
+    line-height: 1.65;
+    margin-bottom: 5px;
+  }
+
+  /* ── Co-benefits grid ── */
+  .cobenefit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .cobenefit {
+    background: #f7f5f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .cobenefit-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .cobenefit-text {
+    font-size: 12px;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+
+  /* ── Transferability ── */
+  .transfer-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .transfer-sub {
+    font-size: 12px;
+    color: #666;
+  }
+
+  .transfer-rationale {
+    font-size: 13px;
+    color: #1a1a1a;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  /* ── Context tags ── */
+  .tags { margin-bottom: 1rem; }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 0.5px solid rgba(0,0,0,0.2);
+    color: #555;
+    margin: 2px;
+  }
+
+  /* ── Costs ── */
+  .costs-narrative {
+    font-size: 13px;
+    color: #1a1a1a;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .funder-chip {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 8px;
+    background: #f7f5f0;
+    border-radius: 10px;
+    color: #555;
+    margin: 2px;
+    border: 0.5px solid rgba(0,0,0,0.1);
+  }
+
+  /* ── Prose sections ── */
+  .prose {
+    font-size: 13px;
+    color: #1a1a1a;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Action row ── */
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 0.5px solid rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: #1D9E75;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover { background: #0F6E56; }
+
+  .btn-secondary {
+    background: transparent;
+    color: #1a1a1a;
+    border: 0.5px solid rgba(0,0,0,0.25);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover { background: #f7f5f0; }
+
+  /* ── Footer ref ── */
+  .card-footer {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card-outer">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="header-row">
+      <span class="badge badge-sector">Highways</span>
+      <span class="ref-line">Sheffield City Council · ID_40 · 2014–ongoing</span>
+    </div>
+    <h1>Sheffield Grey to Green</h1>
+    <p class="subtitle">60% grey to green · discharge cut 87% · 75,000 plants · 561% biodiversity uplift</p>
+  </div>
+
+  <!-- ── Key metrics ── -->
+  <div class="metrics-grid">
+    <div class="metric">
+      <div class="metric-value">87%</div>
+      <div class="metric-label">reduction in river discharge (1-in-100-year event)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">£9.9m</div>
+      <div class="metric-label">Phase 1 + 2 investment (Phase 3 ongoing)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">1.5km</div>
+      <div class="metric-label">continuous urban green corridor</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">561%</div>
+      <div class="metric-label">biodiversity uplift (BREEAM assessment, Phase 2)</div>
+    </div>
+  </div>
+
+  <!-- ── Key insight ── -->
+  <div class="insight-box">
+    <div class="section-label">Key insight</div>
+    <p>SuDS reduced river discharge from 69.6 to 9.2 litres/sec in a 1-in-100-year event. Even with a 30% climate change uplift applied, discharge remains below 12.1 litres/sec. The scheme is now the default approach for Sheffield city centre regeneration and has inspired an £80m Severn Trent SuDS project in Mansfield.</p>
+  </div>
+
+  <hr>
+
+  <!-- ── Main applications ── -->
+  <div class="section-label">Main applications</div>
+  <ul class="bullet-list">
+    <li>Urban transport corridors where road runoff contributes to downstream flooding of rail or tram infrastructure</li>
+    <li>Rail and tram lines following river valleys — scheme directly protects Sheffield rail and tram network downstream</li>
+    <li>Local authority highway flood management programmes operating within existing maintenance budgets</li>
+    <li>City centre regeneration projects where climate adaptation can be bundled with place-making investment</li>
+    <li>Any infrastructure where grey surfacing has been identified as a primary contributor to catchment runoff volumes</li>
+  </ul>
+
+  <hr>
+
+  <!-- ── Key takeaways ── -->
+  <div class="section-label">Key takeaways</div>
+  <ul class="bullet-list">
+    <li>Nature-based SuDS can outperform grey flood infrastructure at lower long-term cost — avoided maintenance costs from removing bituminous surfacing are ringfenced for scheme upkeep</li>
+    <li>Phased delivery reduces capital risk — Phase 1 at £3.6m demonstrated viability before the Phase 2 (£6.3m) commitment was made</li>
+    <li>Cross-sector impact is underappreciated — this roads project also protects rail, tram, and 1,275 residential properties downstream</li>
+    <li>University partnership (Sheffield) provided design credibility and community consultation capacity the council lacked internally</li>
+    <li>Specialist horticultural knowledge is essential for long-term success — schemes that focused only on engineering without plant maintenance have failed elsewhere</li>
+  </ul>
+
+  <hr>
+
+  <!-- ── Co-benefits ── -->
+  <div class="section-label">Co-benefits</div>
+  <div class="cobenefit-grid">
+    <div class="cobenefit">
+      <div class="cobenefit-title">Community</div>
+      <div class="cobenefit-text">98% of users want more green spaces; 16% divert daily journeys to include the corridor; up to 20,000 pedestrian users per day; now included in local school curriculums</div>
+    </div>
+    <div class="cobenefit">
+      <div class="cobenefit-title">Environmental</div>
+      <div class="cobenefit-text">Urban heat island reduced from 55°C to 20°C (observed via shading and evaporative cooling); microplastics, heavy metals and oil captured before entering River Don</div>
+    </div>
+    <div class="cobenefit">
+      <div class="cobenefit-title">Economic</div>
+      <div class="cobenefit-text">£1m new investment in Castlegate area; 540 jobs created; previously vacant listed buildings and offices now occupied by businesses</div>
+    </div>
+    <div class="cobenefit">
+      <div class="cobenefit-title">Carbon</div>
+      <div class="cobenefit-text">230 tonnes CO₂ sequestered by trees and planting; active travel promoted through integrated foot and cycle paths throughout the corridor</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── Transferability ── -->
+  <div class="section-label">Transferability</div>
+  <div class="transfer-row">
+    <span class="badge badge-high-transfer">High UK transferability</span>
+    <span class="transfer-sub">Strong evidence · direct UK application</span>
+  </div>
+  <p class="transfer-rationale">Largest retrofit grey-to-green project in the UK — directly applicable nationwide. Explicitly relevant to infrastructure following river valleys. Cross-sector impact proven: a roads project protecting rail and tram infrastructure downstream.</p>
+  <div class="tags">
+    <span class="tag">UK city centre transport corridors</span>
+    <span class="tag">Rail lines following river valleys</span>
+    <span class="tag">Urban tram networks</span>
+    <span class="tag">Local authority highway flood management</span>
+  </div>
+
+  <hr>
+
+  <!-- ── Costs & funding ── -->
+  <div class="section-label">Costs & funding</div>
+  <p class="costs-narrative">Phase 1: £3.6m (2016) · Phase 2: £6.3m (2020) · Phase 3: ongoing, final costs TBC. Investment band: £1m–£10m per phase. Low ongoing maintenance — avoided costs from grey infrastructure removal are ringfenced for future upkeep. Not dependent on additional climate adaptation funding — EU funding was for economic development.</p>
+  <div style="margin-bottom: 1rem;">
+    <span class="funder-chip">South Yorkshire MCA</span>
+    <span class="funder-chip">EU Regional Development Fund</span>
+    <span class="funder-chip">Sheffield City Council</span>
+    <span class="funder-chip">Canal & Rivers Trust (Ph.1)</span>
+    <span class="funder-chip">Yorkshire Water (Ph.2)</span>
+  </div>
+
+  <hr>
+
+  <!-- ── Implementation notes ── -->
+  <div class="section-label">Implementation notes</div>
+  <p class="prose">Specialist horticultural skills required for plant selection and long-term maintenance — not standard council highway capacity. Only half the highway was re-profiled due to service depth constraints. Initial business resistance to a 'wild landscape' aesthetic required active stakeholder engagement before buy-in was achieved. Native British flora is not always appropriate in urban soil substrates — specialist ecological assessment needed.</p>
+
+  <!-- ── Challenges ── -->
+  <div class="section-label">Implementation challenges</div>
+  <ul class="bullet-list">
+    <li>Salt runoff from de-icing activities affects plant health — ongoing soil and plant monitoring required</li>
+    <li>Biodiversity net gain requirements can conflict with optimal plant species choices in urban engineered substrates</li>
+    <li>Local authority procurement and maintenance capability is a barrier to wider replication without knowledge transfer</li>
+  </ul>
+
+  <!-- ── Lessons learned ── -->
+  <div class="section-label">Lessons learned</div>
+  <ul class="bullet-list">
+    <li>Multiple smaller green spaces distributed across an urban area can match the flood mitigation impact of one large centralised scheme</li>
+    <li>Quality of planting design and ongoing maintenance is as important as the engineering works — schemes focused only on infrastructure have failed when plants were neglected</li>
+    <li>Academic partnership provided design credibility, feasibility capacity, and community consultation support that the council could not resource internally</li>
+  </ul>
+
+  <!-- ── Innovation opportunity ── -->
+  <div class="section-label">Innovation opportunity</div>
+  <p class="prose">Automated stormwater planters connected to weather forecast data — pre-emptively drain storage before storm events, then refill during heavy rainfall. Trialled in a similar project in Hull. Would remove the need for manual operation during storm events.</p>
+
+  <!-- ── Action row ── -->
+  <div class="action-row">
+    <button class="btn-primary">+ Add to AI brief</button>
+    <button class="btn-secondary">View original PDF</button>
+    <button class="btn-secondary">Ask about this case</button>
+  </div>
+
+  <p class="card-footer">Ref: ID_40 · Sheffield Grey to Green · Curated &amp; verified by HIVE · Evidence quality: strong · Generated from document_chunks</p>
+
+</div>
+
+<!--
+  ═══════════════════════════════════════════════════════════════
+  CURSOR REFERENCE NOTES
+  ═══════════════════════════════════════════════════════════════
+
+  DATA SOURCE
+  All content in this card comes from hive.document_chunks
+  for article where trib_article_id = 'ID_40'.
+  Chunks are stored by section_key:
+    challenge, adaptation_measures, applicability,
+    financials, resourcing, co_benefits, evaluation,
+    challenges, lessons_learned, innovation_opportunities
+
+  GENERATION
+  This card is generated once by /api/handbook/cards/generate
+  and stored in hive.article_cards.
+  Re-generated only when content_hash changes (chunks updated).
+
+  FIELD MAPPING FROM article_cards TABLE
+  .header h1              → project_title (from hive.articles)
+  .subtitle               → computed from key stats in chunks
+  .metrics-grid           → extracted from evaluation chunk
+  .insight-box p          → key_insight field
+  .main-applications      → main_applications jsonb array
+  .key-takeaways          → key_takeaways jsonb array
+  .cobenefit-grid         → co_benefits_summary jsonb object
+  .badge-high-transfer    → uk_transferability field
+  .transfer-rationale     → transferability_rationale field
+  .tags                   → transferability_contexts jsonb array
+  .costs-narrative        → investment_detail field
+  .funder-chip items      → funding_sources jsonb array
+  .implementation-notes   → implementation_notes field
+  .challenges             → from challenges chunk directly
+  .lessons-learned        → from lessons_learned chunk directly
+  .innovation-opportunity → from innovation_opportunities chunk
+
+  COLOUR CODING
+  High transferability badge: #E1F5EE / #085041
+  Medium transferability:     #FAEEDA / #633806
+  Low transferability:        #FCEBEB / #791F1F
+  Key insight box:            #E1F5EE with #1D9E75 left border
+  Add to brief button:        #1D9E75 (HIVE brand green)
+
+  DO NOT CHANGE
+  - The section order
+  - The metrics grid (2x2)
+  - The co-benefits grid (2x2)
+  - The action row button labels
+  - The footer format
+  ═══════════════════════════════════════════════════════════════
+-->
+
+</body>
+</html>

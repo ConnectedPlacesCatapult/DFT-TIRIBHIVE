@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useChatContext } from "./ChatContext";
@@ -14,8 +15,39 @@ const NAV_LINKS = [
 
 export function HandbookNav() {
   const pathname = usePathname();
-  const { chatOpen, openChat, closeChat, messages, briefIds, themeKey, setThemeKey } =
-    useChatContext();
+  const {
+    chatOpen,
+    openChat,
+    closeChat,
+    messages,
+    briefIds,
+    themeKey,
+    setThemeKey,
+    viewMode,
+    setViewMode,
+    marqueeView,
+    setMarqueeView,
+    demoCaseCount,
+    demoMeasureCount,
+    backgroundEffect,
+    setBackgroundEffect,
+    heroTextTreatment,
+    setHeroTextTreatment,
+    heroTextTreatmentExtent,
+    setHeroTextTreatmentExtent,
+  } = useChatContext();
+
+  const [demoOpen, setDemoOpen] = useState(false);
+  const demoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!demoOpen) return;
+    const close = (e: MouseEvent) => {
+      if (demoRef.current && !demoRef.current.contains(e.target as Node)) setDemoOpen(false);
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [demoOpen]);
 
   const T = THEMES[themeKey];
   const hasMessages = messages.length > 1;
@@ -115,6 +147,18 @@ export function HandbookNav() {
               </span>
             </Link>
 
+            <span
+              className="hive-show-sm"
+              style={{
+                fontSize: 12,
+                color: T.textSecondary,
+                fontFamily: "var(--font-dm-sans), Arial, sans-serif",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Transport Climate Adaptation Intelligence
+            </span>
+
             <div
               style={{ display: "flex", alignItems: "center", gap: 4 }}
               role="list"
@@ -166,44 +210,240 @@ export function HandbookNav() {
             </div>
           </div>
 
-          {/* Right: theme switcher + chat trigger */}
+          {/* Right: Demo options menu, DfT Partner, Ask HIVE */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Theme picker */}
-            <div
-              aria-label="Theme"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                borderRadius: 20,
-                padding: 2,
-                border: `1px solid ${T.border}`,
-                background: T.surfaceAlt,
-              }}
-            >
-              {(Object.keys(THEMES) as ThemeKey[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setThemeKey(key)}
-                  aria-label={`${THEMES[key].label} theme`}
-                  aria-pressed={themeKey === key}
+            <div ref={demoRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setDemoOpen((o) => !o)}
+                aria-expanded={demoOpen}
+                aria-haspopup="true"
+                aria-label="Demo options"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  border: `1px solid ${T.border}`,
+                  background: T.surfaceAlt,
+                  color: T.textSecondary,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                Demo options
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ transform: demoOpen ? "rotate(180deg)" : "none" }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {demoOpen && (
+                <div
+                  role="menu"
+                  aria-label="Demo options"
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: "3px 9px",
-                    borderRadius: 20,
-                    border: "none",
-                    cursor: "pointer",
-                    background:
-                      themeKey === key ? T.accent : "transparent",
-                    color: themeKey === key ? "#fff" : T.textSecondary,
-                    transition: "all 0.15s",
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: 4,
+                    minWidth: 280,
+                    maxHeight: "min(70vh, 420px)",
+                    overflowY: "auto",
+                    padding: 12,
+                    borderRadius: 12,
+                    border: `1px solid ${T.border}`,
+                    background: T.surface,
+                    boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
+                    zIndex: 50,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 16,
                   }}
                 >
-                  {THEMES[key].label}
-                </button>
-              ))}
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Themes</div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {(Object.keys(THEMES) as ThemeKey[]).map((key) => (
+                        <button
+                          key={key}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={themeKey === key}
+                          onClick={() => setThemeKey(key)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            background: themeKey === key ? T.accent : T.surfaceAlt,
+                            color: themeKey === key ? "#fff" : T.textSecondary,
+                          }}
+                        >
+                          {THEMES[key].label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>View</div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {[
+                        { id: "cases" as const, label: `Cases (${demoCaseCount})` },
+                        { id: "measures" as const, label: `Measures (${demoMeasureCount})` },
+                      ].map((v) => (
+                        <button
+                          key={v.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={viewMode === v.id}
+                          onClick={() => setViewMode(v.id)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            background: viewMode === v.id ? T.accent : T.surfaceAlt,
+                            color: viewMode === v.id ? "#fff" : T.textSecondary,
+                          }}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Animation</div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {[
+                        { id: "marquee" as const, label: "Marquee" },
+                        { id: "velocity" as const, label: "Scroll velocity" },
+                      ].map((v) => (
+                        <button
+                          key={v.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={marqueeView === v.id}
+                          onClick={() => setMarqueeView(v.id)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            background: marqueeView === v.id ? T.accent : T.surfaceAlt,
+                            color: marqueeView === v.id ? "#fff" : T.textSecondary,
+                          }}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Background (demo)</div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {[
+                        { id: "none" as const, label: "None" },
+                        { id: "particles" as const, label: "Particles" },
+                        { id: "aurora" as const, label: "Aurora" },
+                        { id: "hero" as const, label: "Hero" },
+                      ].map((v) => (
+                        <button
+                          key={v.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={backgroundEffect === v.id}
+                          onClick={() => setBackgroundEffect(v.id)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            background: backgroundEffect === v.id ? T.accent : T.surfaceAlt,
+                            color: backgroundEffect === v.id ? "#fff" : T.textSecondary,
+                          }}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {backgroundEffect === "hero" && (
+                    <>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Hero text</div>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                          {[
+                            { id: "gradient" as const, label: "Gradient" },
+                            { id: "scrim" as const, label: "Scrim" },
+                            { id: "backplate" as const, label: "Backplate" },
+                          ].map((v) => (
+                            <button
+                              key={v.id}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={heroTextTreatment === v.id}
+                              onClick={() => setHeroTextTreatment(v.id)}
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                padding: "4px 10px",
+                                borderRadius: 6,
+                                border: "none",
+                                cursor: "pointer",
+                                background: heroTextTreatment === v.id ? T.accent : T.surfaceAlt,
+                                color: heroTextTreatment === v.id ? "#fff" : T.textSecondary,
+                              }}
+                            >
+                              {v.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Extent</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <input
+                            type="range"
+                            min={8}
+                            max={120}
+                            value={heroTextTreatmentExtent}
+                            onChange={(e) => setHeroTextTreatmentExtent(Number(e.target.value))}
+                            style={{ width: 100, accentColor: T.accent }}
+                          />
+                          <span style={{ fontSize: 11, color: T.textSecondary, minWidth: 28 }}>{heroTextTreatmentExtent}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+            <button
+              className="hive-show-md"
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#fff",
+                padding: "5px 14px",
+                borderRadius: 20,
+                border: "none",
+                cursor: "pointer",
+                background: T.accent,
+                transition: "background 0.15s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              DfT Partner
+            </button>
 
             <ChatTrigger
               onClick={handleChatToggle}

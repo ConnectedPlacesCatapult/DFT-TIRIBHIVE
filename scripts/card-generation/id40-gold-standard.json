@@ -1,0 +1,65 @@
+{
+  "project_title": "Sheffield Grey to Green",
+  "organisation": "Sheffield City Council",
+  "trib_article_id": "ID_40",
+  "transport_sector": "Highways",
+  "year_range": "2014\u2013ongoing",
+  "subtitle_stats": "60% grey to green \u00b7 discharge cut 87% \u00b7 75,000 plants \u00b7 561% biodiversity uplift",
+  "key_metrics": [
+    { "value": "87%", "label": "reduction in river discharge (1-in-100-year event)" },
+    { "value": "\u00a39.9m", "label": "Phase 1 + 2 investment (Phase 3 ongoing)" },
+    { "value": "1.5km", "label": "continuous urban green corridor" },
+    { "value": "561%", "label": "biodiversity uplift (BREEAM assessment, Phase 2)" }
+  ],
+  "key_insight": "SuDS reduced river discharge from 69.6 to 9.2 litres/sec in a 1-in-100-year event. Even with a 30% climate change uplift applied, discharge remains below 12.1 litres/sec. The scheme is now the default approach for Sheffield city centre regeneration and has inspired an \u00a380m Severn Trent SuDS project in Mansfield.",
+  "main_applications": [
+    "Urban transport corridors where road runoff contributes to downstream flooding of rail or tram infrastructure",
+    "Rail and tram lines following river valleys \u2014 scheme directly protects Sheffield rail and tram network downstream",
+    "Local authority highway flood management programmes operating within existing maintenance budgets",
+    "City centre regeneration projects where climate adaptation can be bundled with place-making investment",
+    "Any infrastructure where grey surfacing has been identified as a primary contributor to catchment runoff volumes"
+  ],
+  "key_takeaways": [
+    "Nature-based SuDS can outperform grey flood infrastructure at lower long-term cost \u2014 avoided maintenance costs from removing bituminous surfacing are ringfenced for scheme upkeep",
+    "Phased delivery reduces capital risk \u2014 Phase 1 at \u00a33.6m demonstrated viability before the Phase 2 (\u00a36.3m) commitment was made",
+    "Cross-sector impact is underappreciated \u2014 this roads project also protects rail, tram, and 1,275 residential properties downstream",
+    "University partnership (Sheffield) provided design credibility and community consultation capacity the council lacked internally",
+    "Specialist horticultural knowledge is essential for long-term success \u2014 schemes that focused only on engineering without plant maintenance have failed elsewhere"
+  ],
+  "co_benefits_summary": {
+    "community": "98% of users want more green spaces; 16% divert daily journeys to include the corridor; up to 20,000 pedestrian users per day; now included in local school curriculums",
+    "environmental": "Urban heat island reduced from 55\u00b0C to 20\u00b0C (observed via shading and evaporative cooling); microplastics, heavy metals and oil captured before entering River Don",
+    "economic": "\u00a31m new investment in Castlegate area; 540 jobs created; previously vacant listed buildings and offices now occupied by businesses",
+    "carbon": "230 tonnes CO\u2082 sequestered by trees and planting; active travel promoted through integrated foot and cycle paths throughout the corridor"
+  },
+  "uk_transferability": "high",
+  "evidence_quality": "strong",
+  "transferability_rationale": "Largest retrofit grey-to-green project in the UK \u2014 directly applicable nationwide. Explicitly relevant to infrastructure following river valleys. Cross-sector impact proven: a roads project protecting rail and tram infrastructure downstream.",
+  "transferability_contexts": [
+    "UK city centre transport corridors",
+    "Rail lines following river valleys",
+    "Urban tram networks",
+    "Local authority highway flood management"
+  ],
+  "investment_detail": "Phase 1: \u00a33.6m (2016) \u00b7 Phase 2: \u00a36.3m (2020) \u00b7 Phase 3: ongoing, final costs TBC. Investment band: \u00a31m\u2013\u00a310m per phase. Low ongoing maintenance \u2014 avoided costs from grey infrastructure removal are ringfenced for future upkeep. Not dependent on additional climate adaptation funding \u2014 EU funding was for economic development.",
+  "investment_band": "\u00a31m\u2013\u00a310m per phase",
+  "funding_sources": [
+    "South Yorkshire MCA",
+    "EU Regional Development Fund",
+    "Sheffield City Council",
+    "Canal & Rivers Trust (Ph.1)",
+    "Yorkshire Water (Ph.2)"
+  ],
+  "implementation_notes": "Specialist horticultural skills required for plant selection and long-term maintenance \u2014 not standard council highway capacity. Only half the highway was re-profiled due to service depth constraints. Initial business resistance to a \u2018wild landscape\u2019 aesthetic required active stakeholder engagement before buy-in was achieved. Native British flora is not always appropriate in urban soil substrates \u2014 specialist ecological assessment needed.",
+  "challenges": [
+    "Salt runoff from de-icing activities affects plant health \u2014 ongoing soil and plant monitoring required",
+    "Biodiversity net gain requirements can conflict with optimal plant species choices in urban engineered substrates",
+    "Local authority procurement and maintenance capability is a barrier to wider replication without knowledge transfer"
+  ],
+  "lessons_learned": [
+    "Multiple smaller green spaces distributed across an urban area can match the flood mitigation impact of one large centralised scheme",
+    "Quality of planting design and ongoing maintenance is as important as the engineering works \u2014 schemes focused only on infrastructure have failed when plants were neglected",
+    "Academic partnership provided design credibility, feasibility capacity, and community consultation support that the council could not resource internally"
+  ],
+  "innovation_opportunity": "Automated stormwater planters connected to weather forecast data \u2014 pre-emptively drain storage before storm events, then refill during heavy rainfall. Trialled in a similar project in Hull. Would remove the need for manual operation during storm events."
+}

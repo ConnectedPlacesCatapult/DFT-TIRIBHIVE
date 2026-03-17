@@ -1,10 +1,27 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CASE_STUDIES as SEED_CASE_STUDIES } from "@/lib/hive/seed-data";
+import { CASE_STUDIES as SEED_CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
+import { BackgroundEffect } from "@/components/handbook/BackgroundEffect";
+import { HeroImageCycle } from "@/components/handbook/HeroImageCycle";
+import { CaseStudyDetail as CaseStudyDetailShared } from "@/components/hive/CaseStudyDetail";
+
+/** Stable wrapper so hero content doesn’t remount on every keystroke (avoids flicker). */
+function HeroBackplateWrapper({
+  wrap,
+  backplateStyle,
+  children,
+}: {
+  wrap: boolean;
+  backplateStyle: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  if (wrap) return <div style={backplateStyle}>{children}</div>;
+  return <>{children}</>;
+}
 
 const TRIB_MEASURES: Array<{
   trib_article_id: string;
@@ -344,13 +361,13 @@ const Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, hasFi
   return (
     <div style={{ position: "relative", paddingTop: 24, paddingBottom: 24, overflow: "visible" }}>
       <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px", marginBottom: "4px" }} onMouseEnter={() => { if (trackARef.current) trackARef.current.style.animationPlayState = "paused"; }} onMouseLeave={() => { if (trackARef.current) trackARef.current.style.animationPlayState = "running"; }}>
-        <div ref={trackARef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollX 160s linear infinite" }}>
-          {[...rowA, ...rowA].map((c, i) => <MarqueeCard key={`a-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
+        <div ref={trackARef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollXQuarter 160s linear infinite" }}>
+          {[...rowA, ...rowA, ...rowA, ...rowA].map((c, i) => <MarqueeCard key={`a-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
         </div>
       </div>
       <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }} onMouseEnter={() => { if (trackBRef.current) trackBRef.current.style.animationPlayState = "paused"; }} onMouseLeave={() => { if (trackBRef.current) trackBRef.current.style.animationPlayState = "running"; }}>
-        <div ref={trackBRef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollX 185s linear infinite reverse" }}>
-          {[...rowB, ...rowB].map((c, i) => <MarqueeCard key={`b-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
+        <div ref={trackBRef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollXQuarter 185s linear infinite reverse" }}>
+          {[...rowB, ...rowB, ...rowB, ...rowB].map((c, i) => <MarqueeCard key={`b-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
         </div>
       </div>
     </div>
@@ -383,21 +400,22 @@ const VelocityRow = ({ cases, onCardClick, isHighlighted, isDimmed, direction = 
 
   useEffect(() => {
     let rafId;
-    const SPEED = 0.9; // px per frame at 60fps ≈ 54px/s — gentle, same feel as slow marquee
+    const MARQUEE_LOOP_SECONDS = 160; // match Marquee2D row A duration for same perceived speed
     const loop = () => {
       if (!trackRef.current) { rafId = requestAnimationFrame(loop); return; }
-      const trackW = trackRef.current.scrollWidth / 2;
+      const trackW = trackRef.current.scrollWidth / 4;
       if (trackW <= 0) { rafId = requestAnimationFrame(loop); return; }
 
-      // Effective direction = row base direction × last scroll direction
+      // Speed so one full loop (one copy = trackW px) takes MARQUEE_LOOP_SECONDS — 60fps → px per frame = trackW / (160 * 60)
+      const speedPxPerFrame = trackW / (MARQUEE_LOOP_SECONDS * 60);
       const effectiveDir = direction * lastScrollDirRef.current;
-      xRef.current -= SPEED * effectiveDir;
+      xRef.current -= speedPxPerFrame * effectiveDir;
 
-      // Clamp to [-trackW, 0] regardless of which direction we're going
-      if (xRef.current < -trackW) xRef.current += trackW;
-      if (xRef.current > 0) xRef.current -= trackW;
+      // Keep position in [-trackW, 0] so the loop is seamless (no frame ever shows past the duplicate)
+      while (xRef.current < -trackW) xRef.current += trackW;
+      while (xRef.current > 0) xRef.current -= trackW;
 
-      trackRef.current.style.transform = `translateX(${xRef.current.toFixed(2)}px)`;
+      trackRef.current.style.transform = `translateX(${xRef.current}px)`;
       rafId = requestAnimationFrame(loop);
     };
     rafId = requestAnimationFrame(loop);
@@ -407,8 +425,8 @@ const VelocityRow = ({ cases, onCardClick, isHighlighted, isDimmed, direction = 
   return (
     <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }}>
       <div ref={trackRef} style={{ display: "flex", gap: 12, width: "max-content", willChange: "transform" }}>
-        {[...cases, ...cases].map((c, i) => (
-          <MarqueeCard key={i} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />
+        {[...cases, ...cases, ...cases, ...cases].map((c, i) => (
+          <MarqueeCard key={`vel-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />
         ))}
       </div>
     </div>
@@ -483,7 +501,33 @@ const FilterPill = ({ label, selected, onClick, color }) => (
   </button>
 );
 
-const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => (
+// Optional article_cards payload (hive.article_cards). When present, card shows "Where this applies" + "Key insight" instead of UK applicability.
+// When articleCard is missing, we derive the same layout from existing cs.ukApplicability and cs.insight so the new design is visible for all rich cases.
+const ARTICLE_CARD_INSIGHT_MAX = 120;
+function getEffectiveCard(cs) {
+  if (cs.articleCard && ((Array.isArray(cs.articleCard.transferability_contexts) && cs.articleCard.transferability_contexts.length > 0) || (cs.articleCard.key_insight && cs.articleCard.key_insight.trim())))
+    return cs.articleCard;
+  const contexts = Array.isArray(cs.ukApplicability) ? cs.ukApplicability : [];
+  const insight = (cs.insight && String(cs.insight).trim()) || "";
+  if (contexts.length > 0 || insight) {
+    return {
+      transferability_contexts: contexts,
+      key_insight: insight,
+      investment_band: cs.costBand,
+      uk_transferability: cs.transferability,
+    };
+  }
+  return null;
+}
+const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => {
+  const card = getEffectiveCard(cs);
+  const transferabilityLevel = card?.uk_transferability ?? cs.transferability;
+  const investmentBand = card?.investment_band ?? cs.costBand;
+  const hasArticleCard = card && (Array.isArray(card.transferability_contexts) && card.transferability_contexts.length > 0 || (card.key_insight && card.key_insight.trim()));
+  const keyInsightText = card?.key_insight?.trim()
+    ? (card.key_insight.length > ARTICLE_CARD_INSIGHT_MAX ? card.key_insight.slice(0, ARTICLE_CARD_INSIGHT_MAX) + "…" : card.key_insight)
+    : "";
+  return (
   <div onClick={() => onClick(cs)}
     className="hive-card"
     style={{
@@ -521,16 +565,37 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => 
       {cs.hazards.effect.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="effect" />)}
     </div>
     <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "var(--accent)", borderRadius: 12, paddingLeft: 12, paddingRight: 12, paddingTop: 8, paddingBottom: 8, marginBottom: 12, opacity: 0.85 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-        <svg style={{ width: 12, height: 12, flexShrink: 0, color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>UK applicability</span>
-      </div>
-      <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.625 }}>{cs.transferabilityNote}</p>
+      {hasArticleCard ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <svg style={{ width: 12, height: 12, flexShrink: 0, color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>Where this applies</span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {(card.transferability_contexts || []).map(ctx => (
+                <span key={ctx} style={{ fontSize: 11, background: "var(--surface)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", color: "var(--accent-text)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{ctx}</span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Key insight</div>
+            <p style={{ fontSize: 12, color: "var(--accent)", lineHeight: 1.5, fontWeight: 500 }}>{keyInsightText}</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <svg style={{ width: 12, height: 12, flexShrink: 0, color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>UK applicability</span>
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.625 }}>{cs.transferabilityNote}</p>
+        </>
+      )}
     </div>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4, borderTop: "1px solid", borderColor: "var(--border)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <TransferabilityBadge level={cs.transferability} />
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs.costBand}</span>
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{investmentBand}</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <button
@@ -556,7 +621,8 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => 
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAddToBrief, inBrief, matchReasons }) => {
   const sectorStyle = SECTOR_STYLES[cs.sector] || DEFAULT_SECTOR_STYLE;
@@ -582,8 +648,7 @@ const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAdd
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
         {cs.hazards.cause.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="cause" />)}
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4, borderTop: "1px solid", borderColor: "var(--border)" }}>
-        <TransferabilityBadge level={cs.transferability} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingTop: 4, borderTop: "1px solid", borderColor: "var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={e => { e.stopPropagation(); onAddToBrief(cs); }}
@@ -602,83 +667,7 @@ const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAdd
   );
 };
 
-const CaseStudyDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
-  <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-    <div className="hive-modal" style={{ borderRadius: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxWidth: 672, width: "100%", maxHeight: "88vh", overflowY: "auto", fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
-      <div className="hive-modal" style={{ position: "sticky", top: 0, backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", paddingLeft: 24, paddingRight: 24, paddingTop: 16, paddingBottom: 16, display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
-        <div style={{ flex: 1, paddingRight: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>{cs.sector}</span>
-            <span style={{ color: "var(--text-muted)" }}>·</span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs.location}</span>
-          </div>
-          <h2 style={{ fontSize: 20, fontWeight: 400, color: "var(--text-primary)", lineHeight: 1.25, fontFamily: "'DM Serif Display', serif" }}>{cs.title}</h2>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--accent)", marginTop: 4 }}>{cs.hook}</p>
-        </div>
-        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s, color 0.2s", flexShrink: 0, marginTop: 4 }}>
-          <svg style={{ width: 16, height: 16, color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-      </div>
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", borderRadius: 16, padding: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <svg style={{ width: 16, height: 16, color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>Key insight</span>
-          </div>
-          <p style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.625, fontWeight: 500 }}>{cs.insight}</p>
-        </div>
-        <div style={{ background: "var(--surface-alt)", borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625 }}>{cs.summary}</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Climate drivers</h4>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{cs.hazards.cause.map(h => <HazardBadge key={h} hazard={h} type="cause" />)}</div>
-          </div>
-          <div>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Impacts</h4>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{cs.hazards.effect.map(h => <HazardBadge key={h} hazard={h} type="effect" />)}</div>
-          </div>
-        </div>
-        <div>
-          <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Adaptation measures</h4>
-          <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>{cs.measures.map(m => <li key={m} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--text-secondary)" }}><span style={{ width: 6, height: 6, borderRadius: 9999, background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />{m}</li>)}</ul>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 12, border: "1px solid var(--border)" }}>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Investment</h4>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{cs.cost}</p>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>Band: {cs.costBand}</p>
-          </div>
-          <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 12, border: "1px solid var(--border)" }}>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Delivery period</h4>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{cs.year}</p>
-          </div>
-        </div>
-        <div style={{ border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", borderRadius: 12, padding: 16, background: "color-mix(in srgb, var(--accent-bg) 50%, transparent)" }}>
-          <div style={{ marginBottom: 8 }}><TransferabilityBadge level={cs.transferability} /></div>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12 }}>{cs.transferabilityNote}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{cs.ukApplicability.map(a => <span key={a} style={{ fontSize: 12, background: "var(--surface)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", color: "var(--accent-text)", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{a}</span>)}</div>
-        </div>
-        <p style={{ fontSize: 12, color: "var(--text-muted)", paddingTop: 4, borderTop: "1px solid var(--border)" }}>Ref: {cs.id} · {cs.organisation} · Curated & verified by HIVE</p>
-        <button
-          onClick={() => { onAddToBrief(cs); onClose(); }}
-          style={{
-            width: "100%",
-            paddingTop: 12,
-            paddingBottom: 12,
-            borderRadius: 16,
-            fontSize: 14,
-            fontWeight: 600,
-            transition: "all 0.2s",
-            ...(inBrief ? { background: "var(--surface-alt)", color: "var(--text-muted)", border: "1px solid var(--border)" } : { background: "var(--accent)", color: "#fff", border: "none" }),
-          }}>
-          {inBrief ? "✓ Already in your AI brief" : "＋ Add to AI brief"}
-        </button>
-      </div>
-    </div>
-  </div>
-);
+const CaseStudyDetail = CaseStudyDetailShared;
 
 const SynthesisPanel = ({ synthesis, themeKey = "light", resultIds = [] }: { synthesis: { count: number; sectors: string[]; highTransferCount: number; insightSentence: string; allCause: string[]; commonMeasures: string[] }; themeKey?: string; resultIds?: string[] }) => (
   <div style={{ borderRadius: 16, border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", background: "linear-gradient(to bottom right, var(--accent-bg), color-mix(in srgb, #99f6e4 40%, transparent))", padding: 20, marginBottom: 20, fontFamily: "'DM Sans', sans-serif" }}>
@@ -743,6 +732,7 @@ const HEATMAP_MAX = 7;
 
 const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogglePosition, themeKey = "light", onCellClick }: { activeSectors?: string[]; activeHazards?: string[]; position: string; onTogglePosition: (pos: string) => void; themeKey?: string; onCellClick?: (sector: string, hazardId: string) => void }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [expanded, setExpanded] = useState(false);
 
   // normalise active context to heatmap IDs
   const matchedSectors = HEATMAP_SECTORS.filter(s =>
@@ -772,44 +762,65 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
 
   return (
     <div style={{ borderRadius: 12, border: "1px solid", borderColor: "var(--border)", background: "var(--surface)", marginBottom: 20, overflow: "hidden" }}>
-      {/* header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, borderBottom: "1px solid var(--border)" }}>
+      {/* header — always visible; collapsed: show toggle only; expanded: show position + link + hide */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, borderBottom: expanded ? "1px solid var(--border)" : "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 4, height: 16, borderRadius: 2, flexShrink: 0, background: "#006853" }} />
           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>Adaptation options coverage</span>
-          <span className="show-from-sm-inline" style={{ fontSize: 12, color: "var(--text-muted)" }}>— click any cell to explore options for that combination</span>
+          {expanded && (
+            <span className="show-from-sm-inline" style={{ fontSize: 12, color: "var(--text-muted)" }}>— click any cell to explore options for that combination</span>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* position toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 8, padding: 2, border: "1px solid var(--border)", background: "var(--bg)" }}>
-            {["above", "below"].map(pos => (
-              <button key={pos} onClick={() => onTogglePosition(pos)}
-                style={{
-                  fontSize: 12,
-                  paddingLeft: 10,
-                  paddingRight: 10,
-                  paddingTop: 4,
-                  paddingBottom: 4,
-                  borderRadius: 6,
-                  transition: "all 0.2s",
-                  fontWeight: 500,
-                  textTransform: "capitalize",
-                  background: position === pos ? "var(--accent)" : "transparent",
-                  color: position === pos ? "#fff" : "var(--text-muted)",
-                }}>
-                {pos}
+          {expanded ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 8, padding: 2, border: "1px solid var(--border)", background: "var(--bg)" }}>
+                {["above", "below"].map(pos => (
+                  <button key={pos} onClick={() => onTogglePosition(pos)}
+                    style={{
+                      fontSize: 12,
+                      paddingLeft: 10,
+                      paddingRight: 10,
+                      paddingTop: 4,
+                      paddingBottom: 4,
+                      borderRadius: 6,
+                      transition: "all 0.2s",
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                      background: position === pos ? "var(--accent)" : "transparent",
+                      color: position === pos ? "#fff" : "var(--text-muted)",
+                    }}>
+                    {pos}
+                  </button>
+                ))}
+              </div>
+              <Link
+                href={`/handbook/options?theme=${themeKey}`}
+                style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                Browse all options →
+              </Link>
+              <button
+                onClick={() => setExpanded(false)}
+                style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}
+              >
+                Hide
+                <svg style={{ width: 12, height: 12, transform: "rotate(180deg)", transition: "transform 0.2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
-            ))}
-          </div>
-          <Link
-            href={`/handbook/options?theme=${themeKey}`}
-            style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-            Browse all options →
-          </Link>
+            </>
+          ) : (
+            <button
+              onClick={() => setExpanded(true)}
+              style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}
+            >
+              Show options coverage
+              <svg style={{ width: 12, height: 12, transition: "transform 0.2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* grid */}
+      {/* grid — only when expanded */}
+      {expanded && (
       <div style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, overflowX: "auto" }}>
         <table style={{ borderCollapse: 'separate', borderSpacing: '3px', width: '100%', minWidth: 460 }}>
           <thead>
@@ -906,6 +917,7 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };
@@ -924,13 +936,21 @@ function HandbookLandingPageContent() {
   const [synthesis, setSynthesis] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeMatchReasons, setActiveMatchReasons] = useState({});
-  const [themeKey, setThemeKey] = useState("light");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const SEARCH_PLACEHOLDERS = [
+    "flooding on a rail corridor",
+    "heatwave on road bridges",
+    "coastal port storm surge",
+    "slope instability near a motorway",
+  ];
+  // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
+  const { themeKey, setThemeKey, setSessionIntent, openChat, setChatContext, setMessages, setRetrievalMode, setThinking, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent } = useChatContext();
   const T = THEMES[themeKey];
 
   // Semantic search state (scenarios A/B/C)
   const [semanticPrompt, setSemanticPrompt] = useState(null);
   const [semanticScenario, setSemanticScenario] = useState(null);
-  const { setSessionIntent, openChat, setChatContext, setMessages, setRetrievalMode } = useChatContext();
 
   // Detect conversational / non-search queries that should route to the AI chat
   const CONVERSATIONAL_RE = /^(h(i|ello|ey)|how are you|how do(es)? (you|this|hive|it) work|what (can|do) you do|help me|what is hive|tell me about|who are you|good (morning|afternoon|evening)|thanks|thank you|help$)/i;
@@ -946,6 +966,7 @@ function HandbookLandingPageContent() {
     openChat("browse");
     const userMsg = { role: "user" as const, text: q };
     setMessages([userMsg]);
+    setThinking(true);
     try {
       const res = await fetch("/api/handbook/chat", {
         method: "POST",
@@ -975,6 +996,7 @@ function HandbookLandingPageContent() {
     } catch {
       setMessages([userMsg, { role: "ai" as const, text: "Something went wrong. Please try again." }]);
     } finally {
+      setThinking(false);
       chatRoutingRef.current = false;
     }
   }
@@ -991,11 +1013,11 @@ function HandbookLandingPageContent() {
     semanticTimerRef.current = setTimeout(async () => {
       const trimmed = query.trim();
 
-      // Conversational queries bypass semantic search and go straight to chat AI
+      // No auto-send to chat on debounce: only show "Ask HIVE →" when we have results (scenario B).
+      // Chat is sent only on Enter or when user clicks "Ask HIVE →".
       if (isConversationalQuery(trimmed)) {
         setSemanticPrompt(null);
         setSemanticScenario(null);
-        await routeQueryToChat(trimmed);
         return;
       }
 
@@ -1009,9 +1031,6 @@ function HandbookLandingPageContent() {
         if (data.scenario === "B" && data.results?.length > 0) {
           const topIds = data.results.slice(0, 3).map(r => r.article_id);
           setSemanticPrompt(`Found ${topIds.length} relevant cases — want me to explain how they apply? [Ask HIVE →]`);
-        } else if (data.scenario === "C") {
-          setSemanticPrompt(null);
-          await routeQueryToChat(trimmed);
         } else {
           setSemanticPrompt(null);
         }
@@ -1030,8 +1049,11 @@ function HandbookLandingPageContent() {
     }, 400);
     return () => { if (intentTimerRef.current) clearTimeout(intentTimerRef.current); };
   }, [query, setSessionIntent]);
-  const [marqueeView, setMarqueeView] = useState("marquee");
-  const [viewMode, setViewMode] = useState<'cases' | 'measures'>('cases');
+
+  useEffect(() => {
+    setDemoCounts({ cases: CASE_STUDIES.length, measures: TOTAL_MEASURE_COUNT });
+  }, [setDemoCounts]);
+
   const [marqueeSelectedId, setMarqueeSelectedId] = useState(null); // caseStudyId or 'PH_SECTOR'
   const [brief, setBrief] = useState([]);
   const [briefOpen, setBriefOpen] = useState(false);
@@ -1078,6 +1100,15 @@ function HandbookLandingPageContent() {
     }, 350);
     return () => clearTimeout(timer);
   }, [query]);
+
+  // Cycle search placeholder every 3s; pause when input focused or user has typed
+  useEffect(() => {
+    if (searchFocused || query) return;
+    const id = setInterval(() => {
+      setPlaceholderIndex((i) => (i + 1) % SEARCH_PLACEHOLDERS.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [searchFocused, query]);
 
   useEffect(() => {
     const r = searchCaseStudies(query, allActiveHazards, allActiveSectors, selectedRegions, selectedCosts);
@@ -1153,12 +1184,14 @@ function HandbookLandingPageContent() {
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes scrollX { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes scrollXQuarter { from { transform: translateX(0); } to { transform: translateX(-25%); } }
         @keyframes scrollY { from { transform: translateY(0); } to { transform: translateY(-50%); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .fade-up { animation: fadeUp 0.4s ease forwards; }
         .fade-in { animation: fadeIn 0.25s ease forwards; }
         .card-enter { animation: fadeUp 0.3s ease forwards; }
+        .placeholder-fade { animation: fadeIn 0.4s ease forwards; }
 
         .hive-root {
           --bg: ${T.bg};
@@ -1265,13 +1298,33 @@ function HandbookLandingPageContent() {
 
       <div className="hive-root" style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
 
-        {/* Hero */}
-        <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingTop: 56, paddingBottom: 24 }}>
+        {/* Hero — wrapper is relative; background from Demo options: None / Particles / Aurora / Hero (cycling images) */}
+        <div style={{ position: "relative" }}>
+          {backgroundEffect === "hero" && <HeroImageCycle />}
+          <BackgroundEffect />
+          <div style={{ position: "relative", zIndex: 1, maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingTop: 56, paddingBottom: 24 }}>
+          {backgroundEffect === "hero" && heroTextTreatment === "scrim" && (
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "60%",
+                maxWidth: 520,
+                background: themeKey === "dark" ? "rgba(13,17,23,0.72)" : "rgba(247,245,240,0.78)",
+                backdropFilter: `blur(${heroTextTreatmentExtent}px)`,
+                WebkitBackdropFilter: `blur(${heroTextTreatmentExtent}px)`,
+                pointerEvents: "none",
+              }}
+            />
+          )}
+          <HeroBackplateWrapper
+            wrap={backgroundEffect === "hero" && heroTextTreatment === "backplate"}
+            backplateStyle={{ background: T.bg, borderRadius: heroTextTreatmentExtent, padding: 24, maxWidth: 800 }}
+          >
           <div className="fade-up" style={{ maxWidth: 768 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, marginBottom: 20, letterSpacing: "0.05em", textTransform: "uppercase", background: T.accentBg, color: T.accentText }}>
-              <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: 9999, background: T.accent }} />
-              Prototype · {viewMode === 'measures' ? `${TOTAL_MEASURE_COUNT} measures` : `${CASE_STUDIES.length} case studies`} loaded
-            </div>
             <h1 style={{ fontSize: "2.25rem", fontWeight: 400, lineHeight: 1.25, marginBottom: 12, fontFamily: "'DM Serif Display', serif", color: T.textPrimary }}>
               What risk are you
               <span style={{ fontStyle: "italic", color: T.accent }}> managing?</span>
@@ -1284,27 +1337,48 @@ function HandbookLandingPageContent() {
           {/* Search */}
           <div className="fade-up" style={{ maxWidth: 768, animationDelay: "0.1s" }}>
             <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
+              <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}>
                 <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
-              <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
-                placeholder="e.g. flooding on a rail corridor, heatwave on road bridges, coastal port storm surge..."
+              {!query && (
+                <div aria-hidden="true" style={{ position: "absolute", left: 44, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: "var(--text-muted)", pointerEvents: "none", userSelect: "none" }}>
+                  <span key={placeholderIndex} className="placeholder-fade" style={{ display: "block" }}>{SEARCH_PLACEHOLDERS[placeholderIndex]}</span>
+                </div>
+              )}
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder=""
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && query.trim()) {
+                    e.preventDefault();
+                    routeQueryToChat(query.trim());
+                  }
+                }}
                 className="hive-input"
-                style={{ width: "100%", paddingLeft: 44, paddingRight: 40, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1.5px solid var(--input-border)", transition: "all 0.2s" }} />
+                style={{ width: "100%", paddingLeft: 44, paddingRight: 40, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1.5px solid var(--input-border)", transition: "all 0.2s" }}
+              />
               {query && (
                 <button onClick={() => setQuery("")} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
                   <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
-            {!query && (
-              <p style={{ fontSize: 12, marginTop: 12, fontStyle: "italic", color: "var(--text-muted)" }}>Describe your challenge — location, asset type, climate risk</p>
-            )}
             {semanticPrompt && semanticScenario === "B" && (
               <div style={{ marginTop: 8, padding: "8px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, animation: "fadeUp 0.2s ease" }}>
                 <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{semanticPrompt}</span>
                 <button
-                  onClick={() => { setChatContext("browse"); openChat(); }}
+                  onClick={() => {
+                    if (query.trim()) {
+                      routeQueryToChat(query.trim());
+                    } else {
+                      setChatContext("browse");
+                      openChat();
+                    }
+                  }}
                   style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 6, background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}
                 >
                   Ask HIVE →
@@ -1315,36 +1389,14 @@ function HandbookLandingPageContent() {
 
           {/* Filters */}
           <div className="fade-up" style={{ marginTop: 20, maxWidth: 768, animationDelay: "0.15s", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Search describes your situation. Filters narrow by category. Both work together.</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                <Link
-                  href="/handbook/cases"
-                  style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 6, border: "1px solid", borderColor: "var(--border)", background: "var(--surface)", color: "var(--text-secondary)", transition: "all 0.2s", textDecoration: "none" }}
-                  title="Browse all case studies">
-                  <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                  All cases
-                </Link>
-                <Link
-                  href="/handbook/cases"
-                  style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none" }}
-                  title="Case study library">
-                  Case Studies →
-                </Link>
-                <Link
-                  href={`/handbook/brief?theme=${themeKey}`}
-                  style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 6, border: "1px solid", borderColor: "var(--accent)", background: "var(--surface)", color: "var(--accent)", transition: "all 0.2s", textDecoration: "none" }}
-                  title="Open Brief mode">
-                  <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  Brief mode
-                </Link>
-                <button onClick={() => setFiltersOpen(!filtersOpen)}
-                  style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s", color: "var(--accent)" }}>
-                  {filtersOpen ? "Hide filters" : "Show filters"}
-                  {activeFilterCount > 0 && <span style={{ color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, marginLeft: 4, background: "var(--accent)" }}>{activeFilterCount}</span>}
-                  <svg style={{ width: 12, height: 12, transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                </button>
-              </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Search describes your situation. Filters narrow by category. Both work together.</p>
+              <button onClick={() => setFiltersOpen(!filtersOpen)}
+                style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}>
+                {filtersOpen ? "Hide filters" : "Show filters"}
+                {activeFilterCount > 0 && <span style={{ color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, marginLeft: 4, background: "var(--accent)" }}>{activeFilterCount}</span>}
+                <svg style={{ width: 12, height: 12, transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
             </div>
             {filtersOpen && (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1381,6 +1433,7 @@ function HandbookLandingPageContent() {
               </div>
             )}
           </div>
+          </HeroBackplateWrapper>
 
           {/* AI detected */}
           {(aiDetectedHazards.filter(h => !selectedHazards.includes(h)).length > 0 || aiDetectedSectors.filter(s => !selectedSectors.includes(s)).length > 0) && (
@@ -1406,42 +1459,11 @@ function HandbookLandingPageContent() {
               </div>
             </div>
           )}
+          </div>
         </div>
 
-        {/* ── MARQUEE — always visible, responds to filters in place ── */}
+        {/* ── MARQUEE — always visible; view mode & animation toggles are in nav "Demo options" ── */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)" }}>From the knowledge base</p>
-              <p style={{ fontSize: 14, marginTop: 2, color: "var(--text-secondary)" }}>
-                {marqueeHasFilters
-                  ? `Showing ${marqueeMatchingSectors.length > 0 ? marqueeMatchingSectors.join(", ") : "matching"} ${viewMode === 'measures' ? 'measures' : 'cases'} — click any to view`
-                  : viewMode === 'measures'
-                    ? `${MARQUEE_CASES.length} curated adaptation measures — click any card to explore`
-                    : `${MARQUEE_CASE_STUDIES.length} case studies — click any card to explore`}
-              </p>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {/* Cases / Measures toggle */}
-              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
-                {[{ id: "cases" as const, label: `Cases (${CASE_STUDIES.length})` }, { id: "measures" as const, label: `Measures (${TOTAL_MEASURE_COUNT})` }].map(v => (
-                  <button key={v.id} onClick={() => setViewMode(v.id)}
-                    style={{ fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", background: viewMode === v.id ? "var(--accent)" : "transparent", color: viewMode === v.id ? "#fff" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-              {/* Animation style toggle */}
-              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
-                {[{ id: "marquee", label: "Marquee" }, { id: "velocity", label: "Scroll velocity" }].map(v => (
-                  <button key={v.id} onClick={() => setMarqueeView(v.id)}
-                    style={{ fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", background: marqueeView === v.id ? "var(--text-primary)" : "transparent", color: marqueeView === v.id ? "var(--surface)" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
           {marqueeView === "marquee"
             ? <Marquee2D cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
             : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />

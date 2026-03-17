@@ -160,3 +160,9 @@ a:hover {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Responsive show utilities for nav components */
+.hive-show-sm { display: none; }
+@media (min-width: 640px) { .hive-show-sm { display: inline; } }
+.hive-show-md { display: none; }
+@media (min-width: 768px) { .hive-show-md { display: inline-flex; } }

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { ChatPanel } from "@/components/handbook/shared/ChatPanel";
+import { ChatTrigger } from "@/components/handbook/shared/ChatTrigger";
+import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const T = {
@@ -36,7 +38,7 @@ const SECTION_NAV = [
   { key: "climate_drivers", label: "Climate Drivers" },
   { key: "adaptation_approaches", label: "Adaptation Approaches" },
   { key: "costs_and_resourcing", label: "Costs & Resourcing" },
-  { key: "uk_applicability", label: "UK Applicability" },
+  { key: "uk_applicability", label: "Transfer Intelligence" },
   { key: "key_insight", label: "Key Insight" },
   { key: "sources", label: "Source References" },
 ];
@@ -61,6 +63,8 @@ type BriefCase = {
   id: string; title: string; org: string; sector: string;
   location: string; year: string; cost: string; transfer: string;
   hazards: string[]; hook: string;
+  /** When available: key_insight from hive.article_cards, else case_study_text/summary from articles */
+  tileContent?: string;
 };
 
 type BriefSection = {
@@ -71,17 +75,19 @@ type BriefSection = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function normaliseCaseForBrief(cs: { id: string; title: string; organisation?: string; org?: string; sector?: string; location?: string; year?: string; cost?: string; transferability?: string; transfer?: string; hazards?: { cause?: string[]; effect?: string[] } | string[]; hook?: string }) {
+function normaliseCaseForBrief(cs: { id: string; title: string; organisation?: string; org?: string; sector?: string; location?: string; year?: string; cost?: string; transferability?: string; transfer?: string; hazards?: { cause?: string[]; effect?: string[] } | string[]; hook?: string; articleCard?: { key_insight?: string }; summary?: string; case_study_text?: string }) {
   const cause = cs.hazards && !Array.isArray(cs.hazards) ? (cs.hazards.cause ?? []) : [];
   const effect = cs.hazards && !Array.isArray(cs.hazards) ? (cs.hazards.effect ?? []) : [];
   const hazardList = Array.isArray(cs.hazards) ? cs.hazards : [...cause, ...effect];
+  const hook = cs.hook ?? "";
+  const tileContent = cs.articleCard?.key_insight?.trim() || (cs.case_study_text ?? cs.summary)?.trim() || hook;
   return {
     id: cs.id, title: cs.title,
     org: (cs as { organisation?: string }).organisation ?? (cs as { org?: string }).org ?? "",
     sector: cs.sector ?? "", location: cs.location ?? "", year: cs.year ?? "",
     cost: cs.cost ?? "",
     transfer: (cs as { transferability?: string }).transferability ?? (cs as { transfer?: string }).transfer ?? "Medium",
-    hazards: hazardList, hook: cs.hook ?? "",
+    hazards: hazardList, hook, tileContent: tileContent || undefined,
   };
 }
 
@@ -306,6 +312,19 @@ function briefCacheMatches(cache: { ids: string[] }, ids: string[]): boolean {
   return a.every((id, i) => id === b[i]);
 }
 
+// Default example case IDs when user opens brief with no cases — acts as template + user guide
+const EXAMPLE_BRIEF_IDS = ["ID_40", "ID_32", "ID_19"];
+
+const FOCUS_LENSES: { id: "all" | "Rail" | "Highways" | "Aviation" | "Maritime" | "Costs" | "Policy context"; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "Rail", label: "Rail" },
+  { id: "Highways", label: "Highways" },
+  { id: "Aviation", label: "Aviation" },
+  { id: "Maritime", label: "Maritime" },
+  { id: "Costs", label: "Costs" },
+  { id: "Policy context", label: "Policy context" },
+];
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function HIVEBriefWithChat() {
   const [initialized, setInitialized] = useState(false);
@@ -314,6 +333,7 @@ export default function HIVEBriefWithChat() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiLabel, setAiLabel] = useState<string | null>(null);
+  const [isExampleMode, setIsExampleMode] = useState(false);
   const [activeCase, setActiveCase] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("executive_summary");
   const [editingSectionKey, setEditingSectionKey] = useState<string | null>(null);
@@ -327,9 +347,32 @@ export default function HIVEBriefWithChat() {
     setChatContext: setSharedChatContext,
     setBriefSections: setCtxBriefSections,
     setOnBriefSectionUpdate: setCtxOnBriefSectionUpdate,
+    setPendingBriefMessage,
+    themeKey,
+    messages,
   } = useChatContext();
+  const navT = THEMES[themeKey as ThemeKey] ?? T;
+
+  const [focusLens, setFocusLens] = useState<"all" | "Rail" | "Highways" | "Aviation" | "Maritime" | "Costs" | "Policy context">("all");
 
   const caseIds = briefCases.map(c => c.id);
+
+  const handleFocusLens = useCallback((lens: typeof focusLens) => {
+    const next = focusLens === lens ? "all" : lens;
+    setFocusLens(next);
+    if (next !== "all" && setPendingBriefMessage) {
+      const messages: Record<string, string> = {
+        Rail: "Reframe this brief for a Rail audience — emphasise cases and findings most relevant to Rail infrastructure",
+        Highways: "Reframe this brief for a Highways audience — emphasise cases and findings most relevant to Highways infrastructure",
+        Aviation: "Reframe this brief for an Aviation audience — emphasise cases and findings most relevant to Aviation infrastructure",
+        Maritime: "Reframe this brief for a Maritime audience — emphasise cases and findings most relevant to Maritime infrastructure",
+        Costs: "Reframe the brief to prioritise cost evidence — highlight investment figures, funding sources and value for money across the cases",
+        "Policy context": "Reframe the brief to emphasise policy drivers, regulatory context and strategic alignment for a DfT policy audience",
+      };
+      setPendingBriefMessage(messages[next] ?? "");
+      openChat();
+    }
+  }, [focusLens, setPendingBriefMessage, openChat]);
 
   // ── Generate brief from API ───────────────────────────────────────────────
   const generateBrief = useCallback(async (ids: string[]) => {
@@ -376,6 +419,7 @@ export default function HIVEBriefWithChat() {
         .map(id => CASE_STUDIES.find(c => c.id === id))
         .filter((cs): cs is (typeof CASE_STUDIES)[number] => cs != null);
       setBriefCases(resolved.map(cs => normaliseCaseForBrief(cs)));
+      setIsExampleMode(false);
 
       const cache = getBriefCache();
       if (cache && briefCacheMatches(cache, ids)) {
@@ -383,6 +427,22 @@ export default function HIVEBriefWithChat() {
         setAiLabel(cache.label);
       } else {
         generateBrief(ids);
+      }
+    } else {
+      // No cases: show default example brief as template + user guide (do not write to sessionStorage)
+      const resolved = EXAMPLE_BRIEF_IDS
+        .map(id => CASE_STUDIES.find(c => c.id === id))
+        .filter((cs): cs is (typeof CASE_STUDIES)[number] => cs != null);
+      if (resolved.length > 0) {
+        setBriefCases(resolved.map(cs => normaliseCaseForBrief(cs)));
+        setIsExampleMode(true);
+        const cache = getBriefCache();
+        if (cache && briefCacheMatches(cache, EXAMPLE_BRIEF_IDS)) {
+          setSections(cache.sections);
+          setAiLabel(cache.label);
+        } else {
+          generateBrief(EXAMPLE_BRIEF_IDS);
+        }
       }
     }
     setInitialized(true);
@@ -461,21 +521,13 @@ export default function HIVEBriefWithChat() {
     setBriefCases([]);
     setSections(null);
     setAiLabel(null);
+    setIsExampleMode(false);
     try {
       window.sessionStorage.removeItem(HIVE_BRIEF_CACHE_KEY);
     } catch {
       // ignore
     }
   };
-
-  const breadcrumbTitle = (() => {
-    if (briefCases.length === 0) return "Your brief";
-    const sectors = [...new Set(briefCases.map(c => c.sector).filter(Boolean))];
-    const firstHazard = briefCases[0]?.hazards?.[0] ?? "";
-    if (sectors.length > 0 && firstHazard) return `${sectors[0]} · ${firstHazard} · ${briefCases.length} cases`;
-    if (sectors.length > 0) return `${sectors[0]} · ${briefCases.length} cases`;
-    return `Your brief · ${briefCases.length} cases`;
-  })();
 
   const briefTitle = (() => {
     const hazards = [...new Set(briefCases.flatMap(c => c.hazards))].slice(0, 2);
@@ -616,58 +668,64 @@ export default function HIVEBriefWithChat() {
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif" }}>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" />
       <style>{FONT}</style>
-      <div style={{ height: 5, background: T.green }} />
+      {/* DfT green stripe — match HandbookNav */}
+      {themeKey === "dft" && <div aria-hidden="true" style={{ height: 5, background: "#006853" }} />}
+      {themeKey !== "dft" && <div style={{ height: 5, background: T.green }} />}
 
-      {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 40, background: T.navBg, borderBottom: `1px solid ${T.border}`, backdropFilter: "blur(12px)" }}>
+      {/* Nav — aligned with HandbookNav (Case Studies, Brief mode, Options Library) */}
+      <nav aria-label="HIVE handbook navigation" style={{ position: "sticky", top: 0, zIndex: 40, background: (navT as { navBg?: string }).navBg ?? T.navBg, borderBottom: `1px solid ${(navT as { border?: string }).border ?? T.border}`, backdropFilter: "blur(10px)" }}>
         {loading && <div className="loading-bar" />}
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", transition: "padding-right 0.25s", paddingRight: chatOpen ? "calc(24px + 420px)" : "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <a href={`/handbook?theme=${savedTheme}`} style={{ fontSize: 12, color: T.textSec, textDecoration: "none", fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}>&larr; Handbook</a>
-            <span style={{ color: T.border }}>|</span>
-            <div style={{ width: 24, height: 24, borderRadius: 5, background: T.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064" /></svg>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, transition: "padding-right 0.25s", paddingRight: chatOpen ? "calc(24px + 420px)" : "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+            <Link href="/handbook" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+              <div style={{ width: 24, height: 24, borderRadius: 5, background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064" /></svg>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 700, color: (navT as { textPrimary?: string }).textPrimary ?? T.text }}>HIVE</span>
+            </Link>
+            <span style={{ fontSize: 12, color: (navT as { textSecondary?: string }).textSecondary ?? T.textSec, whiteSpace: "nowrap" }}>Transport Climate Adaptation Intelligence</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }} role="list">
+              <Link href="/handbook/cases" style={{ fontSize: 13, fontWeight: 500, color: T.textSec, textDecoration: "none", padding: "4px 10px", borderRadius: 5, borderBottom: "2px solid transparent" }}>Case Studies</Link>
+              <Link href="/handbook/brief" style={{ fontSize: 13, fontWeight: 700, color: T.accent, textDecoration: "none", padding: "4px 10px", borderRadius: 5, borderBottom: `2px solid ${T.accent}` }}>Brief mode</Link>
+              <Link href="/handbook/options" style={{ fontSize: 13, fontWeight: 500, color: T.textSec, textDecoration: "none", padding: "4px 10px", borderRadius: 5, borderBottom: "2px solid transparent" }}>Options Library</Link>
             </div>
-            <span style={{ fontSize: 13, fontWeight: 700, color: T.text }}>HIVE</span>
-            <span style={{ color: T.border }}>&rsaquo;</span>
-            <span style={{ fontSize: 13, color: T.textSec, fontWeight: 500 }}>Brief</span>
-            <span style={{ color: T.border }}>&rsaquo;</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{breadcrumbTitle}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {loading && (
-              <span style={{ fontSize: 11, color: T.textMuted, display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: 12, color: T.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.green, display: "inline-block", animation: "pulse 1s infinite" }} />
                 Generating&hellip;
               </span>
             )}
-            {!loading && sections && <span style={{ fontSize: 11, color: T.green, fontWeight: 600 }}>&check; Ready</span>}
-            {briefCases.length > 0 && !loading && sections && (
-              <button onClick={() => generateBrief(caseIds)} style={{ background: "none", border: `1px solid ${T.border}`, cursor: "pointer", padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: T.textSec }}>
+            {!loading && briefCases.length > 0 && sections && (
+              <button type="button" onClick={() => generateBrief(caseIds)} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: (navT as { surfaceAlt?: string }).surfaceAlt ?? T.surfaceAlt, color: T.textSec, cursor: "pointer" }}>
                 &#x21bb; Regenerate
               </button>
             )}
-            {briefCases.length > 0 && (
-              <button onClick={clearBrief} style={{ background: "none", border: `1px solid ${T.border}`, cursor: "pointer", padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: T.textSec }}>Clear brief</button>
+            {briefCases.length > 0 && !loading && (
+              <button type="button" onClick={clearBrief} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: T.textSec, cursor: "pointer" }}>Clear</button>
             )}
-            <button
-              onClick={handleExportPDF}
-              disabled={loading || !sections?.length}
-              style={{
-                background: "none", border: `1px solid ${T.border}`,
-                cursor: loading || !sections?.length ? "not-allowed" : "pointer",
-                padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                color: T.textSec, opacity: loading || !sections?.length ? 0.5 : 1,
-              }}>
+            <button type="button" onClick={handleExportPDF} disabled={loading || !sections?.length} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: loading || !sections?.length ? T.textMuted : T.textSec, cursor: loading || !sections?.length ? "not-allowed" : "pointer", opacity: loading || !sections?.length ? 0.6 : 1 }}>
               &darr; PDF
             </button>
-            <button onClick={() => chatOpen ? closeChat() : openChat()} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.15s", background: chatOpen ? T.accent : T.surface, color: chatOpen ? "#fff" : T.accent, border: `1.5px solid ${T.accent}` }}>
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-              {chatOpen ? "Close" : "Ask about this brief"}
-            </button>
+            <ChatTrigger onClick={() => chatOpen ? closeChat() : openChat()} hasMessages={messages.length > 1} label={chatOpen ? "Close chat" : "Ask about this brief"} />
           </div>
         </div>
       </nav>
+
+      {/* ── Example brief banner (when opened with no cases) ─────────────────── */}
+      {isExampleMode && !loading && sections && (
+        <div style={{ background: T.accentLight, borderBottom: `1px solid ${T.accentMid}`, padding: "10px 24px", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 20, height: 20, borderRadius: 4, background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>
+            Example brief — this shows what a HIVE brief looks like. Add cases from the handbook to build your own. Use <strong>Clear</strong> in the menu to start from scratch.
+          </span>
+        </div>
+      )}
 
       {/* ── AI-generated warning banner ─────────────────────────────────── */}
       {aiLabel && !loading && sections && (
@@ -780,10 +838,10 @@ export default function HIVEBriefWithChat() {
             </div>
 
             {/* Case tiles */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 24 }}>
               <SLabel>Evidence base &mdash; click to highlight throughout</SLabel>
               <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(briefCases.length, 3)}, 1fr)`, gap: 10 }}>
-                {briefCases.map(c => {
+                {(focusLens === "all" || focusLens === "Costs" || focusLens === "Policy context" ? briefCases : briefCases.filter(c => c.sector === focusLens)).map(c => {
                   const a = getCaseAccent(c.id, caseIds);
                   const isActive = activeCase === c.id;
                   const isOther = activeCase != null && activeCase !== c.id;
@@ -802,7 +860,7 @@ export default function HIVEBriefWithChat() {
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 2 }}>{c.title}</div>
                       <div style={{ fontSize: 11, color: T.textSec, marginBottom: 6 }}>{c.location}</div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: isActive ? a.base : T.green, lineHeight: 1.4, marginBottom: 10 }}>{c.hook}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: isActive ? a.base : T.green, lineHeight: 1.4, marginBottom: 10 }}>{c.tileContent ?? c.hook}</div>
                       <Link
                         href={`/handbook/${c.id}`}
                         title="View full case study"
@@ -818,6 +876,36 @@ export default function HIVEBriefWithChat() {
                         </svg>
                       </Link>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Focus lens bar */}
+            <div style={{ marginBottom: 28 }}>
+              <SLabel>Focus this brief on:</SLabel>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {FOCUS_LENSES.map(({ id, label }) => {
+                  const active = focusLens === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => handleFocusLens(id)}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: 9999,
+                        border: `1.5px solid ${active ? T.accent : T.border}`,
+                        background: active ? T.accentLight : T.surface,
+                        color: active ? T.accent : T.textSec,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {label}
+                    </button>
                   );
                 })}
               </div>

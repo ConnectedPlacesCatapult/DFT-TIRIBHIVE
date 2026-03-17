@@ -25,7 +25,7 @@ export function getSupabaseClient(): SupabaseClient {
 
   _client = createClient(url, key, {
     db: { schema: "hive" },
-  });
+  }) as unknown as SupabaseClient;
 
   if (
     process.env.NODE_ENV !== "production" ||

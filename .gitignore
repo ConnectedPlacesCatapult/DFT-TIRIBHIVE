@@ -18,6 +18,9 @@
 # production
 /build
 
+# vendor (embedded repos / third-party)
+/vendor
+
 # misc
 .DS_Store
 *.pem

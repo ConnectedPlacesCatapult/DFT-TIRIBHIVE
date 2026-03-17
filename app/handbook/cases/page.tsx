@@ -2,9 +2,10 @@
 "use client";
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { CASE_STUDIES as SEED_CASE_STUDIES } from "@/lib/hive/seed-data";
+import { CASE_STUDIES as SEED_CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { THEMES } from "@/lib/hive/themes";
+import { CaseStudyDetail as CaseDetailShared } from "@/components/hive/CaseStudyDetail";
 
 const TRIB_MEASURES: Array<{
   trib_article_id: string;
@@ -115,8 +116,26 @@ const HazardBadge = ({ hazard, type }) => {
 
 // ── CASE STUDY CARD ──────────────────────────────────────────────────────────
 // Richer than the handbook card: shows more on the card face, optimised for gallery browsing
+const ARTICLE_CARD_INSIGHT_MAX = 120;
+function getEffectiveCard(cs: { articleCard?: { transferability_contexts?: string[]; key_insight?: string }; ukApplicability?: string[]; insight?: string; costBand?: string; transferability?: string }) {
+  if (cs.articleCard && ((Array.isArray(cs.articleCard.transferability_contexts) && cs.articleCard.transferability_contexts.length > 0) || (cs.articleCard.key_insight && cs.articleCard.key_insight.trim())))
+    return cs.articleCard;
+  const contexts = Array.isArray(cs.ukApplicability) ? cs.ukApplicability : [];
+  const insight = (cs.insight && String(cs.insight).trim()) || "";
+  if (contexts.length > 0 || insight)
+    return { transferability_contexts: contexts, key_insight: insight, investment_band: cs.costBand, uk_transferability: cs.transferability };
+  return null;
+}
+
 const CaseCard = ({ cs, onClick, onAddToBrief, inBrief, highlighted }) => {
   const sc = SECTOR_COLOR[cs.sector] || SECTOR_COLOR.Multiple;
+  const card = getEffectiveCard(cs);
+  const hasNewLayout = card && (Array.isArray(card.transferability_contexts) && card.transferability_contexts.length > 0 || (card.key_insight && card.key_insight.trim()));
+  const keyInsightText = card?.key_insight?.trim()
+    ? (card.key_insight.length > ARTICLE_CARD_INSIGHT_MAX ? card.key_insight.slice(0, ARTICLE_CARD_INSIGHT_MAX) + "…" : card.key_insight)
+    : "";
+  const transferabilityLevel = card?.uk_transferability ?? cs.transferability;
+  const investmentBand = card?.investment_band ?? cs.costBand;
   return (
     <div
       onClick={() => onClick(cs)}
@@ -153,17 +172,38 @@ const CaseCard = ({ cs, onClick, onAddToBrief, inBrief, highlighted }) => {
         {cs.hazards.effect.slice(0,1).map(h => <HazardBadge key={h} hazard={h} type="effect"/>)}
       </div>
 
-      {/* UK applicability note */}
+      {/* Where this applies + Key insight (when we have data) else UK applicability */}
       <div style={{ background:"var(--accent-bg)", border:"1px solid var(--accent)", borderRadius:10, padding:"8px 12px", marginBottom:14 }}>
-        <div style={{ fontSize:10, fontWeight:700, color:"var(--accent)", marginBottom:3, textTransform:"uppercase", letterSpacing:"0.08em" }}>UK applicability</div>
-        <p className="line-clamp-2" style={{ fontSize:11, color:"var(--text-secondary)", lineHeight:1.55, margin:0 }}>{cs.transferabilityNote}</p>
+        {hasNewLayout ? (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, alignItems:"start" }}>
+            <div>
+              <div style={{ display:"flex", alignItems:"center", gap:4, marginBottom:4 }}>
+                <svg style={{ width:10, height:10, flexShrink:0, color:"var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                <span style={{ fontSize:10, fontWeight:700, color:"var(--accent)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Where this applies</span>
+              </div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                {(card.transferability_contexts || []).map(ctx => (
+                  <span key={ctx} style={{ fontSize:10, background:"var(--surface)", border:"1px solid", borderColor:"color-mix(in srgb, var(--accent) 50%, transparent)", color:"var(--accent-text)", paddingLeft:5, paddingRight:5, paddingTop:1, paddingBottom:1, borderRadius:9999, fontWeight:500 }}>{ctx}</span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:9, fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-muted)", marginBottom:2 }}>Key insight</div>
+              <p style={{ fontSize:11, color:"var(--accent)", lineHeight:1.45, fontWeight:500, margin:0 }}>{keyInsightText}</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize:10, fontWeight:700, color:"var(--accent)", marginBottom:3, textTransform:"uppercase", letterSpacing:"0.08em" }}>UK applicability</div>
+            <p className="line-clamp-2" style={{ fontSize:11, color:"var(--text-secondary)", lineHeight:1.55, margin:0 }}>{cs.transferabilityNote}</p>
+          </>
+        )}
       </div>
 
-      {/* Footer: badge + cost + actions */}
+      {/* Footer: cost + actions */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:10, borderTop:"1px solid var(--border)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-          <TransferabilityBadge level={cs.transferability}/>
-          {cs.costBand && <span style={{ fontSize:10, color:"var(--text-muted)", fontWeight:500 }}>{cs.costBand}</span>}
+          {investmentBand && <span style={{ fontSize:10, color:"var(--text-muted)", fontWeight:500 }}>{investmentBand}</span>}
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           <button
@@ -218,8 +258,7 @@ const MeasureCard = ({ measureName, measureDescription, cs, onClick, onAddToBrie
         {cs.hazards.cause.slice(0,2).map(h => <HazardBadge key={h} hazard={h} type="cause"/>)}
       </div>
 
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:10, borderTop:"1px solid var(--border)" }}>
-        <TransferabilityBadge level={cs.transferability}/>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", paddingTop:10, borderTop:"1px solid var(--border)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           <button
             onClick={e => { e.stopPropagation(); onAddToBrief(cs); }}
@@ -240,115 +279,8 @@ const MeasureCard = ({ measureName, measureDescription, cs, onClick, onAddToBrie
 };
 
 // ── CASE STUDY DETAIL MODAL ──────────────────────────────────────────────────
-// Same component as handbook, consistent behaviour
-const CaseDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
-  <div
-    style={{ position:"fixed", inset:0, zIndex:50, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:16, background:"rgba(0,0,0,0.45)", backdropFilter:"blur(8px)" }}
-    onClick={onClose}>
-    <div
-      className="hive-modal"
-      style={{ borderRadius:24, boxShadow:"0 20px 60px rgba(0,0,0,0.3)", maxWidth:672, width:"100%", maxHeight:"90vh", overflowY:"auto", fontFamily:"'DM Sans',sans-serif" }}
-      onClick={e => e.stopPropagation()}>
-      {/* Sticky header */}
-      <div className="hive-modal" style={{ position:"sticky", top:0, borderBottom:"1px solid var(--border)", padding:"16px 24px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", borderRadius:"24px 24px 0 0" }}>
-        <div style={{ flex:1, paddingRight:16 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-            <span style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--accent)" }}>{cs.sector}</span>
-            <span style={{ color:"var(--text-muted)" }}>·</span>
-            <span style={{ fontSize:11, color:"var(--text-secondary)" }}>{cs.location}</span>
-            <span style={{ color:"var(--text-muted)" }}>·</span>
-            <span style={{ fontSize:11, color:"var(--text-muted)" }}>{cs.year}</span>
-          </div>
-          <h2 style={{ fontSize:20, fontWeight:400, lineHeight:1.3, color:"var(--text-primary)", fontFamily:"'DM Serif Display',serif", margin:0 }}>{cs.title}</h2>
-          <p style={{ fontSize:13, fontWeight:600, color:"var(--accent)", marginTop:4 }}>{cs.hook}</p>
-        </div>
-        <button onClick={onClose} style={{ width:32, height:32, borderRadius:"50%", background:"var(--surface-alt)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:4 }}>
-          <svg style={{ width:14, height:14, color:"var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-
-      {/* Body */}
-      <div style={{ padding:24, display:"flex", flexDirection:"column", gap:16 }}>
-        {/* Key insight */}
-        <div style={{ background:"var(--accent-bg)", border:"1px solid var(--accent)", borderRadius:16, padding:16 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-            <svg style={{ width:16, height:16, color:"var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--accent-text)" }}>Key insight</span>
-          </div>
-          <p style={{ fontSize:13, fontWeight:600, color:"var(--text-primary)", lineHeight:1.6, margin:0 }}>{cs.insight}</p>
-        </div>
-
-        {/* Summary */}
-        <div style={{ background:"var(--surface-alt)", borderRadius:16, padding:16 }}>
-          <p style={{ fontSize:13, color:"var(--text-secondary)", lineHeight:1.65, margin:0 }}>{cs.summary}</p>
-        </div>
-
-        {/* Hazards */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-          <div>
-            <h4 style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--text-muted)", marginBottom:8 }}>Climate drivers</h4>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>{cs.hazards.cause.map(h => <HazardBadge key={h} hazard={h} type="cause"/>)}</div>
-          </div>
-          <div>
-            <h4 style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--text-muted)", marginBottom:8 }}>Impacts</h4>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>{cs.hazards.effect.map(h => <HazardBadge key={h} hazard={h} type="effect"/>)}</div>
-          </div>
-        </div>
-
-        {/* Measures */}
-        <div>
-          <h4 style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--text-muted)", marginBottom:8 }}>Adaptation measures</h4>
-          <ul style={{ listStyle:"none", padding:0, margin:0, display:"flex", flexDirection:"column", gap:6 }}>
-            {cs.measures.map(m => (
-              <li key={m} style={{ display:"flex", alignItems:"flex-start", gap:8, fontSize:13, color:"var(--text-secondary)" }}>
-                <span style={{ width:6, height:6, borderRadius:"50%", background:"var(--accent)", flexShrink:0, marginTop:5, display:"inline-block" }}/>
-                {m}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Cost + period */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <div style={{ background:"var(--surface-alt)", borderRadius:12, padding:12, border:"1px solid var(--border)" }}>
-            <h4 style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--text-muted)", marginBottom:4 }}>Investment</h4>
-            <p style={{ fontSize:13, fontWeight:600, color:"var(--text-primary)", margin:0 }}>{cs.cost}</p>
-            <p style={{ fontSize:11, color:"var(--text-muted)", marginTop:4 }}>Band: {cs.costBand}</p>
-          </div>
-          <div style={{ background:"var(--surface-alt)", borderRadius:12, padding:12, border:"1px solid var(--border)" }}>
-            <h4 style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--text-muted)", marginBottom:4 }}>Delivery period</h4>
-            <p style={{ fontSize:13, fontWeight:600, color:"var(--text-primary)", margin:0 }}>{cs.year}</p>
-          </div>
-        </div>
-
-        {/* UK applicability */}
-        <div style={{ border:"1px solid var(--border)", borderRadius:12, padding:16, background:"var(--accent-bg)" }}>
-          <div style={{ marginBottom:8 }}><TransferabilityBadge level={cs.transferability}/></div>
-          <p style={{ fontSize:13, color:"var(--text-secondary)", lineHeight:1.65, marginBottom:12 }}>{cs.transferabilityNote}</p>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-            {cs.ukApplicability.map(a => (
-              <span key={a} style={{ fontSize:11, fontWeight:600, background:"var(--surface)", border:"1px solid var(--border)", color:"var(--accent-text)", borderRadius:9999, padding:"2px 10px" }}>{a}</span>
-            ))}
-          </div>
-        </div>
-
-        <p style={{ fontSize:11, color:"var(--text-muted)", paddingTop:4, borderTop:"1px solid var(--border)" }}>
-          Ref: {cs.id} · {cs.organisation} · Curated &amp; verified by HIVE
-        </p>
-
-        {/* Add to brief CTA */}
-        <button
-          onClick={() => { onAddToBrief(cs); onClose(); }}
-          style={{ width:"100%", padding:"12px 0", borderRadius:16, fontSize:13, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.2s",
-            background: inBrief ? "var(--surface-alt)" : "var(--accent)",
-            color: inBrief ? "var(--text-muted)" : "#fff",
-          }}>
-          {inBrief ? "✓ Already in your AI brief" : "＋ Add to AI brief"}
-        </button>
-      </div>
-    </div>
-  </div>
-);
+// Uses shared rich card component from components/hive/CaseStudyDetail
+const CaseDetail = CaseDetailShared;
 
 // ── CHAT: uses shared ChatPanel via layout (no local panel needed) ──
 
@@ -523,6 +455,8 @@ function SuggestSourceDrawer({ open, onClose }) {
 // ── MAIN PAGE (uses useSearchParams — must be inside Suspense) ─────────────────
 function CasesPageContent() {
   const { themeKey, setThemeKey, suggestedCaseIds, pendingFilterUpdate, setPendingFilterUpdate } = useChatContext();
+  const [highlighted, setHighlighted] = useState([]);
+
   const effectiveHighlighted = suggestedCaseIds?.length > 0 ? suggestedCaseIds : highlighted;
 
   useEffect(() => {
@@ -560,8 +494,7 @@ function CasesPageContent() {
   // View mode toggle: case studies (default) vs individual measures
   const [viewMode, setViewMode] = useState<'cases' | 'measures'>('cases');
 
-  // UI state
-  const [highlighted, setHighlighted] = useState([]);
+  // UI state (highlighted declared above for effectiveHighlighted)
   const [selectedCase, setSelectedCase] = useState(null);
   const [brief, setBrief] = useState([]);
   const [suggestOpen, setSuggestOpen] = useState(false);

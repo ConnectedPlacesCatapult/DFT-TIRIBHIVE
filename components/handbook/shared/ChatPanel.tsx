@@ -220,6 +220,7 @@ function TypingDots() {
             }}
           />
         ))}
+        <span style={{ fontSize: 12, color: "#6b7280", marginLeft: 4 }}>Thinking…</span>
       </div>
     </div>
   );
@@ -230,7 +231,7 @@ const SECTION_LABELS: Record<string, string> = {
   climate_drivers: "Climate Drivers",
   adaptation_approaches: "Adaptation Approaches",
   costs_and_resourcing: "Costs & Resourcing",
-  uk_applicability: "UK Applicability",
+  uk_applicability: "Transfer Intelligence",
   key_insight: "Key Insight",
   sources: "Source References",
 };
@@ -308,6 +309,9 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     setPendingFilterUpdate,
     briefSections,
     onBriefSectionUpdate,
+    isThinking,
+    pendingBriefMessage,
+    setPendingBriefMessage,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -384,7 +388,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages, typing, isThinking]);
 
   const send = async (text: string) => {
     const q = (text || input).trim();
@@ -429,7 +433,17 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     }
   };
 
-  const showStarters = messages.length <= 1 && !typing;
+  // Brief page focus lens: when chat opens with pendingBriefMessage, send it and clear
+  useEffect(() => {
+    if (open && pendingBriefMessage?.trim()) {
+      const msg = pendingBriefMessage.trim();
+      setPendingBriefMessage(null);
+      send(msg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pendingBriefMessage]);
+
+  const showStarters = messages.length <= 1 && !typing && !isThinking;
 
   return (
     <>
@@ -674,7 +688,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
             </div>
           ))}
 
-          {typing && <TypingDots />}
+          {(typing || isThinking) && <TypingDots />}
 
           {/* Starter questions */}
           {showStarters && (

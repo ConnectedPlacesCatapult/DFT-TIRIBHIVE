@@ -17,6 +17,9 @@ type EvalRun = {
   citation_count: number;
   admitted_no_data: boolean;
   proposed_update_fired: boolean;
+  word_count?: number | null;
+  mentions_brief?: boolean | null;
+  expected_signals?: { max_words?: number } | null;
 };
 
 type BatchInfo = { run_batch: string };
@@ -229,7 +232,7 @@ export default function AdminEvalsPage() {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
-                      {["test_id", "page", "variant", "retrieval", "ms", "citations", "update_fired", "admitted_no_data", "response"].map(
+                      {["test_id", "page", "variant", "retrieval", "ms", "words", "citations", "update_fired", "admitted_no_data", "response"].map(
                         (h) => (
                           <th
                             key={h}
@@ -251,8 +254,18 @@ export default function AdminEvalsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {runsInBatch.map((r, i) => (
-                      <tr key={r.eval_case_id + i} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                    {runsInBatch.map((r, i) => {
+                      const maxWords = r.expected_signals?.max_words;
+                      const wordCount = r.word_count ?? (r.response_text?.trim().split(/\s+/).filter(Boolean).length ?? 0);
+                      const exceedsMaxWords = typeof maxWords === "number" && wordCount > maxWords;
+                      return (
+                      <tr
+                        key={r.eval_case_id + i}
+                        style={{
+                          borderBottom: "1px solid #f3f4f6",
+                          ...(exceedsMaxWords ? { background: "#fef2f2" } : {}),
+                        }}
+                      >
                         <td style={{ padding: "10px 14px", fontWeight: 600, color: "#111827" }}>
                           {r.test_id}
                         </td>
@@ -281,6 +294,16 @@ export default function AdminEvalsPage() {
                           </span>
                         </td>
                         <td style={{ padding: "10px 14px", color: "#374151" }}>{r.response_ms}</td>
+                        <td
+                          style={{
+                            padding: "10px 14px",
+                            color: exceedsMaxWords ? "#b91c1c" : "#374151",
+                            fontWeight: exceedsMaxWords ? 600 : 400,
+                          }}
+                          title={typeof maxWords === "number" ? `max_words: ${maxWords}` : undefined}
+                        >
+                          {wordCount}
+                        </td>
                         <td style={{ padding: "10px 14px" }}>
                           <span
                             style={{
@@ -317,7 +340,8 @@ export default function AdminEvalsPage() {
                           {truncate(r.response_text, 150)}
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

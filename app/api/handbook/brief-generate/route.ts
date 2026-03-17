@@ -29,11 +29,11 @@ Evidence rules — absolute:
 
 Generate a structured brief with these sections in order:
 
-1. executive_summary — 3-4 sentences. The strongest cross-cutting finding across all cases. Cite every case that supports the finding.
+1. executive_summary — Write an executive summary that opens with ONE specific measurable finding from the evidence (a percentage, £ figure, or concrete outcome) that best represents the collective insight. Then in 2-3 sentences explain what the cases collectively demonstrate. Do NOT open with 'The case studies highlight...' or 'These cases demonstrate the importance of...'. Example opening: 'SuDS reduced river discharge by 87% in Sheffield — the strongest quantified outcome across these cases — and the approach has since been replicated at £80m scale in Mansfield.' Every claim must be cited [ID_xx].
 2. climate_drivers — 2-3 sentences. The climate hazards and trends these cases respond to. Cite each case per hazard.
 3. adaptation_approaches — Return a markdown table with three columns: Approach, Case Studies (comma-separated [ID_xx] citations), and Notes (one-line observation). Use pipe-delimited format: | Approach | Case Studies | Notes | with a separator row. Include 3-6 rows covering the key adaptation measures across the cases.
 4. costs_and_resourcing — 2-3 sentences. Cost ranges, funding models, and investment patterns. Use exact figures from cases and cite. If cost data is limited, say so.
-5. uk_applicability — 2-3 sentences. How well these cases transfer to UK transport. Rate each case cited.
+5. uk_applicability — 2-3 sentences. For each case, identify the specific transfer conditions: what transfers directly, what needs adaptation, and what UK infrastructure contexts are most relevant. Be specific — name infrastructure types, not generic 'applicable to UK transport'. Display title: Transfer Intelligence.
 6. key_insight — 2 sentences. The single most generalisable finding — the thing worth quoting. Cite all supporting cases.
 7. sources — List of case IDs with titles.
 
@@ -59,7 +59,7 @@ const SECTION_TITLES: Record<string, string> = {
   climate_drivers: "Climate Drivers & Hazards",
   adaptation_approaches: "Adaptation Approaches",
   costs_and_resourcing: "Costs & Resourcing",
-  uk_applicability: "UK Applicability & Transferability",
+  uk_applicability: "Transfer Intelligence",
   key_insight: "Key Cross-Case Insight",
   sources: "Source References",
 };
@@ -130,7 +130,7 @@ function generateMockBrief(
     },
     {
       section_key: "uk_applicability",
-      section_title: "UK Applicability & Transferability",
+      section_title: "Transfer Intelligence",
       content: `The cases in this brief have been assessed for UK applicability ${ids}. ${articles.length > 1 ? "Multiple cases demonstrate direct transferability to UK transport contexts." : "This case has direct applicability to UK transport planning."} The strongest transfer potential is in ${sectors.slice(0, 2).join(" and ")} infrastructure.`,
       confidence: "partial",
     },

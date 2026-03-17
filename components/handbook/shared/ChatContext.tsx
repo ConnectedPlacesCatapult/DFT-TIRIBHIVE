@@ -62,11 +62,37 @@ type HandbookContextType = {
   /** Callback to update a single brief section — set by brief page, called by ChatPanel on Apply */
   onBriefSectionUpdate: ((key: string, content: string) => void) | null;
   setOnBriefSectionUpdate: (fn: ((key: string, content: string) => void) | null) => void;
+  /** True while a request is in flight (e.g. routeQueryToChat from landing) — panel shows thinking indicator */
+  isThinking: boolean;
+  setThinking: (value: boolean) => void;
+  /** Brief page focus lens: set then open chat to auto-send this message (e.g. reframe for Rail) */
+  pendingBriefMessage: string | null;
+  setPendingBriefMessage: (msg: string | null) => void;
+  /** Demo options (for client demos; may be removed in final) — landing marquee view mode */
+  viewMode: "cases" | "measures";
+  setViewMode: (v: "cases" | "measures") => void;
+  marqueeView: "marquee" | "velocity";
+  setMarqueeView: (v: "marquee" | "velocity") => void;
+  demoCaseCount: number;
+  demoMeasureCount: number;
+  setDemoCounts: (counts: { cases: number; measures: number }) => void;
+  /** Background effect for landing hero (demo only); persisted in localStorage 'hiveBackgroundEffect' */
+  backgroundEffect: "none" | "particles" | "aurora" | "hero";
+  setBackgroundEffect: (v: "none" | "particles" | "aurora" | "hero") => void;
+  /** Hero text readability when background is Hero: gradient (steep) | scrim | backplate; persisted */
+  heroTextTreatment: "gradient" | "scrim" | "backplate";
+  setHeroTextTreatment: (v: "gradient" | "scrim" | "backplate") => void;
+  /** Extent: gradient = steepness (%), scrim = blur px, backplate = radius px; 8–120; persisted */
+  heroTextTreatmentExtent: number;
+  setHeroTextTreatmentExtent: (v: number) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
 
 const SESSION_INTENT_KEY = "hiveSessionIntent";
+const BACKGROUND_EFFECT_KEY = "hiveBackgroundEffect";
+const HERO_TEXT_TREATMENT_KEY = "hiveHeroTextTreatment";
+const HERO_TEXT_EXTENT_KEY = "hiveHeroTextExtent";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
@@ -88,6 +114,57 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [onBriefSectionUpdate, setOnBriefSectionUpdateRaw] = useState<
     ((key: string, content: string) => void) | null
   >(null);
+  const [isThinking, setThinking] = useState(false);
+  const [pendingBriefMessage, setPendingBriefMessage] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"cases" | "measures">("cases");
+  const [marqueeView, setMarqueeView] = useState<"marquee" | "velocity">("marquee");
+  const [demoCounts, setDemoCountsState] = useState({ cases: 0, measures: 0 });
+  const setDemoCounts = useCallback((counts: { cases: number; measures: number }) => {
+    setDemoCountsState(counts);
+  }, []);
+
+  const [backgroundEffect, setBackgroundEffectState] = useState<
+    "none" | "particles" | "aurora" | "hero"
+  >(() => {
+    if (typeof window === "undefined") return "none";
+    const stored = localStorage.getItem(BACKGROUND_EFFECT_KEY);
+    return stored === "particles" || stored === "aurora" || stored === "hero" ? stored : "none";
+  });
+  const setBackgroundEffect = useCallback((v: "none" | "particles" | "aurora" | "hero") => {
+    setBackgroundEffectState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(BACKGROUND_EFFECT_KEY, v);
+    }
+  }, []);
+
+  const [heroTextTreatment, setHeroTextTreatmentState] = useState<
+    "gradient" | "scrim" | "backplate"
+  >(() => {
+    if (typeof window === "undefined") return "gradient";
+    const stored = localStorage.getItem(HERO_TEXT_TREATMENT_KEY);
+    return stored === "scrim" || stored === "backplate" ? stored : "gradient";
+  });
+  const setHeroTextTreatment = useCallback((v: "gradient" | "scrim" | "backplate") => {
+    setHeroTextTreatmentState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HERO_TEXT_TREATMENT_KEY, v);
+    }
+  }, []);
+
+  const [heroTextTreatmentExtent, setHeroTextTreatmentExtentState] = useState<number>(() => {
+    if (typeof window === "undefined") return 24;
+    const stored = localStorage.getItem(HERO_TEXT_EXTENT_KEY);
+    const n = stored ? parseInt(stored, 10) : 24;
+    return Number.isFinite(n) && n >= 8 && n <= 120 ? n : 24;
+  });
+  const setHeroTextTreatmentExtent = useCallback((v: number) => {
+    const clamped = Math.round(Math.max(8, Math.min(120, v)));
+    setHeroTextTreatmentExtentState(clamped);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HERO_TEXT_EXTENT_KEY, String(clamped));
+    }
+  }, []);
+
   const setOnBriefSectionUpdate = useCallback(
     (fn: ((key: string, content: string) => void) | null) => {
       setOnBriefSectionUpdateRaw(() => fn);
@@ -159,6 +236,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setBriefSections,
         onBriefSectionUpdate,
         setOnBriefSectionUpdate,
+        isThinking,
+        setThinking,
+        pendingBriefMessage,
+        setPendingBriefMessage,
+        viewMode,
+        setViewMode,
+        marqueeView,
+        setMarqueeView,
+        demoCaseCount: demoCounts.cases,
+        demoMeasureCount: demoCounts.measures,
+        setDemoCounts,
+        backgroundEffect,
+        setBackgroundEffect,
+        heroTextTreatment,
+        setHeroTextTreatment,
+        heroTextTreatmentExtent,
+        setHeroTextTreatmentExtent,
       }}
     >
       {children}
