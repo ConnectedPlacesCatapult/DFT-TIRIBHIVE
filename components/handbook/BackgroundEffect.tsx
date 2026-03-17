@@ -179,57 +179,6 @@ function ParticlesEffect({ themeKey }: { themeKey: ThemeKey }) {
   }
 }
 
-function AuroraEffect({ themeKey }: { themeKey: ThemeKey }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || typeof window === "undefined") return null;
-
-  try {
-    const isDark = themeKey === "dark";
-    const color1 = isDark ? "#0f766e" : "#0d9488";
-    const color2 = isDark ? "#7e22ce" : "#2563eb";
-    const color3 = isDark ? "#4c1d95" : "#1d4ed8";
-
-    return (
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: "-50%",
-            opacity: 0.3,
-            background: `radial-gradient(ellipse 80% 50% at 20% 40%, ${color1}, transparent),
-              radial-gradient(ellipse 60% 80% at 80% 60%, ${color2}, transparent),
-              radial-gradient(ellipse 70% 60% at 50% 80%, ${color3}, transparent)`,
-            filter: "blur(40px)",
-            animation: "hive-aurora-shift 15s ease-in-out infinite alternate",
-          }}
-        />
-        <style>{`
-          @keyframes hive-aurora-shift {
-            0% { transform: scale(1) translate(0, 0); opacity: 0.3; }
-            100% { transform: scale(1.1) translate(-3%, -2%); opacity: 0.35; }
-          }
-        `}</style>
-      </div>
-    );
-  } catch {
-    return null;
-  }
-}
-
 export function BackgroundEffect() {
   const { backgroundEffect, themeKey } = useChatContext();
 
@@ -239,7 +188,6 @@ export function BackgroundEffect() {
     return (
       <>
         {backgroundEffect === "particles" && <ParticlesEffect themeKey={themeKey} />}
-        {backgroundEffect === "aurora" && <AuroraEffect themeKey={themeKey} />}
       </>
     );
   } catch {

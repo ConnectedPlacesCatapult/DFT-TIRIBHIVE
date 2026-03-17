@@ -676,6 +676,56 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     ))}
                   </div>
                 )}
+                {/* Navigation links: view cases or build brief from cited IDs */}
+                {m.role === "ai" && m.chips && m.chips.length >= 2 && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      display: "flex",
+                      gap: 6,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Link
+                      href={`/handbook/cases?highlight=${m.chips.join(",")}`}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: 5,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        border: "1px solid #d1d5db",
+                        background: "#fff",
+                        color: "#374151",
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      View {m.chips.length} cases ↗
+                    </Link>
+                    <Link
+                      href={`/handbook/brief?ids=${m.chips.join(",")}`}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: 5,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        border: "none",
+                        background: "#1d70b8",
+                        color: "#fff",
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      Build brief from these ↗
+                    </Link>
+                  </div>
+                )}
                 {/* Action card: Apply/Dismiss only — nothing auto-applies */}
                 {m.role === "ai" && m.action && !m.actionDismissed && (
                   <SectionUpdateCard

@@ -11,6 +11,7 @@ const HERO_IMAGES = [
   { src: "/hero/hero-3-rockfall.jpg", caption: "Austrian Federal Railways · ID_06" },
   { src: "/hero/hero-4-panama.jpg", caption: "Panama Canal Authority · ID_37" },
   { src: "/hero/hero-5-heathrow.jpg", caption: "Heathrow Airport Balancing Ponds · ID_32" },
+  { src: "/hero/hero-6-dawlish-waves.jpg", caption: "Severe weather, waves over trains · Dawlish Sea Wall" },
 ];
 
 const CYCLE_MS = 6000;
@@ -29,11 +30,12 @@ export function HeroImageCycle() {
   const dark = (a: number) => `rgba(13,17,23,${a})`;
   const L = isDark ? dark : light;
 
-  // Steep gradient: extent 8–120 → fade ends at ~65%–35% (higher extent = steeper, image clears sooner)
-  const fadeEndPct = 65 - ((heroTextTreatmentExtent - 8) / 112) * 30;
+  // Gradient: extent 0–120 → slide RIGHT = more cover (fade ends 35% → 90%); strong opacity on left for text contrast
+  const fadeEndPct = 35 + (heroTextTreatmentExtent / 120) * 55;
+  const taperStart = Math.min(40, Math.max(20, fadeEndPct - 12));
   const gradientOverlay =
     heroTextTreatment === "gradient"
-      ? `linear-gradient(to right, ${L(0.95)} 0%, ${L(0.7)} ${fadeEndPct * 0.5}%, ${L(0.1)} ${fadeEndPct - 5}%, ${L(0)} ${fadeEndPct}%, ${L(0)} 100%)`
+      ? `linear-gradient(to right, ${L(1)} 0%, ${L(0.98)} 20%, ${L(0.92)} ${taperStart}%, ${L(0)} ${fadeEndPct}%, ${L(0)} 100%)`
       : heroTextTreatment === "scrim" || heroTextTreatment === "backplate"
         ? `linear-gradient(to right, ${L(0.75)} 0%, ${L(0.5)} 35%, ${L(0.2)} 65%, ${L(0)} 100%)`
         : isDark

@@ -351,7 +351,6 @@ export function HandbookNav() {
                       {[
                         { id: "none" as const, label: "None" },
                         { id: "particles" as const, label: "Particles" },
-                        { id: "aurora" as const, label: "Aurora" },
                         { id: "hero" as const, label: "Hero" },
                       ].map((v) => (
                         <button
@@ -413,7 +412,7 @@ export function HandbookNav() {
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <input
                             type="range"
-                            min={8}
+                            min={0}
                             max={120}
                             value={heroTextTreatmentExtent}
                             onChange={(e) => setHeroTextTreatmentExtent(Number(e.target.value))}

@@ -77,12 +77,12 @@ type HandbookContextType = {
   demoMeasureCount: number;
   setDemoCounts: (counts: { cases: number; measures: number }) => void;
   /** Background effect for landing hero (demo only); persisted in localStorage 'hiveBackgroundEffect' */
-  backgroundEffect: "none" | "particles" | "aurora" | "hero";
-  setBackgroundEffect: (v: "none" | "particles" | "aurora" | "hero") => void;
+  backgroundEffect: "none" | "particles" | "hero";
+  setBackgroundEffect: (v: "none" | "particles" | "hero") => void;
   /** Hero text readability when background is Hero: gradient (steep) | scrim | backplate; persisted */
   heroTextTreatment: "gradient" | "scrim" | "backplate";
   setHeroTextTreatment: (v: "gradient" | "scrim" | "backplate") => void;
-  /** Extent: gradient = steepness (%), scrim = blur px, backplate = radius px; 8–120; persisted */
+  /** Extent: gradient = steepness (%), scrim = blur px, backplate = radius px; 0–120; persisted; lower = more fade coverage */
   heroTextTreatmentExtent: number;
   setHeroTextTreatmentExtent: (v: number) => void;
 };
@@ -124,13 +124,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const [backgroundEffect, setBackgroundEffectState] = useState<
-    "none" | "particles" | "aurora" | "hero"
+    "none" | "particles" | "hero"
   >(() => {
     if (typeof window === "undefined") return "none";
     const stored = localStorage.getItem(BACKGROUND_EFFECT_KEY);
-    return stored === "particles" || stored === "aurora" || stored === "hero" ? stored : "none";
+    return stored === "particles" || stored === "hero" ? stored : "none";
   });
-  const setBackgroundEffect = useCallback((v: "none" | "particles" | "aurora" | "hero") => {
+  const setBackgroundEffect = useCallback((v: "none" | "particles" | "hero") => {
     setBackgroundEffectState(v);
     if (typeof window !== "undefined") {
       localStorage.setItem(BACKGROUND_EFFECT_KEY, v);
@@ -155,10 +155,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return 24;
     const stored = localStorage.getItem(HERO_TEXT_EXTENT_KEY);
     const n = stored ? parseInt(stored, 10) : 24;
-    return Number.isFinite(n) && n >= 8 && n <= 120 ? n : 24;
+    return Number.isFinite(n) && n >= 0 && n <= 120 ? n : 24;
   });
   const setHeroTextTreatmentExtent = useCallback((v: number) => {
-    const clamped = Math.round(Math.max(8, Math.min(120, v)));
+    const clamped = Math.round(Math.max(0, Math.min(120, v)));
     setHeroTextTreatmentExtentState(clamped);
     if (typeof window !== "undefined") {
       localStorage.setItem(HERO_TEXT_EXTENT_KEY, String(clamped));

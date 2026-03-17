@@ -1,10 +1,11 @@
 /**
- * Downloads five hero images into public/hero/ for the handbook landing cycle.
+ * Downloads hero images into public/hero/ for the handbook landing cycle.
  * Run: npx tsx scripts/download-hero-images.ts
  *
  * Sources:
  * - Sheffield: Green Estate (case study source)
  * - Dawlish, Rockfall, Panama, Heathrow: Unsplash (free use, thematic match)
+ * - Dawlish waves: YouTube thumbnail (Dawlish Sea Wall severe weather)
  */
 
 import * as fs from "fs";
@@ -37,6 +38,11 @@ const IMAGES: { filename: string; url: string; description: string }[] = [
     filename: "hero-5-heathrow.jpg",
     url: "https://unsplash.com/photos/Ys-bufnHn-g/download?force=true&w=1600",
     description: "Water / infrastructure (Unsplash)",
+  },
+  {
+    filename: "hero-6-dawlish-waves.jpg",
+    url: "https://i.ytimg.com/vi/txDPRjZ0-7k/maxresdefault.jpg",
+    description: "Severe weather, waves over trains, Dawlish Sea Wall (YouTube)",
   },
 ];
 

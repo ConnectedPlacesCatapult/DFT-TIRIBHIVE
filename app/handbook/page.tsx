@@ -1298,7 +1298,7 @@ function HandbookLandingPageContent() {
 
       <div className="hive-root" style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
 
-        {/* Hero — wrapper is relative; background from Demo options: None / Particles / Aurora / Hero (cycling images) */}
+        {/* Hero — wrapper is relative; background from Demo options: None / Particles / Hero (cycling images) */}
         <div style={{ position: "relative" }}>
           {backgroundEffect === "hero" && <HeroImageCycle />}
           <BackgroundEffect />

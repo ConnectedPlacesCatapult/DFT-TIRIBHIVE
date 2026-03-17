@@ -484,11 +484,13 @@ function CasesPageContent() {
     const hazard = searchParams.get("hazard");
     const region = searchParams.get("region");
     const cost = searchParams.get("cost");
+    const highlightParam = searchParams.get("highlight");
     if (q) setQuery(q);
     if (sector) setSectors(sector.split(",").map((s) => s.trim()).filter(Boolean));
     if (hazard) setHazards(hazard.split(",").map((h) => h.trim()).filter(Boolean));
     if (region) setTransferability([]); // region not in filter bar; leave transferability empty
     if (cost) setCostBands(cost.split(",").map((c) => c.trim()).filter(Boolean));
+    if (highlightParam) setHighlighted(highlightParam.split(",").map((id) => id.trim()).filter(Boolean));
   }, [searchParams]);
 
   // View mode toggle: case studies (default) vs individual measures
@@ -505,10 +507,20 @@ function CasesPageContent() {
 
   const results = filterAndSort(CASE_STUDIES_NORMALISED, { query, sectors, hazards, transferability, costBands, sort });
 
+  // Sort highlighted cases to the top when coming from chat navigation links
+  const sortedResults = useMemo(() => {
+    if (effectiveHighlighted.length === 0) return results;
+    return [...results].sort((a, b) => {
+      const aH = effectiveHighlighted.includes(a.id) ? 0 : 1;
+      const bH = effectiveHighlighted.includes(b.id) ? 0 : 1;
+      return aH - bH;
+    });
+  }, [results, effectiveHighlighted]);
+
   // In measure mode, expand each article into one card per measure
   const displayItems = useMemo(() => {
     if (viewMode === 'cases') {
-      return results.map(a => ({
+      return sortedResults.map(a => ({
         type: 'case' as const,
         key: a.id,
         article: a,
@@ -516,7 +528,7 @@ function CasesPageContent() {
         measureDescription: null as string | null,
       }));
     }
-    return results.flatMap(a => {
+    return sortedResults.flatMap(a => {
       const measuresData = TRIB_MEASURES.find(m => m.trib_article_id === a.id);
       if (!measuresData?.measures?.length) {
         const fallbackName = Array.isArray(a.measures) && a.measures.length > 0
