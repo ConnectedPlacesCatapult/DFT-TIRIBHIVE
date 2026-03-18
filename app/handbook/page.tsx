@@ -519,7 +519,7 @@ function getEffectiveCard(cs) {
   }
   return null;
 }
-const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => {
+const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, suggested = false }) => {
   const card = getEffectiveCard(cs);
   const transferabilityLevel = card?.uk_transferability ?? cs.transferability;
   const investmentBand = card?.investment_band ?? cs.costBand;
@@ -533,12 +533,13 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => 
     style={{
       cursor: "pointer",
       borderRadius: 16,
-      border: "1px solid",
+      border: suggested ? "2px solid var(--accent)" : "1px solid",
       transition: "all 0.2s",
       padding: 20,
       display: "flex",
       flexDirection: "column",
       fontFamily: "'DM Sans', sans-serif",
+      boxShadow: suggested ? "0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent)" : undefined,
     }}>
     <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -551,12 +552,24 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => 
         </div>
         <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.375, transition: "color 0.2s" }}>{cs.title}</h3>
       </div>
+      {suggested && (
+        <span style={{ fontSize: 11, fontWeight: 600, background: "var(--accent)", color: "#fff", paddingLeft: 8, paddingRight: 8, paddingTop: 3, paddingBottom: 3, borderRadius: 6, alignSelf: "flex-start", flexShrink: 0 }}>Suggested by HIVE</span>
+      )}
     </div>
     <p style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", marginBottom: 8 }}>{cs.hook}</p>
     <p className="line-clamp-2" style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12, flex: 1 }}>{cs.summary}</p>
+    {cs._semanticSimilarity && (
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+        <svg style={{ width: 12, height: 12, color: "var(--accent)", flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 500 }}>
+          Semantic match · {Math.round(cs._semanticSimilarity * 100)}% relevance
+          {cs._semanticSection && cs._semanticSection !== "general" && ` · ${cs._semanticSection.replace(/_/g, " ")}`}
+        </span>
+      </div>
+    )}
     {matchReasons && matchReasons.length > 0 && (
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Matched on:</span>
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs._semanticSimilarity ? "Also matched on:" : "Matched on:"}</span>
         {matchReasons.map(r => <span key={r} style={{ fontSize: 12, background: "var(--accent-bg)", color: "var(--accent-text)", border: "1px solid", borderColor: "var(--accent)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 6, fontWeight: 500 }}>{r}</span>)}
       </div>
     )}
@@ -945,12 +958,13 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, setSessionIntent, openChat, setChatContext, setMessages, setRetrievalMode, setThinking, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent } = useChatContext();
+  const { themeKey, setThemeKey, setSessionIntent, openChat, setChatContext, setMessages, setRetrievalMode, setThinking, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds } = useChatContext();
   const T = THEMES[themeKey];
 
-  // Semantic search state (scenarios A/B/C)
+  // Semantic search state (scenarios A/B/C + result boosting)
   const [semanticPrompt, setSemanticPrompt] = useState(null);
   const [semanticScenario, setSemanticScenario] = useState(null);
+  const [semanticResults, setSemanticResults] = useState<{article_id: string; similarity: number; section_key: string}[]>([]);
 
   // Detect conversational / non-search queries that should route to the AI chat
   const CONVERSATIONAL_RE = /^(h(i|ello|ey)|how are you|how do(es)? (you|this|hive|it) work|what (can|do) you do|help me|what is hive|tell me about|who are you|good (morning|afternoon|evening)|thanks|thank you|help$)/i;
@@ -1008,6 +1022,7 @@ function HandbookLandingPageContent() {
     if (!query.trim() || query.trim().length < 3) {
       setSemanticPrompt(null);
       setSemanticScenario(null);
+      setSemanticResults([]);
       return;
     }
     semanticTimerRef.current = setTimeout(async () => {
@@ -1028,13 +1043,16 @@ function HandbookLandingPageContent() {
         if (!res.ok) return;
         const data = await res.json();
         setSemanticScenario(data.scenario);
+        setSemanticResults(data.results ?? []);
         if (data.scenario === "B" && data.results?.length > 0) {
           const topIds = data.results.slice(0, 3).map(r => r.article_id);
           setSemanticPrompt(`Found ${topIds.length} relevant cases — want me to explain how they apply? [Ask HIVE →]`);
         } else {
           setSemanticPrompt(null);
         }
-      } catch { /* ignore — client-side search still works */ }
+      } catch {
+        setSemanticResults([]);
+      }
     }, 600);
     return () => { if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current); };
   }, [query]);
@@ -1111,13 +1129,41 @@ function HandbookLandingPageContent() {
   }, [searchFocused, query]);
 
   useEffect(() => {
-    const r = searchCaseStudies(query, allActiveHazards, allActiveSectors, selectedRegions, selectedCosts);
-    setResults(r);
+    const keywordResults = searchCaseStudies(query, allActiveHazards, allActiveSectors, selectedRegions, selectedCosts);
+
+    let merged;
+    if (semanticResults.length > 0 && query.trim()) {
+      const semanticMap = new Map(semanticResults.map(r => [r.article_id, r]));
+
+      const boosted = [];
+      const keywordOnly = [];
+      for (const cs of keywordResults) {
+        if (semanticMap.has(cs.id)) {
+          boosted.push({ ...cs, _semanticSimilarity: semanticMap.get(cs.id).similarity, _semanticSection: semanticMap.get(cs.id).section_key });
+          semanticMap.delete(cs.id);
+        } else {
+          keywordOnly.push(cs);
+        }
+      }
+      // Semantic-only cases not found by keyword — add them if they exist in the seed data
+      for (const [, sr] of semanticMap) {
+        const cs = CASE_STUDIES.find(c => c.id === sr.article_id);
+        if (cs) {
+          boosted.push({ ...cs, _semanticSimilarity: sr.similarity, _semanticSection: sr.section_key });
+        }
+      }
+      boosted.sort((a, b) => (b._semanticSimilarity || 0) - (a._semanticSimilarity || 0));
+      merged = [...boosted, ...keywordOnly];
+    } else {
+      merged = keywordResults;
+    }
+
+    setResults(merged);
     const reasons = {};
-    r.forEach(cs => { reasons[cs.id] = getMatchReasons(cs, query, allActiveHazards, allActiveSectors); });
+    merged.forEach(cs => { reasons[cs.id] = getMatchReasons(cs, query, allActiveHazards, allActiveSectors); });
     setActiveMatchReasons(reasons);
-    setSynthesis(hasActiveFilters && r.length > 0 ? generateSynthesis(r, query) : null);
-  }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts]);
+    setSynthesis(hasActiveFilters && merged.length > 0 ? generateSynthesis(merged, query) : null);
+  }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts, semanticResults]);
 
   // Scroll to results only once per search session, after typing settles
   useEffect(() => {
@@ -1599,7 +1645,7 @@ function HandbookLandingPageContent() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
                     {results.map((cs, i) => (
                       <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
-                        <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} />
+                        <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} />
                       </div>
                     ))}
                   </div>
