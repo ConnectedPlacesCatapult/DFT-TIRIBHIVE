@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CASE_STUDIES as SEED_CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { useHandbookSearch } from "@/lib/handbook/useHandbookSearch";
+import { useUnifiedSearch } from "@/lib/handbook/useUnifiedSearch";
 import { BackgroundEffect } from "@/components/handbook/BackgroundEffect";
 import { HeroImageCycle } from "@/components/handbook/HeroImageCycle";
 import { CaseStudyDetail as CaseStudyDetailShared } from "@/components/hive/CaseStudyDetail";
@@ -992,8 +993,14 @@ function HandbookLandingPageContent() {
   const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter } = useChatContext();
   const T = THEMES[themeKey];
 
+  // Toggle: "classic" uses v1 two-call system; "unified" uses one-brain v2
+  const [searchMode, setSearchMode] = useState<"classic" | "unified">("classic");
+
   // Shared semantic search + chat wiring (same hook as cases library)
   const { semanticResults, semanticScenario, semanticPrompt, routeQueryToChat } = useHandbookSearch(query);
+
+  // v2 unified search — active only when searchMode === "unified"
+  const unified = useUnifiedSearch(searchMode === "unified" ? query : "");
 
   useEffect(() => {
     setDemoCounts({ cases: CASE_STUDIES.length, measures: TOTAL_MEASURE_COUNT });
@@ -1056,6 +1063,9 @@ function HandbookLandingPageContent() {
   }, [searchFocused, query]);
 
   useEffect(() => {
+    // In unified mode, results come from the one-brain API — handled in a separate effect below
+    if (searchMode === "unified") return;
+
     const keywordResults = searchCaseStudies(query, allActiveHazards, allActiveSectors, selectedRegions, selectedCosts);
 
     // One list, one number: semantic-only when semantic has results; keyword fallback otherwise
@@ -1077,7 +1087,17 @@ function HandbookLandingPageContent() {
     merged.forEach(cs => { reasons[cs.id] = getMatchReasons(cs, query, allActiveHazards, allActiveSectors); });
     setActiveMatchReasons(reasons);
     setSynthesis(hasActiveFilters && merged.length > 0 ? generateSynthesis(merged, query) : null);
-  }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts, semanticResults, setResultSet]);
+  }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts, semanticResults, setResultSet, searchMode]);
+
+  // In unified mode: sync one-brain results into the same state slots the grid reads from
+  useEffect(() => {
+    if (searchMode !== "unified" || !query.trim()) return;
+    if (unified.loading) return;
+    setResults(unified.cases.length > 0 ? unified.cases : CASE_STUDIES);
+    setResultSet(unified.cases.slice(0, 12).map((r) => ({ id: r.id, title: r.title, sector: r.sector })));
+    // Use unified synthesis when available, else fall back to keyword synthesis
+    if (unified.synthesis) setSynthesis({ text: unified.synthesis, unified: true, count: unified.cases.length });
+  }, [unified.cases, unified.synthesis, unified.loading, query, searchMode, setResultSet]);
 
   // Scroll to results only once per search session, after typing settles
   useEffect(() => {
@@ -1328,7 +1348,64 @@ function HandbookLandingPageContent() {
                 </button>
               )}
             </div>
-            {semanticPrompt && semanticScenario === "B" && (
+            {/* Search mode toggle — compare classic vs unified one-brain */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: 6, gap: 4 }}>
+              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Search mode:</span>
+              <button
+                onClick={() => setSearchMode("classic")}
+                style={{
+                  fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, border: "1px solid",
+                  borderColor: searchMode === "classic" ? "var(--accent)" : "var(--border)",
+                  background: searchMode === "classic" ? "var(--accent)" : "transparent",
+                  color: searchMode === "classic" ? "#fff" : "var(--text-muted)",
+                  cursor: "pointer", fontFamily: "inherit",
+                }}
+              >Classic</button>
+              <button
+                onClick={() => setSearchMode("unified")}
+                style={{
+                  fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, border: "1px solid",
+                  borderColor: searchMode === "unified" ? "var(--accent)" : "var(--border)",
+                  background: searchMode === "unified" ? "var(--accent)" : "transparent",
+                  color: searchMode === "unified" ? "#fff" : "var(--text-muted)",
+                  cursor: "pointer", fontFamily: "inherit",
+                }}
+              >Unified ✦</button>
+            </div>
+
+            {/* Unified mode: inline AI synthesis (auto-renders, no click required) */}
+            {searchMode === "unified" && query.trim() && (
+              <div style={{ marginTop: 8, padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, animation: "fadeUp 0.2s ease" }}>
+                {unified.loading && !unified.synthesis ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 13 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulse 1s infinite" }} />
+                    Searching…
+                  </div>
+                ) : unified.synthesis ? (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>
+                        {unified.cases.length} case{unified.cases.length === 1 ? "" : "s"} matched · One search, one result
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", margin: 0 }}>
+                      {unified.synthesis.slice(0, 280)}{unified.synthesis.length > 280 ? "…" : ""}
+                    </p>
+                    <button
+                      onClick={() => routeQueryToChat(query.trim())}
+                      style={{ marginTop: 10, fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 6, background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+                    >
+                      Ask a follow-up →
+                    </button>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No results for &ldquo;{query}&rdquo;</span>
+                )}
+              </div>
+            )}
+
+            {semanticPrompt && semanticScenario === "B" && searchMode === "classic" && (
               <div style={{ marginTop: 8, padding: "8px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, animation: "fadeUp 0.2s ease" }}>
                 <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{semanticPrompt}</span>
                 <button
@@ -1509,7 +1586,7 @@ function HandbookLandingPageContent() {
                   </div>
                 </div>
 
-                {synthesis && <div className="fade-in"><SynthesisPanel synthesis={synthesis} themeKey={themeKey} resultIds={results.map((c: { id: string }) => c.id)} /></div>}
+                {synthesis && searchMode === "classic" && <div className="fade-in"><SynthesisPanel synthesis={synthesis} themeKey={themeKey} resultIds={results.map((c: { id: string }) => c.id)} /></div>}
 
                 {/* Heatmap panel — ABOVE position (between synthesis and browse row) */}
                 {results.length > 0 && heatmapPosition === "above" && (

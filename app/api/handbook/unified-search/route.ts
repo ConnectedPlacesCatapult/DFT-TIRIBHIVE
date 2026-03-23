@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     // ── Step 1: single pgvector retrieval ──────────────────────────────────
     const { chunks, mode } = await semanticSearchChunks(query, {
       limit: 12,
-      threshold: 0.4,
+      threshold: 0.35, // explicit — never rely on DB default (some overloads default to 0.7)
     });
 
     // Deduplicate by article_id, keep highest-similarity chunk per article

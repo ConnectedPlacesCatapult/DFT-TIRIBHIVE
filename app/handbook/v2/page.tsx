@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useUnifiedSearch } from "@/lib/handbook/useUnifiedSearch";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
@@ -77,13 +77,30 @@ export default function HandbookV2Page() {
   const [query, setQuery] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [brief, setBrief] = useState<string[]>([]);
-  const { openChat, setSemanticChunks, setSessionIntent } = useChatContext();
+  const {
+    openChat,
+    setSemanticChunks,
+    setSessionIntent,
+    setResultSet,
+    setMessages,
+    setThinking,
+    setRetrievalMode,
+  } = useChatContext();
 
-  const { cases, synthesis, chips, chunks, loading, scenario } = useUnifiedSearch(query);
+  const { cases, synthesis, chips, chunks, loading, scenario, retrieval_mode } = useUnifiedSearch(query);
 
   const hasSynthesis = synthesis.length > 0;
   const hasCases = cases.length > 0;
   const hasResults = hasSynthesis || hasCases;
+
+  // Wire unified search results into ChatContext so the chat panel knows what the grid is showing
+  useEffect(() => {
+    if (chunks.length > 0) setSemanticChunks(chunks);
+    setResultSet(
+      cases.slice(0, 12).map((c) => ({ id: c.id, title: c.title, sector: c.sector }))
+    );
+    if (retrieval_mode) setRetrievalMode(retrieval_mode);
+  }, [cases, chunks, retrieval_mode, setSemanticChunks, setResultSet, setRetrievalMode]);
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -96,12 +113,47 @@ export default function HandbookV2Page() {
     [inputValue, setSessionIntent]
   );
 
-  const handleFollowUp = useCallback(() => {
-    if (chunks.length > 0) {
-      setSemanticChunks(chunks);
-    }
+  // Open chat with the initial query pre-sent so the conversation starts from context
+  const handleFollowUp = useCallback(async () => {
+    if (chunks.length > 0) setSemanticChunks(chunks);
+    const userMsg = { role: "user" as const, text: query };
+    setMessages([userMsg]);
     openChat("browse");
-  }, [chunks, setSemanticChunks, openChat]);
+    setThinking(true);
+    try {
+      const res = await fetch("/api/handbook/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", text: query }],
+          context: "browse",
+          session_intent: query,
+          result_set: cases.slice(0, 12).map((c) => ({ id: c.id, title: c.title, sector: c.sector })),
+          result_chunks: chunks.length > 0 ? chunks : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+      setMessages([
+        userMsg,
+        {
+          role: "ai" as const,
+          text: data.message ?? data.text ?? "",
+          chips: data.chips,
+          gap: data.gap,
+          actions: data.actions,
+          sources: data.sources,
+          retrieval_mode: data.retrieval_mode,
+          action: data.action,
+          actionDismissed: false,
+        },
+      ]);
+    } catch {
+      setMessages([userMsg, { role: "ai" as const, text: "Something went wrong. Please try again." }]);
+    } finally {
+      setThinking(false);
+    }
+  }, [query, cases, chunks, setSemanticChunks, setMessages, openChat, setThinking, setRetrievalMode]);
 
   const toggleBrief = useCallback((id: string) => {
     setBrief((prev) =>

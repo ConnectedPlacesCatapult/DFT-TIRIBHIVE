@@ -87,23 +87,35 @@ export function useUnifiedSearch(query: string): UnifiedSearchResult {
         const data = await res.json();
 
         // Map article_ids back to full CASE_STUDIES objects
-        const matchedCases = (data.cases as UnifiedCase[])
+        const rawCases: UnifiedCase[] = data.cases ?? [];
+        let matchedCases = rawCases
           .map((r) => {
             const cs = CASE_STUDIES.find((c) => c.id === r.article_id);
             return cs ? { ...cs, _similarity: r.similarity, _section: r.section_key } : null;
           })
           .filter(Boolean) as typeof CASE_STUDIES;
 
+        // Fallback: pgvector returned no chunks (DB fallback mode) but LLM cited IDs via chips.
+        // Use chips to show cards so the grid is never empty when synthesis has content.
+        const chips: string[] = data.chips ?? [];
+        if (matchedCases.length === 0 && chips.length > 0) {
+          matchedCases = chips
+            .map((id: string) => CASE_STUDIES.find((c) => c.id === id))
+            .filter(Boolean) as typeof CASE_STUDIES;
+        }
+
         setResult({
           cases: matchedCases,
-          rawCases: data.cases ?? [],
+          rawCases,
           synthesis: data.synthesis ?? "",
-          chips: data.chips ?? [],
-          chunks: (data.cases as UnifiedCase[]).map((c) => ({
-            article_id: c.article_id,
-            section_key: c.section_key,
-            chunk_text: c.chunk_text,
-          })),
+          chips,
+          chunks: rawCases.length > 0
+            ? rawCases.map((c) => ({
+                article_id: c.article_id,
+                section_key: c.section_key,
+                chunk_text: c.chunk_text,
+              }))
+            : chips.map((id: string) => ({ article_id: id, section_key: "general", chunk_text: "" })),
           scenario: data.scenario ?? null,
           retrieval_mode: data.retrieval_mode ?? null,
           loading: false,
