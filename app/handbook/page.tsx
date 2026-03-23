@@ -154,6 +154,50 @@ const SECTORS = ["Rail", "Aviation", "Maritime", "Highways"];
 const UK_REGIONS = ["London & South East", "East of England", "East Midlands", "North West", "Scotland", "Wales", "Coastal UK", "UK-wide"];
 const COST_BANDS = ["Under £1m", "£1m–£10m", "£10m–£100m", "£100m+", "Large programme"];
 
+// ── Typo correction ────────────────────────────────────────────────────────
+const KNOWN_SEARCH_TERMS = [
+  "flood", "flooding", "rain", "rainfall", "drainage", "water",
+  "heat", "temperature", "heatwave", "hot",
+  "storm", "storms", "wind", "weather",
+  "coastal", "coast", "sea", "surge",
+  "landslide", "slope", "embankment", "rockfall", "stability",
+  "drought", "dry",
+  "rail", "railway", "train", "track",
+  "road", "highway", "motorway", "pavement",
+  "aviation", "airport",
+  "port", "maritime", "harbour",
+  "climate", "adaptation", "resilience", "infrastructure", "transport",
+  "suds", "drainage", "bridge", "tunnel", "vegetation",
+];
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => [i, ...new Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i][j - 1], dp[i - 1][j]);
+    }
+  }
+  return dp[m][n];
+}
+
+function getFuzzyCorrection(q: string): string | null {
+  const lower = q.toLowerCase().trim();
+  if (lower.length < 3 || lower.includes(" ")) return null; // skip multi-word queries
+  if (KNOWN_SEARCH_TERMS.includes(lower)) return null;
+  const maxDist = lower.length <= 5 ? 1 : 2;
+  let best: string | null = null, bestDist = Infinity;
+  for (const term of KNOWN_SEARCH_TERMS) {
+    const d = levenshtein(lower, term);
+    if (d < bestDist && d <= maxDist) { bestDist = d; best = term; }
+  }
+  return best;
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 const detectIntent = (query) => {
   const q = query.toLowerCase();
   const detectedHazards = [], detectedSectors = [];
@@ -990,11 +1034,15 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode } = useChatContext();
   const T = THEMES[themeKey];
 
   // Toggle: "classic" uses v1 two-call system; "unified" uses one-brain v2
   const [searchMode, setSearchMode] = useState<"classic" | "unified">("classic");
+  // Unified mode: collapse/expand the non-AI-cited "more cases" section
+  const [showAllUnified, setShowAllUnified] = useState(false);
+  // Unified mode: typo correction — stores the original mistyped query
+  const [typoOriginal, setTypoOriginal] = useState<string | null>(null);
 
   // Shared semantic search + chat wiring (same hook as cases library)
   const { semanticResults, semanticScenario, semanticPrompt, routeQueryToChat } = useHandbookSearch(query);
@@ -1094,10 +1142,45 @@ function HandbookLandingPageContent() {
     if (searchMode !== "unified" || !query.trim()) return;
     if (unified.loading) return;
     setResults(unified.cases.length > 0 ? unified.cases : CASE_STUDIES);
-    setResultSet(unified.cases.slice(0, 12).map((r) => ({ id: r.id, title: r.title, sector: r.sector })));
-    // Use unified synthesis when available, else fall back to keyword synthesis
+    const rs = unified.cases.slice(0, 12).map((r) => ({ id: r.id, title: r.title, sector: r.sector }));
+    setResultSet(rs);
     if (unified.synthesis) setSynthesis({ text: unified.synthesis, unified: true, count: unified.cases.length });
-  }, [unified.cases, unified.synthesis, unified.loading, query, searchMode, setResultSet]);
+    // Pre-populate chat panel so "Ask a follow-up" opens an already-answered panel (no second API call)
+    if (unified.synthesis) {
+      if (unified.chunks.length > 0) setSemanticChunks(unified.chunks);
+      if (unified.retrieval_mode) setRetrievalMode(unified.retrieval_mode);
+      setMessages([
+        { role: "user", text: query },
+        {
+          role: "ai",
+          text: unified.synthesis,
+          chips: unified.chips,
+          sources: unified.chips,
+          retrieval_mode: unified.retrieval_mode ?? undefined,
+        },
+      ]);
+    }
+  }, [unified.cases, unified.synthesis, unified.loading, unified.chips, unified.chunks, unified.retrieval_mode, query, searchMode, setResultSet, setMessages, setSemanticChunks, setRetrievalMode]);
+
+  // Reset collapse state when query changes
+  useEffect(() => { setShowAllUnified(false); }, [query]);
+
+  // Typo correction: if unified returns 0 results, try auto-correcting the query
+  useEffect(() => {
+    if (searchMode !== "unified" || unified.loading) return;
+    if (unified.cases.length === 0 && !unified.synthesis && query.trim().length >= 3) {
+      const correction = getFuzzyCorrection(query.trim());
+      if (correction && correction !== query.trim().toLowerCase()) {
+        setTypoOriginal(query.trim());
+        setQuery(correction);
+        setInputValue(correction);
+      }
+    } else {
+      // Clear correction banner once results are showing normally
+      if (!typoOriginal || unified.cases.length > 0) setTypoOriginal(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unified.cases.length, unified.synthesis, unified.loading, searchMode]);
 
   // Scroll to results only once per search session, after typing settles
   useEffect(() => {
@@ -1373,6 +1456,21 @@ function HandbookLandingPageContent() {
               >Unified ✦</button>
             </div>
 
+            {/* Unified mode: typo correction banner */}
+            {searchMode === "unified" && typoOriginal && (
+              <div style={{ marginTop: 8, padding: "8px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, display: "flex", alignItems: "center", gap: 8, fontSize: 12, animation: "fadeUp 0.2s ease" }}>
+                <span style={{ color: "var(--text-muted)" }}>Showing results for:</span>
+                <strong style={{ color: "var(--text-primary)" }}>{query}</strong>
+                <span style={{ color: "var(--text-muted)", margin: "0 2px" }}>·</span>
+                <button
+                  onClick={() => { setQuery(typoOriginal); setInputValue(typoOriginal); setTypoOriginal(null); }}
+                  style={{ fontSize: 12, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit", textDecoration: "underline" }}
+                >
+                  Search instead for: {typoOriginal}
+                </button>
+              </div>
+            )}
+
             {/* Unified mode: inline AI synthesis (auto-renders, no click required) */}
             {searchMode === "unified" && query.trim() && (
               <div style={{ marginTop: 8, padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, animation: "fadeUp 0.2s ease" }}>
@@ -1386,18 +1484,43 @@ function HandbookLandingPageContent() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
                       <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>
-                        {unified.cases.length} case{unified.cases.length === 1 ? "" : "s"} matched · One search, one result
+                        {unified.chips.length > 0
+                          ? <>{unified.chips.length} case{unified.chips.length === 1 ? "" : "s"} highlighted · {unified.cases.length > unified.chips.length ? `${unified.cases.length - unified.chips.length} more in library` : "one search, one result"}</>
+                          : <>{unified.cases.length} case{unified.cases.length === 1 ? "" : "s"} found · one search, one result</>
+                        }
                       </span>
                     </div>
-                    <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", margin: 0 }}>
-                      {unified.synthesis.slice(0, 280)}{unified.synthesis.length > 280 ? "…" : ""}
+                    <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", margin: "0 0 10px" }}>
+                      {unified.synthesis}
                     </p>
-                    <button
-                      onClick={() => routeQueryToChat(query.trim())}
-                      style={{ marginTop: 10, fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 6, background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-                    >
-                      Ask a follow-up →
-                    </button>
+                    {unified.chips && unified.chips.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                        {unified.chips.map((id) => {
+                          const cs = results.find((r: { id: string }) => r.id === id);
+                          return cs ? (
+                            <a key={id} href={`/handbook/cases/${id}`} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", textDecoration: "none", fontWeight: 500 }}>
+                              {cs.title ?? id} ↗
+                            </a>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => { setChatContext("browse"); openChat(); }}
+                        style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 6, background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+                      >
+                        Ask a follow-up →
+                      </button>
+                      {unified.chips && unified.chips.length > 0 && (
+                        <a
+                          href={`/handbook/brief?ids=${unified.chips.join(",")}`}
+                          style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 6, background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", cursor: "pointer", textDecoration: "none" }}
+                        >
+                          Build brief from {unified.chips.length} case{unified.chips.length === 1 ? "" : "s"} →
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No results for &ldquo;{query}&rdquo;</span>
@@ -1575,7 +1698,9 @@ function HandbookLandingPageContent() {
                     <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
                       {viewMode === 'measures'
                         ? <><strong style={{ color: "var(--text-primary)" }}>{measureDisplayItems.length}</strong> {measureDisplayItems.length === 1 ? "measure" : "measures"} across <strong>{(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length}</strong> case {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length === 1 ? "study" : "studies"}</>
-                        : <>{(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length} case {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length === 1 ? "study" : "studies"} matched</>
+                        : searchMode === "unified" && unified.chips.length > 0
+                          ? <><strong style={{ color: "var(--text-primary)" }}>{unified.chips.length}</strong> case{unified.chips.length === 1 ? "" : "s"} highlighted by AI{unified.cases.length > unified.chips.length ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {unified.cases.length - unified.chips.length} more in library</span> : ""}</>
+                          : <>{(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length} case {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length === 1 ? "study" : "studies"} matched</>
                       }
                     </span>
                     <button onClick={clearAll} style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "underline" }}>Clear all</button>
@@ -1648,11 +1773,44 @@ function HandbookLandingPageContent() {
                     </div>
                   ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
-                    {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).map((cs, i) => (
-                      <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
-                        <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} />
-                      </div>
-                    ))}
+                    {(() => {
+                      const displayResults = exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results;
+                      // In unified mode with AI chips: split into highlighted + collapsible rest
+                      if (searchMode === "unified" && unified.chips.length > 0) {
+                        const aiCited = displayResults.filter(cs => unified.chips.includes(cs.id));
+                        const others = displayResults.filter(cs => !unified.chips.includes(cs.id));
+                        return (
+                          <>
+                            {aiCited.map((cs, i) => (
+                              <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
+                                <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={true} />
+                              </div>
+                            ))}
+                            {others.length > 0 && (
+                              <>
+                                <button
+                                  onClick={() => setShowAllUnified(p => !p)}
+                                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: "var(--text-muted)", background: "none", border: "1px dashed var(--border)", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontFamily: "inherit", width: "100%", justifyContent: "center" }}
+                                >
+                                  <svg style={{ width: 14, height: 14, transition: "transform 0.2s", transform: showAllUnified ? "rotate(180deg)" : "none" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                  {showAllUnified ? `Hide ${others.length} additional case${others.length === 1 ? "" : "s"}` : `Show ${others.length} more related case${others.length === 1 ? "" : "s"} in library`}
+                                </button>
+                                {showAllUnified && others.map((cs, i) => (
+                                  <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: 0.75 }}>
+                                    <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={false} />
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                          </>
+                        );
+                      }
+                      return displayResults.map((cs, i) => (
+                        <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
+                          <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} />
+                        </div>
+                      ));
+                    })()}
                   </div>
                   )
                 ) : (

@@ -197,10 +197,8 @@ export async function hybridSearchChunks(
   // ── Semantic retrieval ───────────────────────────────────────────────────
   const semanticResult = await retrieveContext(query, { limit: limit * 2, threshold });
 
-  // If no DB connection at all, return fallback immediately
-  if (semanticResult.mode === "fallback") {
-    return { chunks: [], mode: "fallback" };
-  }
+  // If DB is fully down, note it — but still run keyword search below so we return something useful
+  const semanticFailed = semanticResult.mode === "fallback";
 
   // Deduplicate semantic chunks: best chunk per article
   const semanticByArticle = new Map<string, RetrievedChunk>();
@@ -256,7 +254,9 @@ export async function hybridSearchChunks(
     })
     .filter(Boolean) as RetrievedChunk[];
 
-  return { chunks: finalChunks, mode: "rag" };
+  // If semantic search was down but keyword found results, return those as a keyword-only result set
+  const resultMode = semanticFailed && finalChunks.length > 0 ? "rag" : semanticFailed ? "fallback" : "rag";
+  return { chunks: finalChunks, mode: resultMode };
 }
 
 async function retrieveContext(

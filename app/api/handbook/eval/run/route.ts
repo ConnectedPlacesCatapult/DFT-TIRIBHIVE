@@ -280,7 +280,7 @@ export async function POST(req: NextRequest) {
           .order("run_batch", { ascending: false })
           .limit(1)
           .maybeSingle();
-        referenceBatch = (latest as { run_batch?: string } | null)?.run_batch ?? null;
+        referenceBatch = (latest as { run_batch?: string } | null)?.run_batch ?? undefined;
       }
       if (referenceBatch) {
         const { data: refRuns } = await sb

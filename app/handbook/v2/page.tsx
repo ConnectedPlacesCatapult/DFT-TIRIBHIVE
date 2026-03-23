@@ -83,7 +83,6 @@ export default function HandbookV2Page() {
     setSessionIntent,
     setResultSet,
     setMessages,
-    setThinking,
     setRetrievalMode,
   } = useChatContext();
 
@@ -102,6 +101,22 @@ export default function HandbookV2Page() {
     if (retrieval_mode) setRetrievalMode(retrieval_mode);
   }, [cases, chunks, retrieval_mode, setSemanticChunks, setResultSet, setRetrievalMode]);
 
+  // Pre-populate chat panel with synthesis so "Ask a follow-up" opens an already-answered panel
+  useEffect(() => {
+    if (!synthesis || loading) return;
+    setMessages([
+      { role: "user", text: query },
+      {
+        role: "ai",
+        text: synthesis,
+        chips,
+        sources: chips,
+        retrieval_mode: (retrieval_mode as "rag" | "fallback" | undefined) ?? undefined,
+      },
+    ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [synthesis, loading]);
+
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -113,47 +128,10 @@ export default function HandbookV2Page() {
     [inputValue, setSessionIntent]
   );
 
-  // Open chat with the initial query pre-sent so the conversation starts from context
-  const handleFollowUp = useCallback(async () => {
-    if (chunks.length > 0) setSemanticChunks(chunks);
-    const userMsg = { role: "user" as const, text: query };
-    setMessages([userMsg]);
+  // Open chat — synthesis is already pre-loaded into messages by the effect above, no second fetch needed
+  const handleFollowUp = useCallback(() => {
     openChat("browse");
-    setThinking(true);
-    try {
-      const res = await fetch("/api/handbook/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", text: query }],
-          context: "browse",
-          session_intent: query,
-          result_set: cases.slice(0, 12).map((c) => ({ id: c.id, title: c.title, sector: c.sector })),
-          result_chunks: chunks.length > 0 ? chunks : undefined,
-        }),
-      });
-      const data = await res.json();
-      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
-      setMessages([
-        userMsg,
-        {
-          role: "ai" as const,
-          text: data.message ?? data.text ?? "",
-          chips: data.chips,
-          gap: data.gap,
-          actions: data.actions,
-          sources: data.sources,
-          retrieval_mode: data.retrieval_mode,
-          action: data.action,
-          actionDismissed: false,
-        },
-      ]);
-    } catch {
-      setMessages([userMsg, { role: "ai" as const, text: "Something went wrong. Please try again." }]);
-    } finally {
-      setThinking(false);
-    }
-  }, [query, cases, chunks, setSemanticChunks, setMessages, openChat, setThinking, setRetrievalMode]);
+  }, [openChat]);
 
   const toggleBrief = useCallback((id: string) => {
     setBrief((prev) =>
