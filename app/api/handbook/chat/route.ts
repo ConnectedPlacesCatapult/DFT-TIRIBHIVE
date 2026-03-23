@@ -28,6 +28,26 @@ export async function POST(req: NextRequest) {
       context.session_intent = body.session_intent;
     }
 
+    if (body.result_set && Array.isArray(body.result_set) && body.result_set.length > 0) {
+      context.result_set = body.result_set.map(
+        (r: { id?: string; title?: string; sector?: string }) => ({
+          id: r.id ?? "",
+          title: r.title ?? "",
+          sector: r.sector ?? "",
+        })
+      );
+    }
+
+    if (body.result_chunks && Array.isArray(body.result_chunks) && body.result_chunks.length > 0) {
+      context.result_chunks = body.result_chunks.map(
+        (c: { article_id?: string; section_key?: string; chunk_text?: string }) => ({
+          article_id: c.article_id ?? "",
+          section_key: c.section_key ?? "general",
+          chunk_text: c.chunk_text ?? "",
+        })
+      ).filter((c: { chunk_text: string }) => c.chunk_text);
+    }
+
     if (body.brief_sections && Array.isArray(body.brief_sections) && context.mode === "synthesis") {
       context.brief_sections = body.brief_sections.map(
         (s: { section_key?: string; section?: string; content: string }) => ({
@@ -35,6 +55,10 @@ export async function POST(req: NextRequest) {
           content: s.content ?? "",
         })
       );
+    }
+
+    if (Array.isArray(body.suggestions_shown)) {
+      context.suggestions_shown = body.suggestions_shown;
     }
 
     const response: ChatApiResponse = await getAIResponse(messages, context);

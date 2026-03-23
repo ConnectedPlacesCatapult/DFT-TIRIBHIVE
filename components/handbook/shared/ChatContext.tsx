@@ -85,6 +85,15 @@ type HandbookContextType = {
   /** Extent: gradient = steepness (%), scrim = blur px, backplate = radius px; 0–120; persisted; lower = more fade coverage */
   heroTextTreatmentExtent: number;
   setHeroTextTreatmentExtent: (v: number) => void;
+  /** Current grid result set (handbook landing) — passed to chat so AI knows what user is looking at; one list, one number */
+  resultSet: Array<{ id: string; title: string; sector: string }>;
+  setResultSet: (set: Array<{ id: string; title: string; sector: string }>) => void;
+  /** Chunks from the most recent semantic search — passed to chat so it uses the same retrieval as the grid */
+  semanticChunks: Array<{ article_id: string; section_key: string; chunk_text: string }>;
+  setSemanticChunks: (chunks: Array<{ article_id: string; section_key: string; chunk_text: string }>) => void;
+  /** System awareness suggestion IDs already shown this session — do not repeat (explore mode) */
+  suggestionsShown: string[];
+  setSuggestionsShown: (ids: string[] | ((prev: string[]) => string[])) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -122,6 +131,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const setDemoCounts = useCallback((counts: { cases: number; measures: number }) => {
     setDemoCountsState(counts);
   }, []);
+  const [resultSet, setResultSet] = useState<Array<{ id: string; title: string; sector: string }>>([]);
+  const [semanticChunks, setSemanticChunks] = useState<Array<{ article_id: string; section_key: string; chunk_text: string }>>([]);
+  const [suggestionsShown, setSuggestionsShown] = useState<string[]>([]);
 
   const [backgroundEffect, setBackgroundEffectState] = useState<
     "none" | "particles" | "hero"
@@ -178,6 +190,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const stored = sessionStorage.getItem(SESSION_INTENT_KEY);
     if (stored) setSessionIntentState(stored);
   }, []);
+
+  useEffect(() => {
+    setSuggestionsShown([]);
+  }, [chatContext]);
 
   const setSessionIntent = useCallback((intent: string) => {
     setSessionIntentState(intent);
@@ -253,6 +269,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setHeroTextTreatment,
         heroTextTreatmentExtent,
         setHeroTextTreatmentExtent,
+        resultSet,
+        setResultSet,
+        semanticChunks,
+        setSemanticChunks,
+        suggestionsShown,
+        setSuggestionsShown,
       }}
     >
       {children}

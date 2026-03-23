@@ -47,6 +47,14 @@ const CONTEXT_CONFIGS: Record<string, ContextConfig> = {
   },
 };
 
+const SUGGESTION_DETECTORS: [string, RegExp][] = [
+  ["brief_nudge", /build a brief from these/i],
+  ["compare_nudge", /compare.*with similar cases/i],
+  ["source_nudge", /suggest a source/i],
+  ["gap_nudge", /turn these findings into.*brief/i],
+  ["howto_nudge", /describe your infrastructure challenge/i],
+];
+
 function getConfig(context: string): ContextConfig {
   if (context.startsWith("case:")) {
     const id = context.replace("case:", "");
@@ -312,6 +320,10 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     isThinking,
     pendingBriefMessage,
     setPendingBriefMessage,
+    resultSet,
+    semanticChunks,
+    suggestionsShown,
+    setSuggestionsShown,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -406,7 +418,10 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           messages: updatedMessages,
           context,
           session_intent: sessionIntent || undefined,
+          result_set: resultSet.length > 0 ? resultSet : undefined,
+          result_chunks: semanticChunks.length > 0 ? semanticChunks : undefined,
           brief_sections: context.startsWith("brief:") && briefSections ? briefSections : undefined,
+          suggestions_shown: suggestionsShown,
         }),
       });
       const data = await res.json();
@@ -423,6 +438,12 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         actionDismissed: false,
       };
       setMessages((prev) => [...prev, aiMsg]);
+      const responseText = aiMsg.text ?? "";
+      const matched = SUGGESTION_DETECTORS.find(([, re]) => re.test(responseText));
+      if (matched) {
+        const [id] = matched;
+        setSuggestionsShown((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -677,7 +698,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                   </div>
                 )}
                 {/* Navigation links: view cases or build brief from cited IDs */}
-                {m.role === "ai" && m.chips && m.chips.length >= 2 && (
+                {m.role === "ai" && ((m.chips?.length ?? 0) >= 2 || (context === "browse" && resultSet.length >= 2)) && (
                   <div
                     style={{
                       marginTop: 6,
@@ -687,7 +708,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     }}
                   >
                     <Link
-                      href={`/handbook/cases?highlight=${m.chips.join(",")}`}
+                      href={`/handbook/cases?highlight=${(context === "browse" && resultSet.length >= 2 ? resultSet.map((r) => r.id) : m.chips ?? []).join(",")}`}
                       style={{
                         padding: "5px 10px",
                         borderRadius: 5,
@@ -703,10 +724,10 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                         gap: 4,
                       }}
                     >
-                      View {m.chips.length} cases ↗
+                      View {context === "browse" && resultSet.length >= 2 ? resultSet.length : (m.chips?.length ?? 0)} cases ↗
                     </Link>
                     <Link
-                      href={`/handbook/brief?ids=${m.chips.join(",")}`}
+                      href={`/handbook/brief?ids=${(m.chips ?? []).join(",")}`}
                       style={{
                         padding: "5px 10px",
                         borderRadius: 5,

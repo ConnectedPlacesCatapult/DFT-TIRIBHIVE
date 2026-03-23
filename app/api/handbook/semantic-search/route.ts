@@ -28,10 +28,10 @@ export async function GET(req: NextRequest) {
 
     const topSimilarity = chunks[0]?.similarity ?? 0;
 
-    // Deduplicate by article_id and pick the highest similarity per article
+    // Deduplicate by article_id and pick the highest similarity per article (keep chunk_text)
     const articleMap = new Map<
       string,
-      { article_id: string; similarity: number; section_key: string }
+      { article_id: string; similarity: number; section_key: string; chunk_text: string }
     >();
     for (const c of chunks) {
       const existing = articleMap.get(c.article_id);
@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
           article_id: c.article_id,
           similarity: c.similarity ?? 0,
           section_key: c.section_key ?? "general",
+          chunk_text: c.chunk_text,
         });
       }
     }

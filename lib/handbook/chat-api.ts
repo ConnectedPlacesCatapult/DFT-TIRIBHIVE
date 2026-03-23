@@ -34,6 +34,9 @@ export type ChatContext = {
   }[];
   brief_sections?: { section: string; content: string }[];
   session_intent?: string;
+  suggestions_shown?: string[];
+  /** Pre-loaded chunks from the grid's semantic search — when present, skip a second pgvector call */
+  result_chunks?: { article_id: string; section_key: string; chunk_text: string }[];
 };
 
 export type ChatAction = {
@@ -67,6 +70,18 @@ type RetrievedChunk = {
   similarity?: number;
 };
 
+/** Heat-related query detection: same logic used for threshold and expansion. */
+export const HEAT_QUERY_REGEX = /\b(heat\s*stress|extreme\s*heat|temperature\s*adaptation|thermal|overheating)\b/i;
+
+/**
+ * For heat-related queries, append synonym phrases so the embedding better matches
+ * chunks that use "extreme heat" / "temperature" wording (explore_02 retrieval fix).
+ */
+export function getEmbeddingQueryForRetrieval(query: string): string {
+  if (!HEAT_QUERY_REGEX.test(query)) return query;
+  return `${query} extreme heat temperature adaptation infrastructure`;
+}
+
 async function retrieveContext(
   query: string,
   options?: { section?: string; limit?: number; threshold?: number }
@@ -97,9 +112,10 @@ async function retrieveContext(
     const { default: OpenAI } = await import("openai");
     const openai = new OpenAI({ apiKey: openaiKey });
 
+    const embeddingInput = getEmbeddingQueryForRetrieval(query);
     const embResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
-      input: query,
+      input: embeddingInput,
     });
     const queryEmbedding = embResponse.data[0].embedding;
 
@@ -213,6 +229,16 @@ export async function semanticSearchChunks(
 // System prompts — Five-layer architecture (Brief v3 §8)
 // ---------------------------------------------------------------------------
 
+/** Shared core rules for all HIVE AI responses; prepended to brief-generate and other endpoints. */
+export const HIVE_CORE_RULES = `<core_rules>
+CORE RULES (apply to all HIVE AI responses):
+1. Only use information present in the retrieved context or provided case study text
+2. Never invent case study names, organisations, costs, dates, or outcomes
+3. If evidence is absent, say "The knowledge base does not cover this" — never fill gaps with general knowledge
+4. Cite every factual claim with [ID_xx]
+5. If uncertain, say so explicitly
+</core_rules>`;
+
 // LAYER 0 — CITATION RULE (first instruction the model sees — non-negotiable)
 const CITATION_RULE = `<citation_rule>
 MANDATORY: Every case study, project, or organisation you mention MUST include its case ID in square brackets immediately after the name — e.g. "Sheffield Grey to Green [ID_40]", "Austrian Federal Railways [ID_06]". Every factual claim about a case (cost, measure, outcome, hazard) MUST end with a citation in brackets.
@@ -231,9 +257,15 @@ const CONSTRAINTS = `<constraints>
 1. CITE OR DON'T MENTION: Only cite case IDs from the retrieved context below. If you name a project, its [ID_xx] must follow immediately. No exceptions.
 2. Never invent costs, dates, project names, outcomes, or statistics.
 3. If a query falls outside transport climate adaptation, redirect constructively: "That's outside the HIVE knowledge base, but I can help you explore [nearest relevant topic]."
-4. Be concise by default. Expand only when the user asks for more detail or the topic warrants it.
+4. RESPONSE LENGTH:
+   - Simple factual question (what, when, how much): 2-4 sentences maximum
+   - Exploratory question (what cases, what options): short paragraph + list if 3+ items
+   - Analytical question (compare, why, what would): short intro, then table or numbered points, then 1-2 sentence synthesis
+   - Never pad responses — if 2 sentences answers it, stop at 2
+   - Expand only when the user explicitly asks for more detail
 5. Before suggesting an action (add to brief, filter change), describe what it will do. Never auto-apply changes.
 6. If a query is vague, ask one clarifying question rather than guessing.
+7. SYSTEM AWARENESS: Contextual suggestions appear only at the END of a response, never mid-answer, maximum one per response, and only when contextually relevant. Never repeat a suggestion already shown this session.
 </constraints>`;
 
 // ---------------------------------------------------------------------------
@@ -291,9 +323,34 @@ Usage question — User: "What can you do?" or "How does this work?"
 Domain context — User: "I work in drainage" or "I'm looking at aviation resilience"
 → Acknowledge their sector, surface the most relevant cases, and note gaps. Example: "For surface water management, the strongest cases are [ID_40] and [ID_12]. The knowledge base is thinner on combined sewer overflow — worth noting."
 
-Comparison request → Use the COMPARATOR skill.
-Gap question → Use the GAP ANALYST skill.
-Transfer question → Use the TRANSFER ANALYST skill.
+Comparison request — User: "Compare Sheffield Grey to Green and Heathrow Balancing Ponds on their approach to flood risk"
+Ideal response (produce a structured comparison table like this):
+"Here's a structured comparison [ID_40] vs [ID_32]:
+
+| Dimension | Sheffield Grey to Green [ID_40] | Heathrow Balancing Ponds [ID_32] |
+|-----------|----------------------------------|----------------------------------|
+| Hazard addressed | Surface water flooding, urban runoff | Heavy rainfall, drainage overload |
+| Approach | Nature-based SuDS, rain gardens | Constructed balancing ponds with tilting weirs |
+| Scale | 1.5km corridor, city centre | Airport-wide drainage integration |
+| Cost | £3.6m Phase 1, £6.3m Phase 2 | £2.1m bundled into wider programme |
+| UK transferability | High — largest retrofit in UK | High — directly applicable to UK airports |
+
+Key difference: Sheffield prioritises biodiversity and place-making alongside flood risk; Heathrow prioritises operational continuity with minimal disruption to existing infrastructure."
+
+Gap question — User: "What don't you have on wildfire risk to transport?"
+Ideal response:
+"The knowledge base does not currently contain any case studies specifically addressing wildfire risk to transport infrastructure. The closest adjacent cases cover vegetation management [ID_16] and slope stabilisation [ID_06], but neither addresses fire as the primary hazard. For wildfire specifically, you would need to look outside this knowledge base — California DOT (Caltrans) [ID_34] covers climate adaptation broadly but not wildfire in particular."
+
+Transfer question — User: "How would the Sheffield Grey to Green approach apply to a major airport like Heathrow?"
+Ideal response:
+"Applying Sheffield Grey to Green [ID_40] to airport infrastructure involves three considerations:
+
+1. What transfers directly: The SuDS principle — capturing and slowly releasing surface water through permeable surfaces and swales — is directly applicable to airport perimeter roads, taxiways, and car parks where runoff volumes are significant.
+
+2. What needs adaptation: Sheffield's approach used former road space for green corridors. Airports have strict security perimeters and FOD (foreign object debris) requirements that would prevent open vegetation near runways. Any planting would need to be contained and away from operational areas.
+
+3. What would not transfer: The biodiversity and community benefit dimension — a key Sheffield co-benefit — is largely irrelevant in an airport operational zone. The business case would need to rest entirely on drainage performance and maintenance cost reduction."
+
 Thin results → Acknowledge honestly, use the SEARCH STRATEGIST skill, note the gap.
 Out of scope → Redirect: "That's outside the HIVE knowledge base. I can help you find transport climate adaptation cases — is there a specific hazard or infrastructure type you'd like to explore?"
 </topic_references>
@@ -307,6 +364,25 @@ ${SKILL_TRANSFER_ANALYST}
 
 ${SKILL_SEARCH_STRATEGIST}
 </skills>
+
+<system_awareness>
+At the END of a response (never mid-answer), you may add ONE contextual suggestion when relevant. Never more than one per response. Phrase as an option, not a directive. Skip if the suggestion ID is in the "already shown" list above.
+
+MOMENT brief_nudge — After returning 3+ case study results:
+"You could also generate a combined brief from these cases — it synthesises the evidence and identifies cross-case patterns. Just say 'build a brief from these' to start."
+
+MOMENT compare_nudge — After a deep dive question on a single case:
+"If you want to see how other cases approach [same hazard], I can compare them — just ask 'compare this with similar cases'."
+
+MOMENT source_nudge — After admitting the knowledge base doesn't cover a topic:
+"The knowledge base doesn't cover this yet. You can suggest a source for review — there's a 'Suggest a source' option on the cases page."
+
+MOMENT gap_nudge — After a comparison or gap analysis question:
+"If you want to turn these findings into a structured brief, say 'build a brief' and I'll synthesise the evidence across all the cases we've discussed."
+
+MOMENT howto_nudge — On first greeting or "how does this work":
+End your welcome with: "The quickest way to start is to describe your infrastructure challenge in the search bar — or just tell me what you're working on."
+</system_awareness>
 
 End every response with one suggested next action, e.g. "You could also explore [related topic] or build a brief from these cases."`;
 
@@ -393,6 +469,17 @@ Rules for the update block:
 - Only include one block per response
 - Only include it when the user is clearly asking for a section change — not for questions, gap analysis, or general discussion
 </proposed_update_format>
+
+<proposed_update_bad_example>
+Do NOT produce a block like this:
+---PROPOSED_UPDATE---
+section_key: the executive summary
+reason: I rewrote it because the user asked and here is the full new text with all the details about Sheffield and flooding and SuDS and...
+content: just a brief note
+---END_UPDATE---
+
+Problems: section_key must be an exact key (executive_summary not 'the executive summary'); reason must be ONE sentence only; content must be the FULL replacement text; never swap reason and content fields.
+</proposed_update_bad_example>
 
 <skills>
 ${SKILL_COMPARATOR}
@@ -489,6 +576,10 @@ function buildSystemPrompt(
     ? `\nUser's original search intent: "${context.session_intent}"`
     : "";
 
+  const suggestionsLine = context.suggestions_shown?.length
+    ? `\nSuggestions already shown this session: ${context.suggestions_shown.join(", ")}. Do not repeat any of these.`
+    : "";
+
   return [
     CITATION_RULE,
     PERSONA,
@@ -498,6 +589,7 @@ function buildSystemPrompt(
     modePrompt,
     modeContext,
     intentLine,
+    suggestionsLine,
     "",
     dataLabel,
     retrievedContent,
@@ -703,10 +795,26 @@ export async function getAIResponse(
       .map((s) => `## ${s.section}\n${s.content}`)
       .join("\n\n");
     retrieval = { chunks: [], formatted, mode: "rag" };
+  } else if (context.result_chunks?.length) {
+    // Grid already ran semantic search — reuse those chunks (one search, two interfaces)
+    const formatted = context.result_chunks
+      .map((c) => `[${c.article_id}] (${c.section_key}):\n${c.chunk_text}`)
+      .join("\n\n---\n\n");
+    retrieval = {
+      chunks: context.result_chunks.map((c) => ({
+        article_id: c.article_id,
+        section_key: c.section_key,
+        chunk_text: c.chunk_text,
+      })),
+      formatted,
+      mode: "rag",
+    };
   } else {
+    // No pre-loaded chunks — fresh pgvector search (standalone chat, no prior search)
+    const threshold = context.mode === "deep_dive" ? 0.4 : 0.35;
     retrieval = await retrieveContext(lastUserMessage, {
-      limit: context.mode === "deep_dive" ? 12 : 8,
-      threshold: 0.4,
+      limit: 12,
+      threshold,
     });
   }
 
@@ -729,11 +837,11 @@ export async function getAIResponse(
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      { role: "system", content: systemPrompt },
-      ...messages.map((m) => ({
+    { role: "system", content: systemPrompt },
+    ...messages.map((m) => ({
         role: (m.role === "ai" ? "assistant" : "user") as "assistant" | "user",
-        content: m.text,
-      })),
+      content: m.text,
+    })),
     ],
     temperature: 0.2,
     max_tokens: maxTokens,
