@@ -1054,6 +1054,13 @@ function HandbookLandingPageContent() {
     setDemoCounts({ cases: CASE_STUDIES.length, measures: TOTAL_MEASURE_COUNT });
   }, [setDemoCounts]);
 
+  // Silently pre-warm the unified-search cache in the background on first page load.
+  // Fire-and-forget — no await, no loading state, no user impact.
+  // The 25 queries warm over ~60-90s; subsequent users get ~20ms cache hits.
+  useEffect(() => {
+    fetch("/api/handbook/prewarm", { method: "POST" }).catch(() => {});
+  }, []);
+
   const [marqueeSelectedId, setMarqueeSelectedId] = useState(null); // caseStudyId or 'PH_SECTOR'
   const [brief, setBrief] = useState([]);
   const [briefOpen, setBriefOpen] = useState(false);
@@ -1388,12 +1395,35 @@ function HandbookLandingPageContent() {
             backplateStyle={{ background: T.bg, borderRadius: heroTextTreatmentExtent, padding: 24, maxWidth: 800 }}
           >
           <div className="fade-up" style={{ maxWidth: 768 }}>
-            <h1 style={{ fontSize: "2.25rem", fontWeight: 400, lineHeight: 1.25, marginBottom: 12, fontFamily: "'DM Serif Display', serif", color: T.textPrimary }}>
+            <h1
+              style={{
+                fontSize: "2.25rem",
+                fontWeight: 400,
+                lineHeight: 1.25,
+                marginBottom: 10,
+                fontFamily: "'DM Serif Display', serif",
+                color: T.textPrimary,
+                ...(backgroundEffect === "hero"
+                  ? { textShadow: themeKey === "dark" ? "0 1px 3px rgba(0,0,0,0.75)" : "0 1px 2px rgba(255,255,255,0.9), 0 0 24px rgba(247,245,240,0.85)" }
+                  : {}),
+              }}
+            >
               What risk are you
               <span style={{ fontStyle: "italic", color: T.accent }}> managing?</span>
             </h1>
-            <p style={{ fontSize: 16, marginBottom: 24, maxWidth: 576, lineHeight: 1.625, color: T.textSecondary }}>
-              Describe your infrastructure challenge in plain English. HIVE surfaces proven adaptations, comparable case studies, and structured evidence you can use immediately.
+            <p
+              style={{
+                fontSize: 15,
+                marginBottom: 22,
+                maxWidth: 520,
+                lineHeight: 1.55,
+                color: T.textSecondary,
+                ...(backgroundEffect === "hero"
+                  ? { textShadow: themeKey === "dark" ? "0 1px 2px rgba(0,0,0,0.7)" : "0 1px 2px rgba(255,255,255,0.85), 0 0 18px rgba(247,245,240,0.75)" }
+                  : {}),
+              }}
+            >
+              Search in plain English for adaptations, comparable case studies, and evidence you can use.
             </p>
           </div>
 
@@ -1431,29 +1461,58 @@ function HandbookLandingPageContent() {
                 </button>
               )}
             </div>
-            {/* Search mode toggle — compare classic vs unified one-brain */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: 6, gap: 4 }}>
-              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Search mode:</span>
-              <button
-                onClick={() => setSearchMode("classic")}
+            {/* Search mode — segmented control (single visual unit) */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: 8, gap: 8 }}>
+              <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Search mode</span>
+              <div
+                role="group"
+                aria-label="Search mode"
                 style={{
-                  fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, border: "1px solid",
-                  borderColor: searchMode === "classic" ? "var(--accent)" : "var(--border)",
-                  background: searchMode === "classic" ? "var(--accent)" : "transparent",
-                  color: searchMode === "classic" ? "#fff" : "var(--text-muted)",
-                  cursor: "pointer", fontFamily: "inherit",
+                  display: "inline-flex",
+                  padding: 2,
+                  borderRadius: 8,
+                  background: "var(--surface-alt)",
+                  border: "1px solid var(--border)",
+                  gap: 0,
                 }}
-              >Classic</button>
-              <button
-                onClick={() => setSearchMode("unified")}
-                style={{
-                  fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 4, border: "1px solid",
-                  borderColor: searchMode === "unified" ? "var(--accent)" : "var(--border)",
-                  background: searchMode === "unified" ? "var(--accent)" : "transparent",
-                  color: searchMode === "unified" ? "#fff" : "var(--text-muted)",
-                  cursor: "pointer", fontFamily: "inherit",
-                }}
-              >Unified ✦</button>
+              >
+                <button
+                  type="button"
+                  onClick={() => setSearchMode("classic")}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: "5px 12px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: searchMode === "classic" ? "var(--surface)" : "transparent",
+                    color: searchMode === "classic" ? "var(--text-primary)" : "var(--text-muted)",
+                    boxShadow: searchMode === "classic" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Classic
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchMode("unified")}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: "5px 12px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: searchMode === "unified" ? "var(--surface)" : "transparent",
+                    color: searchMode === "unified" ? "var(--text-primary)" : "var(--text-muted)",
+                    boxShadow: searchMode === "unified" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Unified ✦
+                </button>
+              </div>
             </div>
 
             {/* Unified mode: typo correction banner */}
@@ -1551,7 +1610,7 @@ function HandbookLandingPageContent() {
           {/* Filters */}
           <div className="fade-up" style={{ marginTop: 20, maxWidth: 768, animationDelay: "0.15s", display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Search describes your situation. Filters narrow by category. Both work together.</p>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Narrow results with filters—hazard, sector, region, and more.</p>
               <button onClick={() => setFiltersOpen(!filtersOpen)}
                 style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}>
                 {filtersOpen ? "Hide filters" : "Show filters"}
