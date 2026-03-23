@@ -10,7 +10,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { semanticSearchChunks, getAIResponse } from "@/lib/handbook/chat-api";
+import { hybridSearchChunks, getDynamicThreshold, getAIResponse } from "@/lib/handbook/chat-api";
 
 export async function POST(req: NextRequest) {
   let body: { q?: string };
@@ -29,38 +29,25 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // ── Step 1: single pgvector retrieval ──────────────────────────────────
-    const { chunks, mode } = await semanticSearchChunks(query, {
+    // ── Step 1: hybrid retrieval (pgvector + keyword RRF) ──────────────────
+    const { chunks, mode } = await hybridSearchChunks(query, {
       limit: 12,
-      threshold: 0.35, // explicit — never rely on DB default (some overloads default to 0.7)
+      threshold: getDynamicThreshold(query), // dynamic: 0.25 short / 0.35 phrase / 0.45 long
     });
 
-    // Deduplicate by article_id, keep highest-similarity chunk per article
-    const articleMap = new Map<
-      string,
-      { article_id: string; similarity: number; section_key: string; chunk_text: string }
-    >();
-    for (const c of chunks) {
-      const existing = articleMap.get(c.article_id);
-      if (!existing || (c.similarity ?? 0) > existing.similarity) {
-        articleMap.set(c.article_id, {
-          article_id: c.article_id,
-          similarity: c.similarity ?? 0,
-          section_key: c.section_key ?? "general",
-          chunk_text: c.chunk_text,
-        });
-      }
-    }
+    // hybridSearchChunks already deduplicates by article_id and RRF-merges — use directly
+    const cases = chunks.map((c) => ({
+      article_id: c.article_id,
+      similarity: c.similarity ?? 0,
+      section_key: c.section_key ?? "general",
+      chunk_text: c.chunk_text,
+    }));
 
-    const cases = Array.from(articleMap.values()).sort(
-      (a, b) => b.similarity - a.similarity
-    );
-
-    // Scenario classification (mirrors /api/handbook/semantic-search)
-    const topSimilarity = cases[0]?.similarity ?? 0;
+    // Scenario classification based on top semantic similarity
+    const topSimilarity = Math.max(...cases.map((c) => c.similarity), 0);
     let scenario: "A" | "B" | "C";
     if (topSimilarity >= 0.55) scenario = "A";
-    else if (topSimilarity >= 0.4 && cases.length > 0) scenario = "B";
+    else if (cases.length > 0) scenario = "B";
     else scenario = "C";
 
     // ── Step 2: LLM synthesis using the same chunks (no second pgvector call) ──

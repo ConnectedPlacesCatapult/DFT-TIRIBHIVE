@@ -73,13 +73,190 @@ type RetrievedChunk = {
 /** Heat-related query detection: same logic used for threshold and expansion. */
 export const HEAT_QUERY_REGEX = /\b(heat\s*stress|extreme\s*heat|temperature\s*adaptation|thermal|overheating)\b/i;
 
+// ---------------------------------------------------------------------------
+// Step 1: Dynamic threshold — short queries cast a wider net
+// ---------------------------------------------------------------------------
+
 /**
- * For heat-related queries, append synonym phrases so the embedding better matches
- * chunks that use "extreme heat" / "temperature" wording (explore_02 retrieval fix).
+ * Returns a cosine similarity threshold calibrated to query length.
+ * Short/single-word queries (e.g. "pavement", "storms") have narrow embeddings
+ * and need a lower threshold to surface borderline-relevant chunks.
+ * Long natural-language questions can afford to be more precise.
+ */
+export function getDynamicThreshold(query: string): number {
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= 2) return 0.25; // single word / two words: cast wide net
+  if (words.length <= 5) return 0.35; // short phrase: standard
+  return 0.45;                        // long question: can be more precise
+}
+
+// ---------------------------------------------------------------------------
+// Step 2: Universal query expansion — improves embeddings for short queries
+// ---------------------------------------------------------------------------
+
+/**
+ * Domain-specific expansions for common short queries that have narrow embeddings.
+ * Adding context words shifts the embedding closer to the chunk content space.
+ */
+const QUERY_EXPANSION_MAP: Record<string, string> = {
+  flood:      "flooding surface water management adaptation SuDS drainage infrastructure resilience",
+  flooding:   "flooding surface water management SuDS drainage transport infrastructure resilience",
+  storm:      "storm damage wind weather event resilience infrastructure protection adaptation",
+  storms:     "storm damage wind weather event resilience infrastructure protection adaptation",
+  drought:    "drought water scarcity resilience adaptation infrastructure conservation management",
+  coastal:    "coastal erosion sea level rise defence adaptation protection infrastructure",
+  erosion:    "coastal erosion slope instability land degradation infrastructure protection",
+  landslide:  "landslide slope instability embankment stabilisation infrastructure resilience",
+  slope:      "slope stabilisation embankment landslide infrastructure resilience geotechnical",
+  pavement:   "road pavement surface cool adaptation thermal management maintenance resilience",
+  road:       "road highway surface pavement adaptation resilience maintenance climate",
+  rail:       "rail railway track infrastructure climate adaptation flood heat resilience",
+  aviation:   "aviation airport climate adaptation resilience flood heat infrastructure",
+  maritime:   "maritime port sea level rise coastal adaptation resilience shipping",
+  drainage:   "drainage surface water management SuDS sustainable urban climate adaptation",
+  suds:       "sustainable drainage systems SuDS surface water flood adaptation urban",
+  heat:       "extreme heat urban heat island temperature adaptation cooling infrastructure",
+  ice:        "ice freeze thaw cold winter infrastructure resilience adaptation",
+  snow:       "snow ice winter cold infrastructure resilience adaptation maintenance",
+  wind:       "wind storm damage infrastructure resilience protection adaptation",
+};
+
+/**
+ * Expands the query before embedding to improve semantic match quality.
+ * For heat-specific queries: existing behaviour (preserves any fine-tuning).
+ * For other short queries: domain-specific expansion from the map above.
+ * Long queries are returned unchanged — they already carry sufficient context.
  */
 export function getEmbeddingQueryForRetrieval(query: string): string {
-  if (!HEAT_QUERY_REGEX.test(query)) return query;
-  return `${query} extreme heat temperature adaptation infrastructure`;
+  const trimmed = query.trim();
+  // Preserve existing heat expansion behaviour
+  if (HEAT_QUERY_REGEX.test(trimmed)) {
+    return `${trimmed} extreme heat temperature adaptation infrastructure`;
+  }
+  // For short queries, look up domain expansion
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length <= 2) {
+    const key = words[0].toLowerCase().replace(/[^a-z]/g, "");
+    const expansion = QUERY_EXPANSION_MAP[key];
+    if (expansion) return `${trimmed} ${expansion}`;
+  }
+  return trimmed;
+}
+
+// ---------------------------------------------------------------------------
+// Step 3: Hybrid search — keyword scoring + pgvector, merged with RRF
+// ---------------------------------------------------------------------------
+
+/**
+ * Lightweight keyword scorer against case study metadata (mirrors scoreResult in search.ts).
+ * Used server-side in hybridSearchChunks to generate keyword ranks for RRF.
+ */
+function keywordScore(
+  cs: { id: string; title: string; summary: string; insight: string; tags: string[]; measures: string[]; ukApplicability: string[]; hazards: { cause: string[]; effect: string[] } },
+  query: string
+): number {
+  if (!query.trim()) return 0;
+  const q = query.toLowerCase();
+  const words = q.split(/\s+/).filter((w) => w.length > 2);
+  const allHazards = [...cs.hazards.cause, ...cs.hazards.effect];
+  let score = 0;
+  if (cs.title.toLowerCase().includes(q)) score += 10;
+  if (cs.summary.toLowerCase().includes(q)) score += 6;
+  if (cs.insight.toLowerCase().includes(q)) score += 4;
+  allHazards.forEach((h) => { if (h.toLowerCase().includes(q) || q.includes(h.toLowerCase())) score += 5; });
+  cs.tags.forEach((t) => { if (t.includes(q) || q.includes(t)) score += 3; });
+  cs.measures.forEach((m) => { if (m.toLowerCase().includes(q)) score += 3; });
+  cs.ukApplicability.forEach((a) => { if (a.toLowerCase().includes(q)) score += 4; });
+  words.forEach((word) => {
+    if (cs.title.toLowerCase().includes(word)) score += 2;
+    allHazards.forEach((h) => { if (h.toLowerCase().includes(word)) score += 3; });
+    cs.tags.forEach((t) => { if (t.includes(word)) score += 2; });
+    if (cs.summary.toLowerCase().includes(word)) score += 1;
+  });
+  return score;
+}
+
+/**
+ * Hybrid retrieval: pgvector semantic search + keyword metadata scoring,
+ * merged using Reciprocal Rank Fusion (RRF, k=60).
+ *
+ * This ensures short/ambiguous queries (e.g. "pavement", "storms") that score
+ * narrowly in vector space still surface keyword-matched articles, while
+ * long natural-language queries benefit from semantic precision.
+ *
+ * Returns enriched chunks: semantic chunks for pgvector matches,
+ * summary-derived chunks for keyword-only matches.
+ */
+export async function hybridSearchChunks(
+  query: string,
+  options?: { limit?: number; threshold?: number }
+): Promise<{ chunks: RetrievedChunk[]; mode: "rag" | "fallback" }> {
+  const limit = options?.limit ?? 12;
+  const threshold = options?.threshold ?? getDynamicThreshold(query);
+
+  // ── Semantic retrieval ───────────────────────────────────────────────────
+  const semanticResult = await retrieveContext(query, { limit: limit * 2, threshold });
+
+  // If no DB connection at all, return fallback immediately
+  if (semanticResult.mode === "fallback") {
+    return { chunks: [], mode: "fallback" };
+  }
+
+  // Deduplicate semantic chunks: best chunk per article
+  const semanticByArticle = new Map<string, RetrievedChunk>();
+  for (const chunk of semanticResult.chunks) {
+    const existing = semanticByArticle.get(chunk.article_id);
+    if (!existing || (chunk.similarity ?? 0) > (existing.similarity ?? 0)) {
+      semanticByArticle.set(chunk.article_id, chunk);
+    }
+  }
+  const semanticRanked = [...semanticByArticle.values()].sort(
+    (a, b) => (b.similarity ?? 0) - (a.similarity ?? 0)
+  );
+
+  // ── Keyword retrieval (runs on CASE_STUDIES metadata, server-side) ───────
+  const { CASE_STUDIES } = await import("@/lib/hive/seed-data");
+  const keywordRanked = CASE_STUDIES
+    .map((cs) => ({ id: cs.id, score: keywordScore(cs, query), cs }))
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 20);
+
+  // ── RRF merge (k=60 is the standard constant) ────────────────────────────
+  const K = 60;
+  const rrfScores = new Map<string, number>();
+
+  semanticRanked.forEach((chunk, i) => {
+    rrfScores.set(chunk.article_id, (rrfScores.get(chunk.article_id) ?? 0) + 1 / (i + 1 + K));
+  });
+  keywordRanked.forEach((r, i) => {
+    rrfScores.set(r.id, (rrfScores.get(r.id) ?? 0) + 1 / (i + 1 + K));
+  });
+
+  const sortedIds = [...rrfScores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => id);
+
+  // ── Build final chunk list ────────────────────────────────────────────────
+  // Prefer semantic chunks (real content); fall back to metadata-derived chunk for keyword-only matches
+  const finalChunks: RetrievedChunk[] = sortedIds
+    .map((id) => {
+      const semanticChunk = semanticByArticle.get(id);
+      if (semanticChunk) return semanticChunk;
+      // Keyword-only article: synthesise a chunk from metadata so LLM has something to cite
+      const cs = CASE_STUDIES.find((c) => c.id === id);
+      if (!cs) return null;
+      return {
+        article_id: id,
+        section_key: "general",
+        chunk_text: `${cs.title}: ${cs.summary}${cs.insight ? ` Key insight: ${cs.insight}` : ""}`,
+        similarity: 0,
+      } as RetrievedChunk;
+    })
+    .filter(Boolean) as RetrievedChunk[];
+
+  return { chunks: finalChunks, mode: "rag" };
 }
 
 async function retrieveContext(
@@ -129,7 +306,7 @@ async function retrieveContext(
       .schema("public")
       .rpc("hive_match_chunks", {
         query_embedding: queryEmbedding,
-        match_threshold: options?.threshold ?? 0.4,
+        match_threshold: options?.threshold ?? getDynamicThreshold(query),
         match_count: options?.limit ?? 8,
         filter_section: options?.section ?? null,
       });
@@ -811,7 +988,8 @@ export async function getAIResponse(
     };
   } else {
     // No pre-loaded chunks — fresh pgvector search (standalone chat, no prior search)
-    const threshold = context.mode === "deep_dive" ? 0.4 : 0.35;
+    // deep_dive uses a fixed higher threshold; explore uses dynamic threshold calibrated to query length
+    const threshold = context.mode === "deep_dive" ? 0.4 : getDynamicThreshold(lastUserMessage);
     retrieval = await retrieveContext(lastUserMessage, {
       limit: 12,
       threshold,

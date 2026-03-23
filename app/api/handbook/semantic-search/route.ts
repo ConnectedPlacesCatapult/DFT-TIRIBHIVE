@@ -8,7 +8,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { semanticSearchChunks } from "@/lib/handbook/chat-api";
+import { hybridSearchChunks, getDynamicThreshold } from "@/lib/handbook/chat-api";
 
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q")?.trim();
@@ -21,39 +21,25 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { chunks, mode } = await semanticSearchChunks(query, {
+    const { chunks, mode } = await hybridSearchChunks(query, {
       limit: 12,
-      threshold: 0.4,
+      threshold: getDynamicThreshold(query),
     });
 
-    const topSimilarity = chunks[0]?.similarity ?? 0;
+    // hybridSearchChunks already deduplicates (one chunk per article, RRF-ordered)
+    const results = chunks.map((c) => ({
+      article_id: c.article_id,
+      similarity: c.similarity ?? 0,
+      section_key: c.section_key ?? "general",
+      chunk_text: c.chunk_text,
+    }));
 
-    // Deduplicate by article_id and pick the highest similarity per article (keep chunk_text)
-    const articleMap = new Map<
-      string,
-      { article_id: string; similarity: number; section_key: string; chunk_text: string }
-    >();
-    for (const c of chunks) {
-      const existing = articleMap.get(c.article_id);
-      if (!existing || (c.similarity ?? 0) > existing.similarity) {
-        articleMap.set(c.article_id, {
-          article_id: c.article_id,
-          similarity: c.similarity ?? 0,
-          section_key: c.section_key ?? "general",
-          chunk_text: c.chunk_text,
-        });
-      }
-    }
-
-    const results = Array.from(articleMap.values()).sort(
-      (a, b) => b.similarity - a.similarity
-    );
-
-    // Determine scenario based on top similarity score
+    // Scenario based on top semantic similarity (keyword-only matches have similarity 0)
+    const topSimilarity = Math.max(...results.map((r) => r.similarity), 0);
     let scenario: "A" | "B" | "C";
     if (topSimilarity >= 0.55) {
       scenario = "A";
-    } else if (topSimilarity >= 0.4 && results.length > 0) {
+    } else if (results.length > 0) {
       scenario = "B";
     } else {
       scenario = "C";
