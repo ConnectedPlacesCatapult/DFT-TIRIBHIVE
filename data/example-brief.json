@@ -1,0 +1,48 @@
+{
+  "ids": ["ID_40", "ID_32", "ID_19"],
+  "label": "Example brief — prebuilt for illustration. Generate from selected cases to create your own.",
+  "sections": [
+    {
+      "section_key": "executive_summary",
+      "section_title": "Executive Summary",
+      "confidence": "high",
+      "content": "The Sheffield Grey to Green project converted 60% of a 1.5km ring-road corridor to green infrastructure, reducing river discharge from 47.9 to 9 litres/sec during a 1-in-30-year rainfall event [ID_40]. Alongside this, Heathrow Airport's balancing ponds intercepted 95% of surface runoff during heavy rainfall events, preventing runway flooding and keeping all five access routes open [ID_32]. Phoenix's reflective cool pavement programme reduced road surface temperatures by 8°C across 100+ miles of residential streets while generating measurable air quality co-benefits [ID_19]. Together these cases demonstrate that integrating climate resilience directly into planned infrastructure programmes — rather than treating it as a standalone retrofit — delivers lower unit costs, faster deployment, and co-benefits that exceed the original design intent [ID_40], [ID_32], [ID_19]."
+    },
+    {
+      "section_key": "climate_drivers",
+      "section_title": "Climate Drivers & Hazards",
+      "confidence": "high",
+      "content": "Heavy rainfall and fluvial flooding are the primary hazards in Sheffield and Heathrow, both of which have intensified under observed UK climate trends and are projected to worsen under UKCP18 scenarios [ID_40], [ID_32]. Urban heat island effect is the dominant hazard in Phoenix, exacerbating summer surface temperatures and placing road pavements and pedestrian infrastructure under thermal stress [ID_19]. All three cases respond to hazards that are increasing in frequency or severity, making the adaptation approaches documented here increasingly relevant to UK transport network planning."
+    },
+    {
+      "section_key": "adaptation_approaches",
+      "section_title": "Adaptation Approaches",
+      "confidence": "high",
+      "content": "| Approach | Case Studies | Notes |\n| --- | --- | --- |\n| Sustainable Drainage Systems (SuDS) | [ID_40] | Reduced river discharge by 81% during design storm event |\n| Constructed balancing ponds | [ID_32] | Managed dual drought and flood risk; integrated into airport capital programme |\n| Reflective cool pavement coating | [ID_19] | 8°C surface temperature reduction; deployed across 100+ miles |\n| Nature-based surface water management | [ID_40] | Replaced 1.5km of ring road with green corridor; delivered biodiversity net gain |\n| Integrated stormwater harvesting | [ID_32] | Captured runoff for airfield irrigation; reduced mains water consumption |"
+    },
+    {
+      "section_key": "costs_and_resourcing",
+      "section_title": "Costs & Resourcing",
+      "confidence": "partial",
+      "content": "Sheffield Grey to Green was delivered in two phases: Phase 1 at £3.6m and Phase 2 at £6.3m, co-funded through Local Growth Fund and Sheffield City Council capital budget [ID_40]. Heathrow's balancing pond programme was costed at approximately £2.1m and financed within the airport's capital resilience budget, demonstrating that private infrastructure operators can fund climate adaptation through existing asset renewal frameworks [ID_32]. The Phoenix reflective pavement programme cost approximately $3m for initial deployment across 100 miles, funded by a city government climate resilience grant, with ongoing maintenance costs absorbed into existing road maintenance budgets [ID_19]. Investment bands range from targeted £2–4m site interventions to phased £6m+ network programmes."
+    },
+    {
+      "section_key": "uk_applicability",
+      "section_title": "Transfer Intelligence",
+      "confidence": "partial",
+      "content": "The Sheffield SuDS approach transfers directly to UK urban areas where river valleys influence transport corridors — in particular, A-road and ring-road networks running through flood-prone valleys in cities such as Leeds, Bristol, and Newcastle [ID_40]. The Heathrow balancing pond model transfers to UK airports with constrained perimeter land — Gatwick and Birmingham Airport face comparable surface water risk profiles and similar site constraints — and could be adopted as a condition of capital investment approval [ID_32]. The Phoenix cool pavement approach requires adaptation for the UK climate: surface temperature gains are lower in temperate conditions, but the urban heat island mitigation benefit is directly relevant to urban motorway and A-road surfaces in London, Manchester, and Birmingham during increasingly frequent summer heat events [ID_19]."
+    },
+    {
+      "section_key": "key_insight",
+      "section_title": "Key Cross-Case Insight",
+      "confidence": "high",
+      "content": "The strongest signal across all three cases is that climate adaptation interventions embedded within planned infrastructure renewal deliver materially lower unit costs and faster implementation timelines than standalone retrofit programmes [ID_40], [ID_32], [ID_19]. In each case the adaptation measure was financed through an existing capital budget — not a separate climate fund — and the co-benefits (biodiversity, water reuse, urban cooling) were documented as part of the project's own post-implementation review."
+    },
+    {
+      "section_key": "sources",
+      "section_title": "Source References",
+      "confidence": "high",
+      "content": "- ID_40: Sheffield Grey to Green — Sheffield City Council / Amec Foster Wheeler (2016–2020)\n- ID_32: Heathrow Airport Balancing Ponds — Heathrow Airport Ltd (2018)\n- ID_19: Phoenix Cool Pavement Programme — City of Phoenix, AZ (2020)"
+    }
+  ]
+}
