@@ -1,7 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MarqueeEntry } from "@/lib/hive/seed-data";
+
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = () => setReduced(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
 
 type MarqueeScrollProps = {
   entries: MarqueeEntry[];
@@ -33,11 +45,11 @@ function MarqueeCard({
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
       className="flex-shrink-0 cursor-pointer rounded-2xl border p-4 transition-all duration-300"
       style={{
         width: "280px",
-        opacity: dimmed ? 0.25 : 1,
+        opacity: dimmed ? 0.45 : 1,
         boxShadow: highlighted ? "0 2px 12px rgba(0,0,0,0.10)" : hovered ? "0 8px 24px rgba(0,0,0,0.12)" : "none",
         transform: highlighted ? "translateY(-2px)" : hovered ? "translateY(-3px) scale(1.03)" : "none",
         borderColor: hovered && !highlighted ? "var(--border-strong)" : highlighted ? "var(--accent)" : "var(--border)",
@@ -81,6 +93,7 @@ export function MarqueeScroll({
   gradFade = "var(--grad-fade)",
   variant = "2d",
 }: MarqueeScrollProps) {
+  const reducedMotion = useReducedMotion();
   const isHighlighted = (c: MarqueeEntry) => {
     if (!hasFilters) return false;
     const sectorMatch = matchingSectors.length === 0 || matchingSectors.includes(c.sector);
@@ -121,7 +134,7 @@ export function MarqueeScroll({
                 <div
                   className="marquee-col-inner flex flex-col gap-3 p-2"
                   style={{
-                    animation: `scrollY ${colIdx % 2 === 0 ? 30 : 38}s linear infinite ${colIdx % 2 === 1 ? "reverse" : ""}`,
+                    animation: reducedMotion ? "none" : `scrollY ${colIdx % 2 === 0 ? 30 : 38}s linear infinite ${colIdx % 2 === 1 ? "reverse" : ""}`,
                   }}
                 >
                   {[...colCases, ...colCases].map((c, i) => (
@@ -173,7 +186,7 @@ export function MarqueeScroll({
       >
         <div
           className="track-a flex gap-3"
-          style={{ width: "max-content", animation: "scrollX 130s linear infinite" }}
+          style={{ width: "max-content", animation: reducedMotion ? "none" : "scrollX 130s linear infinite" }}
         >
           {[...rowA, ...rowA].map((c, i) => (
             <MarqueeCard
@@ -199,7 +212,7 @@ export function MarqueeScroll({
       >
         <div
           className="track-b flex gap-3"
-          style={{ width: "max-content", animation: "scrollX 155s linear infinite reverse" }}
+          style={{ width: "max-content", animation: reducedMotion ? "none" : "scrollX 155s linear infinite reverse" }}
         >
           {[...rowB, ...rowB].map((c, i) => (
             <MarqueeCard

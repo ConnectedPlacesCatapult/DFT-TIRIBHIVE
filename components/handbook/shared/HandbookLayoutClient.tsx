@@ -17,7 +17,7 @@ export function HandbookLayoutClient({ children }: { children: ReactNode }) {
     pathname?.startsWith("/handbook/brief/");
 
   if (isBriefPage) {
-    return <>{children}</>;
+    return <main id="brief-main">{children}</main>;
   }
 
   return (

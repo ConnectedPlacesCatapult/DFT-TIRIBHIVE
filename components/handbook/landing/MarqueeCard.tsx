@@ -29,7 +29,7 @@ export function MarqueeCard({ entry, onClick, highlighted, dimmed }: MarqueeCard
       tabIndex={0}
       aria-label={`${entry.title} — ${entry.sector}`}
       onClick={() => onClick(entry)}
-      onKeyDown={(e) => e.key === "Enter" && onClick(entry)}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick(entry)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -40,7 +40,7 @@ export function MarqueeCard({ entry, onClick, highlighted, dimmed }: MarqueeCard
         border: `1px solid ${highlighted ? "#1d70b8" : hovered ? "#9ca3af" : "#e5e7eb"}`,
         background: highlighted ? "#e8f1fb" : "#fff",
         padding: "14px 16px",
-        opacity: dimmed ? 0.25 : 1,
+        opacity: dimmed ? 0.45 : 1,
         boxShadow: highlighted
           ? "0 2px 12px rgba(0,0,0,0.10)"
           : hovered

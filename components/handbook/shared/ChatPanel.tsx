@@ -125,6 +125,12 @@ function getActionDescription(action: ChatActionPayload): string {
     }
     case "suggest_cases": {
       const ids = (action.payload?.case_ids as string[]) ?? [];
+      const exclusive = action.payload?.exclusive as boolean | undefined;
+      if (exclusive) {
+        return ids.length > 0
+          ? `Filter the search to show only ${ids.length} case${ids.length === 1 ? "" : "s"}: ${ids.slice(0, 3).join(", ")}${ids.length > 3 ? "…" : ""}. Other results will be hidden until you clear.`
+          : "Filter the case list to only these suggested cases.";
+      }
       return ids.length > 0
         ? `Highlight ${ids.length} case${ids.length === 1 ? "" : "s"} in the results: ${ids.slice(0, 3).join(", ")}${ids.length > 3 ? "…" : ""}.`
         : "Highlight suggested cases in the case list.";
@@ -324,6 +330,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     semanticChunks,
     suggestionsShown,
     setSuggestionsShown,
+    setExclusiveFilter,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -345,7 +352,12 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         }
         case "suggest_cases": {
           const ids = (action.payload?.case_ids as string[]) ?? [];
-          setSuggestedCaseIds(ids);
+          const exclusive = action.payload?.exclusive as boolean | undefined;
+          if (exclusive && (context === "browse" || context === "cases")) {
+            setExclusiveFilter(ids);
+          } else {
+            setSuggestedCaseIds(ids);
+          }
           break;
         }
         case "update_filters": {
@@ -371,7 +383,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         )
       );
     },
-    [addToBrief, setSuggestedCaseIds, setPendingFilterUpdate, setMessages, context, onBriefSectionUpdate]
+    [addToBrief, setSuggestedCaseIds, setPendingFilterUpdate, setMessages, context, onBriefSectionUpdate, setExclusiveFilter]
   );
 
   const handleDismissAction = useCallback(
@@ -708,7 +720,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     }}
                   >
                     <Link
-                      href={`/handbook/cases?highlight=${(context === "browse" && resultSet.length >= 2 ? resultSet.map((r) => r.id) : m.chips ?? []).join(",")}`}
+                      href={`/handbook/cases?${sessionIntent ? `q=${encodeURIComponent(sessionIntent)}&` : ""}highlight=${(context === "browse" && resultSet.length >= 2 ? resultSet.map((r) => r.id) : m.chips ?? []).join(",")}`}
                       style={{
                         padding: "5px 10px",
                         borderRadius: 5,
@@ -724,7 +736,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                         gap: 4,
                       }}
                     >
-                      View {context === "browse" && resultSet.length >= 2 ? resultSet.length : (m.chips?.length ?? 0)} cases ↗
+                      View {(m.chips?.length ?? 0) >= 2 ? m.chips!.length : resultSet.length} cases ↗
                     </Link>
                     <Link
                       href={`/handbook/brief?ids=${(m.chips ?? []).join(",")}`}

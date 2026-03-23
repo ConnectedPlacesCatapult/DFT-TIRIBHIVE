@@ -38,6 +38,8 @@ type EvalCaseRow = {
   variant_config: Record<string, unknown> | null;
   test_group: string | null;
   follow_on_messages: unknown; // jsonb: array of { role, text } or null
+  consecutive_passes?: number;
+  frozen?: boolean;
 };
 
 type EvalRunInsert = {
@@ -63,6 +65,9 @@ type EvalRunInsert = {
   score_citations: number | null;
   score_relevant: boolean | null;
   reviewer_notes: string | null;
+  reviewer_relevance: number | null;
+  reviewer_accuracy: number | null;
+  reviewer_reasoning: string | null;
 };
 
 const ADMITTED_PHRASES = [
@@ -94,6 +99,69 @@ function parseMessages(messages: unknown): ChatMessageIn[] {
   return messages
     .filter((m): m is { role: string; text: string } => m && typeof m === "object" && "role" in m && "text" in m)
     .map((m) => ({ role: m.role as "user" | "ai", text: String(m.text) }));
+}
+
+const REVIEWER_SYSTEM_PROMPT = `You are evaluating an AI assistant response for a transport climate adaptation knowledge tool used by UK government analysts. Score the response on two dimensions.
+Return JSON only, no other text:
+{
+  "relevance": <1-5 integer>,
+  "accuracy": <1-5 integer>,
+  "reasoning": "<one sentence explaining both scores>"
+}
+
+Special scoring rules — apply before the general scale:
+- If the response correctly declines to answer because the question is outside the current case context (says "not covered in this case study" or similar), score relevance: 5 — this IS the correct behaviour.
+- If the response correctly redirects an out-of-scope query (coffee shop, space travel, non-transport) back to the knowledge domain, score relevance: 4.
+- If the response honestly admits the knowledge base lacks coverage on a topic, score relevance: 4.
+- Only score relevance 1-2 if the response attempts to answer but gives a wrong or irrelevant answer.
+
+Relevance scale: 1=completely off-topic, 3=partially answers, 5=directly and fully answers
+Accuracy scale: 1=contains invented facts, 3=mostly grounded but some gaps, 5=fully grounded in evidence, admits uncertainty correctly`;
+
+async function runSemanticReviewer(
+  responseText: string,
+  messagesSent: unknown,
+  expectedSignals: unknown
+): Promise<{ relevance: number; accuracy: number; reasoning: string } | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const { default: OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey });
+    const messagesStr =
+      typeof messagesSent === "string"
+        ? messagesSent
+        : Array.isArray(messagesSent)
+          ? (messagesSent as { role?: string; text?: string }[])
+              .map((m) => `${m.role ?? "user"}: ${m.text ?? ""}`)
+              .join("\n")
+          : JSON.stringify(messagesSent ?? "");
+    const expectedStr =
+      typeof expectedSignals === "string"
+        ? expectedSignals
+        : JSON.stringify(expectedSignals ?? "");
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: REVIEWER_SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Question asked:\n${messagesStr}\n\nResponse given:\n${responseText}\n\nExpected signals (if any):\n${expectedStr}`,
+        },
+      ],
+      temperature: 0,
+      max_tokens: 200,
+      response_format: { type: "json_object" },
+    });
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(raw) as { relevance?: number; accuracy?: number; reasoning?: string };
+    const relevance = typeof parsed.relevance === "number" ? Math.min(5, Math.max(1, Math.round(parsed.relevance))) : 3;
+    const accuracy = typeof parsed.accuracy === "number" ? Math.min(5, Math.max(1, Math.round(parsed.accuracy))) : 3;
+    return { relevance, accuracy, reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "" };
+  } catch (err) {
+    console.warn("[EVAL] Semantic reviewer failed:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 /** Load document chunks for given trib IDs and return format suitable for ChatContext (article_id as trib id). */
@@ -137,7 +205,16 @@ function buildContextFromCase(row: EvalCaseRow): ChatContext {
 export async function POST(req: NextRequest) {
   console.log("[EVAL] eval/run POST invoked once per request at", new Date().toISOString());
   const errors: string[] = [];
-  let body: { batch?: string; page?: string; mode?: string; group?: string; variant?: string } = {};
+  let body: {
+    batch?: string;
+    page?: string;
+    mode?: string;
+    group?: string;
+    variant?: string;
+    weak_only?: boolean;
+    reference_batch?: string;
+    include_frozen?: boolean;
+  } = {};
   try {
     body = await req.json();
   } catch {
@@ -148,6 +225,8 @@ export async function POST(req: NextRequest) {
   const filterMode = body.mode;
   const filterGroup = body.group;
   const filterVariant = body.variant;
+  const weakOnly = body.weak_only === true;
+  const includeFrozen = body.include_frozen === true;
 
   // Diagnostic: confirm env is available in API route (RAG fallback often = missing env here)
   console.log("[EVAL] OPENAI_API_KEY set:", !!process.env.OPENAI_API_KEY);
@@ -179,12 +258,107 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    const rows = (cases ?? []) as EvalCaseRow[];
+    let rows = (cases ?? []) as EvalCaseRow[];
     if (rows.length === 0) {
       return NextResponse.json(
         { batch: runBatch, total: 0, message: "No eval cases match filters" },
         { status: 200 }
       );
+    }
+
+    let skipped = 0;
+    let weakCount = 0;
+    let frozenSkipped = 0;
+
+    // Weak-only: restrict to cases that were weak in a single reference batch
+    if (weakOnly) {
+      let referenceBatch = body.reference_batch;
+      if (!referenceBatch) {
+        const { data: latest } = await sb
+          .from("eval_runs")
+          .select("run_batch")
+          .order("run_batch", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        referenceBatch = (latest as { run_batch?: string } | null)?.run_batch ?? null;
+      }
+      if (referenceBatch) {
+        const { data: refRuns } = await sb
+          .from("eval_runs")
+          .select("test_id, reviewer_relevance, reviewer_accuracy, citation_count, expected_signals")
+          .eq("run_batch", referenceBatch);
+        const hasRefRuns = (refRuns?.length ?? 0) > 0;
+        if (hasRefRuns) {
+          const runByTestId = new Map<
+            string,
+            { reviewer_relevance: number | null; reviewer_accuracy: number | null; citation_count: number; expected_signals: unknown }
+          >();
+          for (const r of refRuns ?? []) {
+            const t = r as {
+              test_id: string;
+              reviewer_relevance: number | null;
+              reviewer_accuracy: number | null;
+              citation_count: number;
+              expected_signals: unknown;
+            };
+            runByTestId.set(t.test_id, t);
+          }
+          const expectCitations = (sig: unknown) =>
+            sig != null && typeof sig === "object" && (sig as Record<string, unknown>).has_citations === true;
+          const weakTestIds = new Set<string>();
+          for (const row of rows) {
+            const ref = runByTestId.get(row.test_id);
+            if (!ref) {
+              weakTestIds.add(row.test_id);
+              continue;
+            }
+            if (
+              (ref.reviewer_relevance != null && ref.reviewer_relevance < 3) ||
+              (ref.reviewer_accuracy != null && ref.reviewer_accuracy < 3) ||
+              (ref.citation_count === 0 && expectCitations(ref.expected_signals))
+            ) {
+              weakTestIds.add(row.test_id);
+            }
+          }
+          let before = rows.length;
+          rows = rows.filter((r) => weakTestIds.has(r.test_id));
+          skipped = before - rows.length;
+          weakCount = rows.length;
+          // Exclude landing/search tests — they return JSON not chat text and have no reviewer scores
+          rows = rows.filter((r) => r.page !== "landing");
+          weakCount = rows.length;
+          if (rows.length === 0) {
+            console.log("[EVAL] weak_only: no weak cases, skipped", skipped);
+            return NextResponse.json({
+              batch: runBatch,
+              total: 0,
+              total_planned: 0,
+              skipped,
+              weak_count: weakCount,
+              message: "No weak cases in reference batch",
+            });
+          }
+        }
+        // No runs in reference batch: run all to establish baseline
+      }
+    }
+
+    // Freeze: skip cases marked frozen unless include_frozen
+    if (!includeFrozen && rows.length > 0) {
+      const before = rows.length;
+      rows = rows.filter((r) => r.frozen !== true);
+      frozenSkipped = before - rows.length;
+    }
+
+    if (rows.length === 0) {
+      return NextResponse.json({
+        batch: runBatch,
+        total: 0,
+        total_planned: 0,
+        ...(weakOnly && { skipped, weak_count: weakCount }),
+        ...(frozenSkipped > 0 && { frozen_skipped: frozenSkipped }),
+        message: "No cases to run after filters",
+      });
     }
 
     const byPage: Record<string, number> = {};
@@ -253,6 +427,9 @@ export async function POST(req: NextRequest) {
             score_citations: null,
             score_relevant: null,
             reviewer_notes: null,
+            reviewer_relevance: null,
+            reviewer_accuracy: null,
+            reviewer_reasoning: null,
           };
           await sb.from("eval_runs").insert(run);
         } catch (err) {
@@ -344,8 +521,49 @@ export async function POST(req: NextRequest) {
         score_citations: citationCount,
         score_relevant: null,
         reviewer_notes: null,
+        reviewer_relevance: null,
+        reviewer_accuracy: null,
+        reviewer_reasoning: null,
       };
+      if (lastResponse.text.length > 20) {
+        try {
+          const review = await runSemanticReviewer(
+            lastResponse.text,
+            row.messages,
+            row.expected_signals
+          );
+          if (review) {
+            run.reviewer_relevance = review.relevance;
+            run.reviewer_accuracy = review.accuracy;
+            run.reviewer_reasoning = review.reasoning;
+          }
+        } catch {
+          // leave null
+        }
+        await new Promise((r) => setTimeout(r, 200));
+      }
       await sb.from("eval_runs").insert(run);
+      // Update freeze state on eval_cases for chat runs with reviewer scores
+      const rel = run.reviewer_relevance ?? null;
+      const acc = run.reviewer_accuracy ?? null;
+      if (rel != null && acc != null) {
+        const currentPasses = row.consecutive_passes ?? 0;
+        if (rel >= 4 && acc >= 4) {
+          const nextPasses = currentPasses + 1;
+          await sb
+            .from("eval_cases")
+            .update({
+              consecutive_passes: nextPasses,
+              frozen: nextPasses >= 3,
+            })
+            .eq("id", row.id);
+        } else {
+          await sb
+            .from("eval_cases")
+            .update({ consecutive_passes: 0, frozen: false })
+            .eq("id", row.id);
+        }
+      }
       await new Promise((r) => setTimeout(r, 300));
     }
 
@@ -357,8 +575,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       batch: runBatch,
       total: rows.length,
+      total_planned: rows.length,
       byPage,
       avgCitations,
+      ...(weakOnly && { skipped, weak_count: weakCount }),
+      ...(frozenSkipped > 0 && { frozen_skipped: frozenSkipped }),
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err) {

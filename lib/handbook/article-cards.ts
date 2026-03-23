@@ -112,6 +112,61 @@ export function rowToCardData(row: ArticleCardRow): ArticleCardData {
   };
 }
 
+/**
+ * Human-readable block for brief-generation prompts (structured intelligence).
+ * Prefer this for costs / transfer sections; chunk text remains for citations.
+ */
+export function formatArticleCardRowForBriefPrompt(row: ArticleCardRow): string {
+  const cob = row.co_benefits_summary;
+  const cobParts: string[] = [];
+  if (cob) {
+    if (cob.community?.trim()) cobParts.push(`Community: ${cob.community.trim()}`);
+    if (cob.environmental?.trim())
+      cobParts.push(`Environmental: ${cob.environmental.trim()}`);
+    if (cob.economic?.trim()) cobParts.push(`Economic: ${cob.economic.trim()}`);
+    if (cob.carbon?.trim()) cobParts.push(`Carbon: ${cob.carbon.trim()}`);
+  }
+  const cobLine = cobParts.length ? cobParts.join("; ") : "";
+
+  const metrics =
+    row.key_metrics?.length && row.key_metrics.length > 0
+      ? row.key_metrics.map((m) => `${m.label}: ${m.value}`).join("; ")
+      : "";
+
+  const challenges =
+    row.challenges?.length && row.challenges.length > 0
+      ? row.challenges.map((c) => `• ${c}`).join("\n")
+      : "";
+
+  const transfer =
+    row.transferability_contexts?.length && row.transferability_contexts.length > 0
+      ? row.transferability_contexts.join("; ")
+      : "";
+
+  const lines: string[] = [];
+  lines.push(`## Case [${row.trib_article_id}] — Structured intelligence`);
+  if (row.key_insight?.trim()) lines.push(`Key insight: ${row.key_insight.trim()}`);
+  if (row.investment_band?.trim() || row.investment_detail?.trim()) {
+    const band = row.investment_band?.trim() ?? "—";
+    const detail = row.investment_detail?.trim() ?? "";
+    lines.push(
+      detail ? `Investment: ${band} — ${detail}` : `Investment: ${band}`
+    );
+  }
+  if (cobLine) lines.push(`Co-benefits: ${cobLine}`);
+  if (metrics) lines.push(`Key metrics: ${metrics}`);
+  if (challenges) lines.push(`Challenges:\n${challenges}`);
+  if (transfer) lines.push(`Transferable contexts: ${transfer}`);
+  if (row.transferability_rationale?.trim()) {
+    lines.push(`Transfer rationale: ${row.transferability_rationale.trim()}`);
+  }
+  if (row.uk_transferability?.trim()) {
+    lines.push(`UK transferability (structured): ${row.uk_transferability.trim()}`);
+  }
+  lines.push("---");
+  return lines.join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Validation — check GPT output has all required fields
 // ---------------------------------------------------------------------------

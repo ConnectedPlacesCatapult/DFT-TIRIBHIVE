@@ -6,6 +6,9 @@ import { CASE_STUDIES as SEED_CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hiv
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { THEMES } from "@/lib/hive/themes";
 import { CaseStudyDetail as CaseDetailShared } from "@/components/hive/CaseStudyDetail";
+import { useHandbookSearch } from "@/lib/handbook/useHandbookSearch";
+import { generateSynthesis } from "@/lib/hive/search";
+import Link from "next/link";
 
 const TRIB_MEASURES: Array<{
   trib_article_id: string;
@@ -138,7 +141,11 @@ const CaseCard = ({ cs, onClick, onAddToBrief, inBrief, highlighted }) => {
   const investmentBand = card?.investment_band ?? cs.costBand;
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={cs.title}
       onClick={() => onClick(cs)}
+      onKeyDown={e => (e.key === "Enter" || e.key === " ") && onClick(cs)}
       className="hive-card"
       style={{
         borderRadius:16, border:"1px solid", cursor:"pointer",
@@ -230,7 +237,11 @@ const MeasureCard = ({ measureName, measureDescription, cs, onClick, onAddToBrie
   const sc = SECTOR_COLOR[cs.sector] || SECTOR_COLOR.Multiple;
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`${measureName} — ${cs.title}`}
       onClick={() => onClick(cs)}
+      onKeyDown={e => (e.key === "Enter" || e.key === " ") && onClick(cs)}
       className="hive-card"
       style={{
         borderRadius:16, border:"1px solid", cursor:"pointer",
@@ -293,7 +304,7 @@ function BriefTray({ brief, onRemove, onGenerate }) {
     <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:45, background:"var(--surface)", borderTop:"2px solid var(--accent)", boxShadow:"0 -4px 24px rgba(0,0,0,0.12)", fontFamily:"'DM Sans',sans-serif", transition:"height 0.25s" }}>
       <div style={{ maxWidth:1152, margin:"0 auto", padding:"0 24px" }}>
         {/* Collapsed bar */}
-        <div style={{ height:52, display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }} onClick={() => setOpen(o => !o)}>
+        <div role="button" tabIndex={0} aria-expanded={open} aria-label="Toggle AI brief tray" style={{ height:52, display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }} onClick={() => setOpen(o => !o)} onKeyDown={e => (e.key === "Enter" || e.key === " ") && setOpen(o => !o)}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:22, height:22, borderRadius:5, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center" }}>
               <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -317,7 +328,7 @@ function BriefTray({ brief, onRemove, onGenerate }) {
               <div key={cs.id} style={{ display:"flex", alignItems:"center", gap:6, background:"var(--surface-alt)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 10px", fontSize:12 }}>
                 <span style={{ fontWeight:600, color:"var(--text-primary)" }}>{cs.title}</span>
                 <span style={{ fontSize:10, color:"var(--text-muted)" }}>· {cs.sector}</span>
-                <button onClick={() => onRemove(cs)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", fontSize:14, lineHeight:1, padding:"0 2px", marginLeft:2 }}>×</button>
+                <button onClick={() => onRemove(cs)} aria-label={`Remove ${cs.title} from brief`} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", fontSize:14, lineHeight:1, padding:"0 2px", marginLeft:2 }}>×</button>
               </div>
             ))}
           </div>
@@ -391,8 +402,8 @@ function SuggestSourceDrawer({ open, onClose }) {
         {/* Header */}
         <div style={{ padding:"20px 24px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:"var(--text-primary)" }}>Suggest a source</h2>
-          <button onClick={handleClose} style={{ width:28, height:28, borderRadius:"50%", background:"var(--surface-alt)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <svg style={{ width:12, height:12, color:"var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          <button onClick={handleClose} aria-label="Close panel" style={{ width:28, height:28, borderRadius:"50%", background:"var(--surface-alt)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <svg aria-hidden="true" style={{ width:12, height:12, color:"var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
 
@@ -454,7 +465,14 @@ function SuggestSourceDrawer({ open, onClose }) {
 
 // ── MAIN PAGE (uses useSearchParams — must be inside Suspense) ─────────────────
 function CasesPageContent() {
-  const { themeKey, setThemeKey, suggestedCaseIds, pendingFilterUpdate, setPendingFilterUpdate } = useChatContext();
+  const {
+    themeKey, setThemeKey,
+    suggestedCaseIds,
+    pendingFilterUpdate, setPendingFilterUpdate,
+    setResultSet, resultSet,
+    openChat, setChatContext,
+    exclusiveFilter, setExclusiveFilter,
+  } = useChatContext();
   const [highlighted, setHighlighted] = useState([]);
 
   const effectiveHighlighted = suggestedCaseIds?.length > 0 ? suggestedCaseIds : highlighted;
@@ -500,22 +518,60 @@ function CasesPageContent() {
   const [selectedCase, setSelectedCase] = useState(null);
   const [brief, setBrief] = useState([]);
   const [suggestOpen, setSuggestOpen] = useState(false);
+  const [briefConfirm, setBriefConfirm] = useState(false);
+
+  // Shared semantic search + chat wiring (mirrors landing page behaviour)
+  const { semanticResults, semanticScenario, semanticPrompt, routeQueryToChat } = useHandbookSearch(query);
 
   const toggle = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
   const toggleBrief = (cs) => setBrief(prev => prev.some(x => x.id === cs.id) ? prev.filter(x => x.id !== cs.id) : [...prev, cs]);
   const hasFilters = query.trim() || sectors.length || hazards.length || transferability.length || costBands.length;
 
-  const results = filterAndSort(CASE_STUDIES_NORMALISED, { query, sectors, hazards, transferability, costBands, sort });
+  // Keyword+filter base (always respects pills) — memoized so its reference is stable
+  const keywordResults = useMemo(
+    () => filterAndSort(CASE_STUDIES_NORMALISED, { query, sectors, hazards, transferability, costBands, sort }),
+    [query, sectors, hazards, transferability, costBands, sort]
+  );
 
-  // Sort highlighted cases to the top when coming from chat navigation links
+  // Semantic-boosted merge: intersect semantic ordering with pill-filtered set
+  const results = useMemo(() => {
+    if (semanticResults.length > 0 && query.trim()) {
+      const intersection = semanticResults
+        .map(sr => keywordResults.find(cs => cs.id === sr.article_id))
+        .filter(Boolean) as typeof keywordResults;
+      // Fall back to keyword if intersection is empty (e.g. semantic missed all filtered cases)
+      return intersection.length > 0 ? intersection : keywordResults;
+    }
+    return keywordResults;
+  }, [semanticResults, keywordResults, query]);
+
+  // Sync resultSet for chat context (same shape as landing) — stable JSON comparison prevents extra renders
+  const resultSetRef = useRef<string>("");
+  useEffect(() => {
+    const next = hasFilters ? results.slice(0, 12).map(r => ({ id: r.id, title: r.title, sector: r.sector })) : [];
+    const serialised = JSON.stringify(next);
+    if (serialised !== resultSetRef.current) {
+      resultSetRef.current = serialised;
+      setResultSet(next);
+    }
+  }, [results, hasFilters, setResultSet]);
+
+  // Generate synthesis summary when filters are active
+  const synthesis = useMemo(() => {
+    if (!hasFilters || results.length === 0) return null;
+    return generateSynthesis(results, query);
+  }, [results, hasFilters, query]);
+
+  // Sort highlighted cases to the top; filter to exclusive set when chat has applied an exclusive filter
   const sortedResults = useMemo(() => {
-    if (effectiveHighlighted.length === 0) return results;
-    return [...results].sort((a, b) => {
+    const base = exclusiveFilter ? results.filter(a => exclusiveFilter.includes(a.id)) : results;
+    if (effectiveHighlighted.length === 0) return base;
+    return [...base].sort((a, b) => {
       const aH = effectiveHighlighted.includes(a.id) ? 0 : 1;
       const bH = effectiveHighlighted.includes(b.id) ? 0 : 1;
       return aH - bH;
     });
-  }, [results, effectiveHighlighted]);
+  }, [results, effectiveHighlighted, exclusiveFilter]);
 
   // In measure mode, expand each article into one card per measure
   const displayItems = useMemo(() => {
@@ -641,32 +697,57 @@ function CasesPageContent() {
           {/* FILTER BAR */}
           <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"16px 20px", marginBottom:24 }}>
             {/* Search row */}
-            <div style={{ display:"flex", gap:10, marginBottom:14 }}>
-              <div style={{ flex:1, position:"relative" }}>
-                <svg style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input value={query} onChange={e => setQuery(e.target.value)}
-                  placeholder="Search by hazard, measure, location, or keyword…"
-                  style={{ width:"100%", padding:"10px 12px 10px 38px", fontSize:13, border:"1.5px solid var(--input-border)", borderRadius:9, outline:"none", fontFamily:"'DM Sans',sans-serif", color:"var(--text-primary)", background:"var(--input-bg)" }}
-                  onFocus={e => e.target.style.borderColor="var(--accent)"} onBlur={e => e.target.style.borderColor="var(--input-border)"}
-                />
-              </div>
-              {hasFilters && (
-                <button onClick={clearAll} style={{ padding:"0 14px", fontSize:12, fontWeight:600, color:"var(--text-secondary)", background:"none", border:"1px solid var(--border)", borderRadius:9, cursor:"pointer" }}>
-                  Clear all
-                </button>
-              )}
-              {/* Sort */}
-              <div style={{ display:"flex", alignItems:"center", gap:4, borderRadius:9, padding:2, border:"1px solid var(--border)", background:"var(--surface-alt)" }}>
-                {SORT_OPTIONS.map(o => (
-                  <button key={o.id} onClick={() => setSort(o.id)}
-                    style={{ fontSize:11, fontWeight:600, padding:"6px 10px", borderRadius:7, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", whiteSpace:"nowrap",
-                      background: sort === o.id ? "var(--accent)" : "transparent",
-                      color: sort === o.id ? "#fff" : "var(--text-secondary)",
-                    }}>
-                    {o.label}
+            <div style={{ marginBottom:14 }}>
+              <div style={{ display:"flex", gap:10 }}>
+                <div style={{ flex:1, position:"relative" }}>
+                  <svg style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"var(--text-muted)", pointerEvents:"none" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <input value={query} onChange={e => setQuery(e.target.value)}
+                    placeholder="Search by hazard, measure, location, or keyword…"
+                    aria-label="Search case studies"
+                    style={{ width:"100%", padding:"10px 36px 10px 38px", fontSize:13, border:"1.5px solid var(--input-border)", borderRadius:9, outline:"none", fontFamily:"'DM Sans',sans-serif", color:"var(--text-primary)", background:"var(--input-bg)" }}
+                    onFocus={e => e.target.style.borderColor="var(--accent)"} onBlur={e => e.target.style.borderColor="var(--input-border)"}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && query.trim()) {
+                        e.preventDefault();
+                        routeQueryToChat(query.trim());
+                      }
+                    }}
+                  />
+                  {query && (
+                    <button onClick={() => setQuery("")} aria-label="Clear search" style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", color:"var(--text-muted)", background:"none", border:"none", cursor:"pointer", padding:2, display:"flex", alignItems:"center" }}>
+                      <svg style={{ width:14, height:14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  )}
+                </div>
+                {hasFilters && (
+                  <button onClick={clearAll} style={{ padding:"0 14px", fontSize:12, fontWeight:600, color:"var(--text-secondary)", background:"none", border:"1px solid var(--border)", borderRadius:9, cursor:"pointer", whiteSpace:"nowrap" }}>
+                    Clear all
                   </button>
-                ))}
+                )}
+                {/* Sort */}
+                <div style={{ display:"flex", alignItems:"center", gap:4, borderRadius:9, padding:2, border:"1px solid var(--border)", background:"var(--surface-alt)" }}>
+                  {SORT_OPTIONS.map(o => (
+                    <button key={o.id} onClick={() => setSort(o.id)}
+                      style={{ fontSize:11, fontWeight:600, padding:"6px 10px", borderRadius:7, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", whiteSpace:"nowrap",
+                        background: sort === o.id ? "var(--accent)" : "transparent",
+                        color: sort === o.id ? "#fff" : "var(--text-secondary)",
+                      }}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
               </div>
+              {/* "Ask HIVE →" prompt — appears when semantic search finds relevant cases */}
+              {semanticPrompt && semanticScenario === "B" && (
+                <div style={{ marginTop:8, padding:"8px 14px", background:"var(--surface-alt)", border:"1px solid var(--border)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, animation:"fadeUp 0.2s ease" }}>
+                  <span style={{ fontSize:12, color:"var(--text-secondary)" }}>{semanticPrompt}</span>
+                  <button
+                    onClick={() => query.trim() ? routeQueryToChat(query.trim()) : openChat("browse")}
+                    style={{ fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:6, background:"var(--accent)", color:"#fff", border:"none", cursor:"pointer", whiteSpace:"nowrap", fontFamily:"inherit" }}>
+                    Ask HIVE →
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Sector pills */}
@@ -709,6 +790,21 @@ function CasesPageContent() {
             </div>
           </div>
 
+          {/* Exclusive filter banner — shown when chat has filtered the grid via suggest_cases */}
+          {exclusiveFilter && (
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12, padding:"8px 12px", background:"#e8f1fb", borderRadius:6, border:"1px solid #b3d4ef" }}>
+              <span style={{ fontSize:13, color:"#1d4ed8", fontWeight:500 }}>
+                Showing {exclusiveFilter.length} case{exclusiveFilter.length === 1 ? "" : "s"} from your conversation
+              </span>
+              <button
+                onClick={() => setExclusiveFilter(null)}
+                style={{ fontSize:12, color:"#1d4ed8", background:"none", border:"none", cursor:"pointer", textDecoration:"underline", fontFamily:"inherit" }}
+              >
+                Clear to browse all
+              </button>
+            </div>
+          )}
+
           {/* Result count + empty state */}
           {hasFilters && (
             <div style={{ marginBottom:16, fontSize:13, color:"var(--text-secondary)" }}>
@@ -718,6 +814,48 @@ function CasesPageContent() {
                   ? <span><strong style={{ color:"var(--text-primary)" }}>{results.length}</strong> case {results.length === 1 ? "study" : "studies"} match your filters</span>
                   : <span><strong style={{ color:"var(--text-primary)" }}>{displayItems.length}</strong> {displayItems.length === 1 ? "measure" : "measures"} across <strong>{results.length}</strong> case {results.length === 1 ? "study" : "studies"}</span>
               }
+            </div>
+          )}
+
+          {/* SYNTHESIS + BRIEF CTA — shown in cases mode when filters are active and results exist */}
+          {viewMode === 'cases' && hasFilters && synthesis && results.length > 0 && (
+            <div style={{ borderRadius:14, border:"1px solid", borderColor:"color-mix(in srgb, var(--accent) 40%, transparent)", background:"linear-gradient(to bottom right, var(--accent-bg), color-mix(in srgb, #99f6e4 30%, transparent))", padding:"16px 20px", marginBottom:20, fontFamily:"'DM Sans',sans-serif" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10, flexWrap:"wrap", gap:8 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:22, height:22, borderRadius:7, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <svg style={{ width:13, height:13, color:"#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  </div>
+                  <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.05em", textTransform:"uppercase", color:"var(--accent)" }}>Cross-case analysis</span>
+                  <span style={{ fontSize:12, color:"var(--text-muted)" }}>{synthesis.count} case {synthesis.count === 1 ? "study" : "studies"}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const briefUrl = `/handbook/brief?theme=${themeKey}&ids=${sortedResults.slice(0, 8).map(c => c.id).join(",")}`;
+                    if (sortedResults.length > 8 && !briefConfirm) {
+                      setBriefConfirm(true);
+                      setTimeout(() => {
+                        setBriefConfirm(false);
+                        window.location.href = briefUrl;
+                      }, 2200);
+                    } else {
+                      window.location.href = briefUrl;
+                    }
+                  }}
+                  style={{ fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:6, paddingLeft:12, paddingRight:12, paddingTop:6, paddingBottom:6, borderRadius:8, flexShrink:0, transition:"all 0.2s", background: briefConfirm ? "#047857" : "#065f46", color:"#fff", border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+                  <svg style={{ width:12, height:12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  {briefConfirm
+                    ? `Using top 8 of ${sortedResults.length} — generating…`
+                    : "Generate brief from this analysis →"
+                  }
+                </button>
+              </div>
+              <p style={{ fontSize:13, color:"var(--text-primary)", lineHeight:1.6, marginBottom:12, fontWeight:500 }}>{synthesis.insightSentence}</p>
+              <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                  {synthesis.sectors.map(s => <span key={s} style={{ fontSize:11, background:"rgba(255,255,255,0.75)", border:"1px solid", borderColor:"color-mix(in srgb, var(--accent) 40%, transparent)", color:"var(--accent-text)", paddingLeft:8, paddingRight:8, paddingTop:3, paddingBottom:3, borderRadius:9999, fontWeight:500 }}>{s}</span>)}
+                </div>
+                <span style={{ fontSize:11, color:"var(--text-muted)" }}>{synthesis.highTransferCount} of {synthesis.count} with high UK transferability</span>
+              </div>
             </div>
           )}
 

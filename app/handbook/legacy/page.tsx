@@ -121,7 +121,7 @@ function DetailModal({ cs, onClose }: { cs: (typeof CASE_STUDIES)[number] | null
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background:"#fff",maxWidth:680,width:"100%",maxHeight:"85vh",overflowY:"auto",padding:36,position:"relative",fontFamily:"Arial, sans-serif" }}>
-        <button onClick={onClose} style={{ position:"absolute",top:16,right:16,background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#666",lineHeight:1 }}>×</button>
+        <button onClick={onClose} aria-label="Close" style={{ position:"absolute",top:16,right:16,background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#666",lineHeight:1 }}>×</button>
         <div style={{ display:"flex",alignItems:"center",gap:7,marginBottom:14 }}>
           <ShareIcon size={13} color="#666" />
           <span style={{ fontSize:13,color:"#555" }}>Case Study</span>

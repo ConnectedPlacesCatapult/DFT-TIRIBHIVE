@@ -890,6 +890,8 @@ export async function getAIResponse(
     const lower = text.toLowerCase();
     if (/\badd to (your )?brief\b|\badd (these |them )?to (your )?brief\b/i.test(lower)) {
       action = { type: "add_to_brief", payload: { article_ids: chips } };
+    } else if (/\bshow(ing)? (you |only )?(these|them|the following)\b|\bfilter(ing)? (the )?search\b|\bupdate (the )?search\b|\bnarrow(ing)? (down|the results)\b/i.test(lower)) {
+      action = { type: "suggest_cases", payload: { case_ids: chips, exclusive: true } };
     } else if (/\bsimilar cases\b|\bsuggest.*cases\b|\bconsider these\b|\bhighlight (these )?cases\b/i.test(lower)) {
       action = { type: "suggest_cases", payload: { case_ids: chips } };
     }

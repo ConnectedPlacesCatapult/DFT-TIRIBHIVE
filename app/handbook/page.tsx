@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CASE_STUDIES as SEED_CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
+import { useHandbookSearch } from "@/lib/handbook/useHandbookSearch";
 import { BackgroundEffect } from "@/components/handbook/BackgroundEffect";
 import { HeroImageCycle } from "@/components/handbook/HeroImageCycle";
 import { CaseStudyDetail as CaseStudyDetailShared } from "@/components/hive/CaseStudyDetail";
@@ -313,7 +314,11 @@ const MarqueeCard = ({ c, onClick, dimmed, highlighted }) => {
   const sectorStyle = SECTOR_STYLES[c.sector] || DEFAULT_SECTOR_STYLE;
   return (
   <div
+    role="button"
+    tabIndex={0}
+    aria-label={c.title}
     onClick={() => onClick(c)}
+    onKeyDown={e => (e.key === "Enter" || e.key === " ") && onClick(c)}
     onMouseEnter={() => setHovered(true)}
     onMouseLeave={() => setHovered(false)}
     className={`marquee-card ${highlighted ? "highlighted" : ""}`}
@@ -324,7 +329,7 @@ const MarqueeCard = ({ c, onClick, dimmed, highlighted }) => {
       borderRadius: 16,
       border: "1px solid",
       fontFamily: "'DM Sans', sans-serif",
-      opacity: dimmed ? 0.25 : 1,
+      opacity: dimmed ? 0.45 : 1,
       boxShadow: highlighted ? "0 2px 12px rgba(0,0,0,0.10)" : hovered ? "0 8px 24px rgba(0,0,0,0.12)" : "none",
       transform: highlighted ? "translateY(-2px)" : hovered ? "translateY(-3px) scale(1.03)" : "none",
       borderColor: hovered && !highlighted ? "var(--border-strong)" : undefined,
@@ -349,6 +354,14 @@ const Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, hasFi
   const rowB = cases.slice(half);
   const trackARef = useRef<HTMLDivElement>(null);
   const trackBRef = useRef<HTMLDivElement>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const h = () => setReducedMotion(mq.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
 
   const isHighlighted = (c) => {
     if (!hasFilters) return false;
@@ -361,12 +374,12 @@ const Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, hasFi
   return (
     <div style={{ position: "relative", paddingTop: 24, paddingBottom: 24, overflow: "visible" }}>
       <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px", marginBottom: "4px" }} onMouseEnter={() => { if (trackARef.current) trackARef.current.style.animationPlayState = "paused"; }} onMouseLeave={() => { if (trackARef.current) trackARef.current.style.animationPlayState = "running"; }}>
-        <div ref={trackARef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollXQuarter 160s linear infinite" }}>
+        <div ref={trackARef} style={{ display: "flex", gap: 12, width: "max-content", animation: reducedMotion ? "none" : "scrollXQuarter 160s linear infinite" }}>
           {[...rowA, ...rowA, ...rowA, ...rowA].map((c, i) => <MarqueeCard key={`a-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
         </div>
       </div>
       <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }} onMouseEnter={() => { if (trackBRef.current) trackBRef.current.style.animationPlayState = "paused"; }} onMouseLeave={() => { if (trackBRef.current) trackBRef.current.style.animationPlayState = "running"; }}>
-        <div ref={trackBRef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollXQuarter 185s linear infinite reverse" }}>
+        <div ref={trackBRef} style={{ display: "flex", gap: 12, width: "max-content", animation: reducedMotion ? "none" : "scrollXQuarter 185s linear infinite reverse" }}>
           {[...rowB, ...rowB, ...rowB, ...rowB].map((c, i) => <MarqueeCard key={`b-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
         </div>
       </div>
@@ -383,10 +396,17 @@ const Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, hasFi
 const VelocityRow = ({ cases, onCardClick, isHighlighted, isDimmed, direction = 1 }) => {
   const trackRef = useRef(null);
   const xRef = useRef(0);
-  // lastScrollDir: +1 = scrolling down (default), -1 = scrolling up
   const lastScrollDirRef = useRef(1);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Shared scroll direction listener — updates the latch
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const h = () => setReducedMotion(mq.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
+
   useEffect(() => {
     let lastY = window.scrollY;
     const onScroll = () => {
@@ -399,6 +419,7 @@ const VelocityRow = ({ cases, onCardClick, isHighlighted, isDimmed, direction = 
   }, []);
 
   useEffect(() => {
+    if (reducedMotion) return;
     let rafId;
     const MARQUEE_LOOP_SECONDS = 160; // match Marquee2D row A duration for same perceived speed
     const loop = () => {
@@ -420,7 +441,7 @@ const VelocityRow = ({ cases, onCardClick, isHighlighted, isDimmed, direction = 
     };
     rafId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafId);
-  }, [direction]);
+  }, [direction, reducedMotion]);
 
   return (
     <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }}>
@@ -528,7 +549,12 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, sugge
     ? (card.key_insight.length > ARTICLE_CARD_INSIGHT_MAX ? card.key_insight.slice(0, ARTICLE_CARD_INSIGHT_MAX) + "…" : card.key_insight)
     : "";
   return (
-  <div onClick={() => onClick(cs)}
+  <div
+    role="button"
+    tabIndex={0}
+    aria-label={cs.title}
+    onClick={() => onClick(cs)}
+    onKeyDown={e => (e.key === "Enter" || e.key === " ") && onClick(cs)}
     className="hive-card"
     style={{
       cursor: "pointer",
@@ -640,7 +666,12 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, sugge
 const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAddToBrief, inBrief, matchReasons }) => {
   const sectorStyle = SECTOR_STYLES[cs.sector] || DEFAULT_SECTOR_STYLE;
   return (
-    <div onClick={() => onClick(cs)}
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`${measureName} — ${cs.title}`}
+      onClick={() => onClick(cs)}
+      onKeyDown={e => (e.key === "Enter" || e.key === " ") && onClick(cs)}
       className="hive-card"
       style={{ cursor: "pointer", borderRadius: 16, border: "1px solid", transition: "all 0.2s", padding: 20, display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -958,115 +989,11 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, setSessionIntent, openChat, setChatContext, setMessages, setRetrievalMode, setThinking, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter } = useChatContext();
   const T = THEMES[themeKey];
 
-  // Semantic search state (scenarios A/B/C + result boosting)
-  const [semanticPrompt, setSemanticPrompt] = useState(null);
-  const [semanticScenario, setSemanticScenario] = useState(null);
-  const [semanticResults, setSemanticResults] = useState<{article_id: string; similarity: number; section_key: string}[]>([]);
-
-  // Detect conversational / non-search queries that should route to the AI chat
-  const CONVERSATIONAL_RE = /^(h(i|ello|ey)|how are you|how do(es)? (you|this|hive|it) work|what (can|do) you do|help me|what is hive|tell me about|who are you|good (morning|afternoon|evening)|thanks|thank you|help$)/i;
-  function isConversationalQuery(q: string): boolean {
-    return CONVERSATIONAL_RE.test(q.trim());
-  }
-
-  // Route a query through the chat API (opens panel, sends user message, gets AI response)
-  const chatRoutingRef = useRef(false);
-  async function routeQueryToChat(q: string) {
-    if (chatRoutingRef.current) return;
-    chatRoutingRef.current = true;
-    openChat("browse");
-    const userMsg = { role: "user" as const, text: q };
-    setMessages([userMsg]);
-    setThinking(true);
-    try {
-      const res = await fetch("/api/handbook/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", text: q }],
-          context: "browse",
-          session_intent: q,
-        }),
-      });
-      const data = await res.json();
-      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
-      setMessages([
-        userMsg,
-        {
-          role: "ai" as const,
-          text: data.message ?? data.text ?? "",
-          chips: data.chips,
-          gap: data.gap,
-          actions: data.actions,
-          sources: data.sources,
-          retrieval_mode: data.retrieval_mode,
-          action: data.action,
-          actionDismissed: false,
-        },
-      ]);
-    } catch {
-      setMessages([userMsg, { role: "ai" as const, text: "Something went wrong. Please try again." }]);
-    } finally {
-      setThinking(false);
-      chatRoutingRef.current = false;
-    }
-  }
-
-  // Semantic search: fire on debounced query, supplements client-side search
-  const semanticTimerRef = useRef(null);
-  useEffect(() => {
-    if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current);
-    if (!query.trim() || query.trim().length < 3) {
-      setSemanticPrompt(null);
-      setSemanticScenario(null);
-      setSemanticResults([]);
-      return;
-    }
-    semanticTimerRef.current = setTimeout(async () => {
-      const trimmed = query.trim();
-
-      // No auto-send to chat on debounce: only show "Ask HIVE →" when we have results (scenario B).
-      // Chat is sent only on Enter or when user clicks "Ask HIVE →".
-      if (isConversationalQuery(trimmed)) {
-        setSemanticPrompt(null);
-        setSemanticScenario(null);
-        return;
-      }
-
-      if (trimmed.length < 5) return;
-
-      try {
-        const res = await fetch(`/api/handbook/semantic-search?q=${encodeURIComponent(trimmed)}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setSemanticScenario(data.scenario);
-        setSemanticResults(data.results ?? []);
-        if (data.scenario === "B" && data.results?.length > 0) {
-          const topIds = data.results.slice(0, 3).map(r => r.article_id);
-          setSemanticPrompt(`Found ${topIds.length} relevant cases — want me to explain how they apply? [Ask HIVE →]`);
-        } else {
-          setSemanticPrompt(null);
-        }
-      } catch {
-        setSemanticResults([]);
-      }
-    }, 600);
-    return () => { if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current); };
-  }, [query]);
-
-  // Store session intent when user pauses typing (debounced, 5+ chars)
-  const intentTimerRef = useRef(null);
-  useEffect(() => {
-    if (intentTimerRef.current) clearTimeout(intentTimerRef.current);
-    if (query.trim().length < 5) return;
-    intentTimerRef.current = setTimeout(() => {
-      setSessionIntent(query.trim());
-    }, 400);
-    return () => { if (intentTimerRef.current) clearTimeout(intentTimerRef.current); };
-  }, [query, setSessionIntent]);
+  // Shared semantic search + chat wiring (same hook as cases library)
+  const { semanticResults, semanticScenario, semanticPrompt, routeQueryToChat } = useHandbookSearch(query);
 
   useEffect(() => {
     setDemoCounts({ cases: CASE_STUDIES.length, measures: TOTAL_MEASURE_COUNT });
@@ -1131,39 +1058,26 @@ function HandbookLandingPageContent() {
   useEffect(() => {
     const keywordResults = searchCaseStudies(query, allActiveHazards, allActiveSectors, selectedRegions, selectedCosts);
 
+    // One list, one number: semantic-only when semantic has results; keyword fallback otherwise
     let merged;
     if (semanticResults.length > 0 && query.trim()) {
-      const semanticMap = new Map(semanticResults.map(r => [r.article_id, r]));
-
-      const boosted = [];
-      const keywordOnly = [];
-      for (const cs of keywordResults) {
-        if (semanticMap.has(cs.id)) {
-          boosted.push({ ...cs, _semanticSimilarity: semanticMap.get(cs.id).similarity, _semanticSection: semanticMap.get(cs.id).section_key });
-          semanticMap.delete(cs.id);
-        } else {
-          keywordOnly.push(cs);
-        }
-      }
-      // Semantic-only cases not found by keyword — add them if they exist in the seed data
-      for (const [, sr] of semanticMap) {
-        const cs = CASE_STUDIES.find(c => c.id === sr.article_id);
-        if (cs) {
-          boosted.push({ ...cs, _semanticSimilarity: sr.similarity, _semanticSection: sr.section_key });
-        }
-      }
-      boosted.sort((a, b) => (b._semanticSimilarity || 0) - (a._semanticSimilarity || 0));
-      merged = [...boosted, ...keywordOnly];
+      merged = semanticResults
+        .map((sr) => {
+          const cs = CASE_STUDIES.find((c) => c.id === sr.article_id);
+          return cs ? { ...cs, _semanticSimilarity: sr.similarity, _semanticSection: sr.section_key } : null;
+        })
+        .filter(Boolean);
     } else {
       merged = keywordResults;
     }
 
     setResults(merged);
+    setResultSet(hasActiveFilters ? merged.slice(0, 12).map((r) => ({ id: r.id, title: r.title, sector: r.sector })) : []);
     const reasons = {};
     merged.forEach(cs => { reasons[cs.id] = getMatchReasons(cs, query, allActiveHazards, allActiveSectors); });
     setActiveMatchReasons(reasons);
     setSynthesis(hasActiveFilters && merged.length > 0 ? generateSynthesis(merged, query) : null);
-  }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts, semanticResults]);
+  }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts, semanticResults, setResultSet]);
 
   // Scroll to results only once per search session, after typing settles
   useEffect(() => {
@@ -1395,6 +1309,7 @@ function HandbookLandingPageContent() {
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
+                aria-label="Search case studies"
                 placeholder=""
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
@@ -1408,8 +1323,8 @@ function HandbookLandingPageContent() {
                 style={{ width: "100%", paddingLeft: 44, paddingRight: 40, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1.5px solid var(--input-border)", transition: "all 0.2s" }}
               />
               {query && (
-                <button onClick={() => setQuery("")} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
-                  <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button onClick={() => setQuery("")} aria-label="Clear search" style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
+                  <svg aria-hidden="true" style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
@@ -1492,13 +1407,13 @@ function HandbookLandingPageContent() {
                 {aiDetectedHazards.filter(h => !selectedHazards.includes(h)).map(h => (
                   <span key={h} style={{ display: "inline-flex", alignItems: "center", gap: 6, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 9999, fontSize: 12, fontWeight: 500, border: "1px solid", background: "var(--accent-bg)", color: "var(--accent-text)", borderColor: "color-mix(in srgb, var(--accent) 60%, transparent)" }}>
                     {h}
-                    <button onClick={() => removeAiHazard(h)} style={{ opacity: 0.7 }}><svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button onClick={() => removeAiHazard(h)} aria-label={`Remove ${h} filter`} style={{ opacity: 0.7 }}><svg aria-hidden="true" style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
                   </span>
                 ))}
                 {aiDetectedSectors.filter(s => !selectedSectors.includes(s)).map(s => (
                   <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 9999, fontSize: 12, fontWeight: 500, border: "1px solid", background: "var(--accent-bg)", color: "var(--accent-text)", borderColor: "color-mix(in srgb, var(--accent) 60%, transparent)" }}>
                     {s}
-                    <button onClick={() => removeAiSector(s)} style={{ opacity: 0.7 }}><svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button onClick={() => removeAiSector(s)} aria-label={`Remove ${s} filter`} style={{ opacity: 0.7 }}><svg aria-hidden="true" style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
                   </span>
                 ))}
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>— remove any that don't apply</span>
@@ -1565,12 +1480,25 @@ function HandbookLandingPageContent() {
             {/* Search/filter-driven multi-result view */}
             {hasActiveFilters && (
               <>
+                {exclusiveFilter && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, padding: "8px 12px", background: "#e8f1fb", borderRadius: 6, border: "1px solid #b3d4ef" }}>
+                    <span style={{ fontSize: 13, color: "#1d4ed8", fontWeight: 500 }}>
+                      Showing {exclusiveFilter.length} case{exclusiveFilter.length === 1 ? "" : "s"} from your conversation
+                    </span>
+                    <button
+                      onClick={() => setExclusiveFilter(null)}
+                      style={{ fontSize: 12, color: "#1d4ed8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
+                    >
+                      Clear to browse all
+                    </button>
+                  </div>
+                )}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingTop: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
                       {viewMode === 'measures'
-                        ? <><strong style={{ color: "var(--text-primary)" }}>{measureDisplayItems.length}</strong> {measureDisplayItems.length === 1 ? "measure" : "measures"} across <strong>{results.length}</strong> case {results.length === 1 ? "study" : "studies"}</>
-                        : <>{results.length} case {results.length === 1 ? "study" : "studies"} matched</>
+                        ? <><strong style={{ color: "var(--text-primary)" }}>{measureDisplayItems.length}</strong> {measureDisplayItems.length === 1 ? "measure" : "measures"} across <strong>{(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length}</strong> case {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length === 1 ? "study" : "studies"}</>
+                        : <>{(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length} case {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).length === 1 ? "study" : "studies"} matched</>
                       }
                     </span>
                     <button onClick={clearAll} style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "underline" }}>Clear all</button>
@@ -1643,7 +1571,7 @@ function HandbookLandingPageContent() {
                     </div>
                   ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
-                    {results.map((cs, i) => (
+                    {(exclusiveFilter ? results.filter(cs => exclusiveFilter.includes(cs.id)) : results).map((cs, i) => (
                       <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
                         <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} />
                       </div>

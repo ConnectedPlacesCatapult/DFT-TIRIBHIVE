@@ -171,7 +171,7 @@ function DirectionA() {
           <div style={{ marginBottom:14 }}>
             <div style={{ fontSize:10, letterSpacing:"0.12em", textTransform:"uppercase", color:A.meta, marginBottom:10 }}>Search the knowledge base</div>
             <div style={{ display:"flex" }}>
-              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="e.g. flood resilience, rail heatwave, coastal storm surge..."
+              <input value={q} onChange={e=>setQ(e.target.value)} aria-label="Search the knowledge base" placeholder="e.g. flood resilience, rail heatwave, coastal storm surge..."
                 style={{ flex:1, background:A.panel, border:`1px solid ${q?A.gold:A.border}`, borderRight:"none", padding:"13px 16px", color:A.cream, fontSize:14, outline:"none", fontFamily:"'DM Sans',sans-serif", borderRadius:"3px 0 0 3px", transition:"border-color 0.2s" }}/>
               <button style={{ background:A.gold, color:A.bg, border:"none", padding:"0 24px", cursor:"pointer", fontSize:12, fontWeight:700, borderRadius:"0 3px 3px 0", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.06em" }}>Search</button>
             </div>
@@ -195,7 +195,7 @@ function DirectionA() {
               <span style={{ fontSize:10, color:A.gold, letterSpacing:"0.1em", textTransform:"uppercase" }}>Detected:</span>
               {[...aiH,...aiS].map(t=>(
                 <span key={t} style={{ display:"inline-flex", alignItems:"center", gap:6, background:A.goldFade, border:`1px solid ${A.goldBorder}`, borderRadius:2, padding:"3px 10px", fontSize:11, color:A.gold }}>
-                  {t}<button onClick={()=>{setAiH(p=>p.filter(x=>x!==t));setAiS(p=>p.filter(x=>x!==t));}} style={{ background:"none",border:"none",cursor:"pointer",color:A.gold,padding:0,lineHeight:1,fontSize:14 }}>×</button>
+                  {t}<button onClick={()=>{setAiH(p=>p.filter(x=>x!==t));setAiS(p=>p.filter(x=>x!==t));}} aria-label={`Remove ${t} filter`} style={{ background:"none",border:"none",cursor:"pointer",color:A.gold,padding:0,lineHeight:1,fontSize:14 }}>×</button>
                 </span>
               ))}
             </div>
@@ -457,8 +457,8 @@ const B_MarqueeCard = ({ c, onClick, dimmed, highlighted }) => {
   const secBg = { Rail:"#EBF4FF",Aviation:"#F3EEF9",Maritime:"#E6F5EE",Highways:"#FDF0E5",Energy:"#F5F0FD",Multiple:"#F5F5F4" };
   const secCol = { Rail:"#1A4A8A",Aviation:"#5B3FA0",Maritime:"#156840",Highways:"#9A4812",Energy:"#6B3FA0",Multiple:"#78716c" };
   return (
-    <div onClick={() => onClick(c)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ flexShrink:0,width:280,cursor:"pointer",borderRadius:16,border:`1px solid ${highlighted?'var(--b-accent)':'var(--b-border)'}`,background:highlighted?'var(--b-accent-bg)':'var(--b-surface)',padding:"14px 16px",opacity:dimmed?0.25:1,transition:"all 0.25s",transform:hovered&&!highlighted?"translateY(-3px) scale(1.03)":highlighted?"translateY(-2px)":"none",boxShadow:hovered?"0 8px 24px rgba(0,0,0,0.12)":highlighted?"0 2px 12px rgba(0,0,0,0.10)":"none",fontFamily:"'DM Sans',sans-serif" }}>
+    <div role="button" tabIndex={0} aria-label={c.title} onClick={() => onClick(c)} onKeyDown={e=>(e.key==="Enter"||e.key===" ")&&onClick(c)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{ flexShrink:0,width:280,cursor:"pointer",borderRadius:16,border:`1px solid ${highlighted?'var(--b-accent)':'var(--b-border)'}`,background:highlighted?'var(--b-accent-bg)':'var(--b-surface)',padding:"14px 16px",opacity:dimmed?0.45:1,transition:"all 0.25s",transform:hovered&&!highlighted?"translateY(-3px) scale(1.03)":highlighted?"translateY(-2px)":"none",boxShadow:hovered?"0 8px 24px rgba(0,0,0,0.12)":highlighted?"0 2px 12px rgba(0,0,0,0.10)":"none",fontFamily:"'DM Sans',sans-serif" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,gap:8 }}>
         <h4 style={{ fontSize:13,fontWeight:600,lineHeight:1.35,color:'var(--b-text-primary)',flex:1 }}>{c.title}</h4>
         <span style={{ fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,border:`1px solid ${(secCol[c.sector]||"#78716c")}44`,background:secBg[c.sector]||"#f5f5f4",color:secCol[c.sector]||"#78716c",whiteSpace:"nowrap",flexShrink:0 }}>{c.sector}</span>
@@ -474,13 +474,21 @@ const B_Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, has
   const rowA = cases.slice(0, half), rowB = cases.slice(half);
   const isHighlighted = c => { if (!hasFilters) return false; const sm = matchingSectors.length===0||matchingSectors.includes(c.sector); const hm = matchingHazards.length===0||c.hazards.some(h=>matchingHazards.some(mh=>h.toLowerCase().includes(mh.toLowerCase()))); return sm&&hm; };
   const isDimmed = c => hasFilters && !isHighlighted(c);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const h = () => setReducedMotion(mq.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
   return (
     <div style={{ position:"relative",paddingTop:6,paddingBottom:6 }}>
       {[rowA,rowB].map((row,ri)=>(
         <div key={ri} style={{ overflow:"hidden",paddingTop:8,paddingBottom:8 }}
           onMouseEnter={e=>{const el=e.currentTarget.querySelector('[data-btrack]');if(el)el.style.animationPlayState='paused';}}
           onMouseLeave={e=>{const el=e.currentTarget.querySelector('[data-btrack]');if(el)el.style.animationPlayState='running';}}>
-          <div data-btrack style={{ display:"flex",gap:12,width:"max-content",animation:`scrollX ${ri===0?130:155}s linear infinite ${ri===1?"reverse":""}` }}>
+          <div data-btrack style={{ display:"flex",gap:12,width:"max-content",animation:reducedMotion?"none":`scrollX ${ri===0?130:155}s linear infinite ${ri===1?"reverse":""}` }}>
             {[...row,...row].map((c,i)=><B_MarqueeCard key={`b${ri}-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)}/>)}
           </div>
         </div>
@@ -496,6 +504,14 @@ const B_Marquee3D = ({ cases, onCardClick, matchingSectors, matchingHazards, has
   cases.forEach((c,i)=>cols[i%6].push(c));
   const isHighlighted = c => { if (!hasFilters) return false; const sm = matchingSectors.length===0||matchingSectors.includes(c.sector); const hm = matchingHazards.length===0||c.hazards.some(h=>matchingHazards.some(mh=>h.toLowerCase().includes(mh.toLowerCase()))); return sm&&hm; };
   const isDimmed = c => hasFilters && !isHighlighted(c);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const h = () => setReducedMotion(mq.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
   return (
     <div style={{ position:"relative",overflow:"hidden",height:500 }}>
       <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",perspective:900 }}>
@@ -504,7 +520,7 @@ const B_Marquee3D = ({ cases, onCardClick, matchingSectors, matchingHazards, has
             <div key={ci} style={{ overflow:"hidden",flexShrink:0,width:224,height:440 }}
               onMouseEnter={e=>{const el=e.currentTarget.querySelector('[data-bcol]');if(el)el.style.animationPlayState='paused';}}
               onMouseLeave={e=>{const el=e.currentTarget.querySelector('[data-bcol]');if(el)el.style.animationPlayState='running';}}>
-              <div data-bcol style={{ display:"flex",flexDirection:"column",gap:12,padding:8,animation:`scrollY ${ci%2===0?30:38}s linear infinite ${ci%2===1?"reverse":""}` }}>
+              <div data-bcol style={{ display:"flex",flexDirection:"column",gap:12,padding:8,animation:reducedMotion?"none":`scrollY ${ci%2===0?30:38}s linear infinite ${ci%2===1?"reverse":""}` }}>
                 {[...colCases,...colCases].map((c,i)=><B_MarqueeCard key={`bc${ci}-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)}/>)}
               </div>
             </div>
@@ -518,7 +534,13 @@ const B_Marquee3D = ({ cases, onCardClick, matchingSectors, matchingHazards, has
 };
 
 const B_CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => (
-  <div onClick={() => onClick(cs)} style={{ background:'var(--b-surface)',border:`1px solid var(--b-border)`,borderRadius:16,padding:"20px 20px 16px",display:"flex",flexDirection:"column",cursor:"pointer",transition:"border-color 0.2s,box-shadow 0.2s",fontFamily:"'DM Sans',sans-serif" }}
+  <div
+    role="button"
+    tabIndex={0}
+    aria-label={cs.title}
+    onClick={() => onClick(cs)}
+    onKeyDown={e=>(e.key==="Enter"||e.key===" ")&&onClick(cs)}
+    style={{ background:'var(--b-surface)',border:`1px solid var(--b-border)`,borderRadius:16,padding:"20px 20px 16px",display:"flex",flexDirection:"column",cursor:"pointer",transition:"border-color 0.2s,box-shadow 0.2s",fontFamily:"'DM Sans',sans-serif" }}
     onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--b-accent)';e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.12)";}}
     onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--b-border)';e.currentTarget.style.boxShadow="none";}}>
     <div style={{ display:"flex",alignItems:"flex-start",gap:12,marginBottom:4 }}>
@@ -729,11 +751,12 @@ function DirectionB() {
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </div>
           <input ref={inputRef} value={query} onChange={e=>setQuery(e.target.value)}
+            aria-label="Search case studies"
             placeholder="e.g. flooding on a rail corridor, heatwave on road bridges, coastal port storm surge..."
             className="b-input"
             style={{ width:"100%",paddingLeft:44,paddingRight:40,paddingTop:15,paddingBottom:15,fontSize:15,borderRadius:16,border:`1.5px solid ${query?T.accent:T.inputBorder}`,outline:"none",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",transition:"border-color 0.2s",boxShadow:"0 2px 12px rgba(0,0,0,0.06)" }}/>
-          {query&&<button onClick={()=>setQuery("")} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.textMuted }}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          {query&&<button onClick={()=>setQuery("")} aria-label="Clear search" style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.textMuted }}>
+            <svg aria-hidden="true" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>}
         </div>
         {!query&&<p style={{ fontSize:12,marginBottom:16,fontStyle:"italic",color:T.textMuted }}>Describe your challenge — location, asset type, climate risk</p>}
@@ -1006,7 +1029,7 @@ function DirectionC() {
           <p style={{ fontSize:17,color:C.textMid,lineHeight:1.65,maxWidth:520,margin:"0 auto 52px" }}>109 transport case studies. AI-assisted synthesis. Structured briefings for climate adaptation decisions.</p>
           <div style={{ maxWidth:640,margin:"0 auto",background:C.panel,border:`1px solid ${q.length>2?C.teal:C.tealBorder}`,borderRadius:14,display:"flex",alignItems:"center",transition:"border-color 0.3s,box-shadow 0.3s",boxShadow:q.length>2?"0 0 32px rgba(0,212,170,0.18)":"0 6px 40px rgba(0,0,0,0.5)" }}>
             <span style={{ padding:"0 18px",color:C.teal,fontSize:20 }}>⌕</span>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Ask about any transport climate challenge..." style={{ flex:1,background:"none",border:"none",outline:"none",fontSize:16,color:C.text,padding:"18px 0",fontFamily:"'Fira Sans',sans-serif" }}/>
+            <input value={q} onChange={e=>setQ(e.target.value)} aria-label="Search case studies" placeholder="Ask about any transport climate challenge..." style={{ flex:1,background:"none",border:"none",outline:"none",fontSize:16,color:C.text,padding:"18px 0",fontFamily:"'Fira Sans',sans-serif" }}/>
             {q&&<button style={{ background:C.teal,color:C.bg,border:"none",margin:7,borderRadius:9,padding:"10px 22px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Epilogue',sans-serif" }}>Search</button>}
           </div>
           {q.length>2&&<div style={{ maxWidth:640,margin:"10px auto 0",background:C.raised,border:`1px solid ${C.tealBorder}`,borderRadius:10,padding:"14px 22px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
@@ -1067,7 +1090,7 @@ function DirectionD() {
           <p style={{ fontSize:16,color:"rgba(255,255,255,0.5)",marginBottom:38,lineHeight:1.65 }}>Search 109 case studies across rail, aviation, maritime and highways infrastructure.</p>
           <div style={{ background:"#FFF",borderRadius:10,display:"flex",alignItems:"center",border:`2px solid ${focused?F.green:"transparent"}`,transition:"border-color 0.2s",boxShadow:"0 6px 32px rgba(0,0,0,0.35)" }}>
             <span style={{ padding:"0 18px",color:F.textMid,fontSize:20 }}>⌕</span>
-            <input value={q} onChange={e=>setQ(e.target.value)} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} placeholder="Search case studies..." style={{ flex:1,background:"none",border:"none",outline:"none",fontSize:15,color:F.text,padding:"15px 0",fontFamily:"'Source Sans 3',sans-serif" }}/>
+            <input value={q} onChange={e=>setQ(e.target.value)} aria-label="Search case studies" onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} placeholder="Search case studies..." style={{ flex:1,background:"none",border:"none",outline:"none",fontSize:15,color:F.text,padding:"15px 0",fontFamily:"'Source Sans 3',sans-serif" }}/>
           </div>
           <div style={{ display:"flex",justifyContent:"center",gap:8,marginTop:20,flexWrap:"wrap" }}>
             {["Flooding","Rail heatwave","Sea level rise","SuDS","Monitoring"].map(qt=>(
@@ -1141,9 +1164,9 @@ export default function HIVEDesignReview() {
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
       `}</style>
-      <div className="hive-root" style={{ paddingBottom:72 }}>
+      <main id="hive-main" className="hive-root" style={{ paddingBottom:72 }}>
         <Active/>
-      </div>
+      </main>
       <div style={{ position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:9999,background:"rgba(5,8,15,0.96)",backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:"8px 10px",display:"flex",gap:4,boxShadow:"0 12px 48px rgba(0,0,0,0.5)",alignItems:"center" }}>
         {Object.entries(LABELS).map(([k,v],i)=>(
           <div key={k} style={{ display:"flex",alignItems:"center",gap:4 }}>

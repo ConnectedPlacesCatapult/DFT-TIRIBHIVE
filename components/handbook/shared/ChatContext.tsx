@@ -94,6 +94,9 @@ type HandbookContextType = {
   /** System awareness suggestion IDs already shown this session — do not repeat (explore mode) */
   suggestionsShown: string[];
   setSuggestionsShown: (ids: string[] | ((prev: string[]) => string[])) => void;
+  /** When non-null, the grid is filtered to only these IDs (set via suggest_cases Apply in browse/discovery mode) */
+  exclusiveFilter: string[] | null;
+  setExclusiveFilter: (ids: string[] | null) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -134,6 +137,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [resultSet, setResultSet] = useState<Array<{ id: string; title: string; sector: string }>>([]);
   const [semanticChunks, setSemanticChunks] = useState<Array<{ article_id: string; section_key: string; chunk_text: string }>>([]);
   const [suggestionsShown, setSuggestionsShown] = useState<string[]>([]);
+  const [exclusiveFilter, setExclusiveFilter] = useState<string[] | null>(null);
 
   const [backgroundEffect, setBackgroundEffectState] = useState<
     "none" | "particles" | "hero"
@@ -275,6 +279,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setSemanticChunks,
         suggestionsShown,
         setSuggestionsShown,
+        exclusiveFilter,
+        setExclusiveFilter,
       }}
     >
       {children}
