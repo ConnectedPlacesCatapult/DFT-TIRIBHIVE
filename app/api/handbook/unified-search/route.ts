@@ -14,9 +14,21 @@ import { hybridSearchChunks, getDynamicThreshold, getAIResponse } from "@/lib/ha
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 
-/** Normalise a query for cache keying — lowercase, collapse whitespace */
+/**
+ * Normalise a query for cache keying.
+ * Strips conversational filler so "I'm dealing with flooding" and "flooding"
+ * hash to the same key and share a cache entry.
+ */
+const FILLER_WORDS =
+  /\b(i'm|i am|i've|we('re| are)|we've|dealing with|managing|struggling with|worried about|about|related to|regarding|what about|tell me about|show me|cases (about|for|on)|cases|for|on|the|a|an|our|my|some|any|examples of|example of|how (to|do|does|can)|what (is|are)|help (me |us )?(with|understand)?)\b/gi;
+
 function normaliseQuery(q: string): string {
-  return q.toLowerCase().replace(/\s+/g, " ").trim();
+  return q
+    .toLowerCase()
+    .replace(FILLER_WORDS, " ")
+    .replace(/['"?!.,;:]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** SHA-256 hash of the normalised query — used as the primary key */

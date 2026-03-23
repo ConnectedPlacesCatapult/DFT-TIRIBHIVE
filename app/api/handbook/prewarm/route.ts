@@ -48,8 +48,16 @@ const PREWARM_QUERIES = [
   "wind damage",
 ];
 
+const FILLER_WORDS =
+  /\b(i'm|i am|i've|we('re| are)|we've|dealing with|managing|struggling with|worried about|about|related to|regarding|what about|tell me about|show me|cases (about|for|on)|cases|for|on|the|a|an|our|my|some|any|examples of|example of|how (to|do|does|can)|what (is|are)|help (me |us )?(with|understand)?)\b/gi;
+
 function normaliseQuery(q: string): string {
-  return q.toLowerCase().replace(/\s+/g, " ").trim();
+  return q
+    .toLowerCase()
+    .replace(FILLER_WORDS, " ")
+    .replace(/['"?!.,;:]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function hashQuery(q: string): string {
