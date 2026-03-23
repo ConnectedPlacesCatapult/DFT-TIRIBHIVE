@@ -85,6 +85,11 @@ function getProvider(): "json" | "supabase" | "azure" {
   return "json";
 }
 
+/** Current data provider — gate Supabase-only brief features (article_cards, option links). */
+export function getHiveDataProvider(): "json" | "supabase" | "azure" {
+  return getProvider();
+}
+
 // ---------------------------------------------------------------------------
 // Supabase client (lazy — only instantiated when provider is supabase/azure)
 // ---------------------------------------------------------------------------
@@ -453,6 +458,93 @@ export async function getReportSections(sessionId: string): Promise<ReportSectio
 }
 
 /** Check connectivity and return provider info — used by the admin health panel. */
+/** Linked options-framework rows for brief generation (hive.option_case_links + options). */
+export type BriefLinkedOption = {
+  trib_article_id: string;
+  adaptation_measure: string;
+  transport_subsector?: string | null;
+  climate_hazard_cause?: string | null;
+};
+
+/**
+ * Returns options linked to the given trib_article_ids via hive.option_case_links.
+ * Join table keys cases by articles.id (UUID), not trib_article_id — resolve first.
+ * No-op in json mode or if the table is missing / empty.
+ */
+export async function getLinkedOptionsForBriefArticles(
+  tribArticleIds: string[]
+): Promise<BriefLinkedOption[]> {
+  if (getProvider() === "json" || tribArticleIds.length === 0) return [];
+
+  try {
+    const sb = getSupabaseClient();
+
+    const { data: articleRows, error: artErr } = await sb
+      .from("articles")
+      .select("id, trib_article_id")
+      .in("trib_article_id", tribArticleIds);
+
+    if (artErr || !articleRows?.length) return [];
+
+    const uuidToTrib = new Map<string, string>();
+    for (const row of articleRows as { id: string; trib_article_id: string | null }[]) {
+      if (row.id && row.trib_article_id) uuidToTrib.set(row.id, row.trib_article_id);
+    }
+
+    const articleUuids = [...uuidToTrib.keys()];
+    if (!articleUuids.length) return [];
+
+    const { data: links, error: linkErr } = await sb
+      .from("option_case_links")
+      .select("article_id, option_id")
+      .in("article_id", articleUuids);
+
+    if (linkErr || !links?.length) return [];
+
+    const optionIds = [
+      ...new Set(
+        (links as { option_id: string }[]).map((l) => String(l.option_id))
+      ),
+    ];
+    if (!optionIds.length) return [];
+
+    const { data: optionRows, error: optErr } = await sb
+      .from("options")
+      .select("id, adaptation_measure, transport_subsector, climate_hazard_cause")
+      .in("id", optionIds);
+
+    if (optErr || !optionRows?.length) return [];
+
+    const optById = new Map(
+      (optionRows as Record<string, unknown>[]).map((o) => [String(o.id), o])
+    );
+
+    const out: BriefLinkedOption[] = [];
+    for (const l of links as { article_id: string; option_id: string }[]) {
+      const trib = uuidToTrib.get(l.article_id);
+      if (!trib) continue;
+
+      const o = optById.get(String(l.option_id)) as
+        | {
+            adaptation_measure?: string;
+            transport_subsector?: string | null;
+            climate_hazard_cause?: string | null;
+          }
+        | undefined;
+      if (!o?.adaptation_measure) continue;
+      out.push({
+        trib_article_id: trib,
+        adaptation_measure: o.adaptation_measure,
+        transport_subsector: o.transport_subsector ?? null,
+        climate_hazard_cause: o.climate_hazard_cause ?? null,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export async function getProviderStatus(): Promise<{
   provider: string;
   healthy: boolean;
