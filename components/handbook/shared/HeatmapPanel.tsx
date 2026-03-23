@@ -29,6 +29,8 @@ export interface HeatmapPanelProps {
   onCellClick: (sector: string, hazard: string) => void;
   /** Optional matrix of counts; when provided, used instead of HEATMAP_MATRIX (e.g. from Supabase options). */
   matrix?: Record<string, Record<string, number>>;
+  /** Override the header subtitle text (e.g. for brief context). */
+  subtitle?: string;
 }
 
 const LEGEND_SWATCHES = ["#f0fdf4", "#d1fae5", "#bbf7d0", "#6ee7b7"];
@@ -41,6 +43,7 @@ export function HeatmapPanel({
   onTogglePosition,
   onCellClick,
   matrix: matrixProp,
+  subtitle,
 }: HeatmapPanelProps) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   const matrix = matrixProp ?? HEATMAP_MATRIX;
@@ -90,9 +93,9 @@ export function HeatmapPanel({
             style={{ fontSize: 11, color: "var(--text-muted)", display: "none" }}
             className="sm:inline"
           >
-            {variant === "landing"
+            {subtitle ?? (variant === "landing"
               ? "— click any cell to explore options for that combination"
-              : "— click a cell to apply as filter"}
+              : "— click a cell to apply as filter")}
           </span>
         </div>
 

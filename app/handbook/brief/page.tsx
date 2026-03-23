@@ -5,12 +5,13 @@ import { CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { ChatPanel } from "@/components/handbook/shared/ChatPanel";
 import { ChatTrigger } from "@/components/handbook/shared/ChatTrigger";
+import { BriefOptionsCoverage } from "@/components/handbook/brief/BriefOptionsCoverage";
 import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const T = {
   bg: "#f8f7f4", surface: "#ffffff", surfaceAlt: "#f3f1ec",
-  border: "#e4e0d8", text: "#1a1814", textSec: "#5a5650", textMuted: "#9a948a",
+  border: "#e4e0d8", text: "#1a1814", textSec: "#5a5650", textMuted: "#6b6560",
   accent: "#1d70b8", accentLight: "#e8f1fb", accentMid: "#b3d4ef",
   green: "#006853", greenLight: "#e6f4f1", greenMid: "#a7d8d0",
   amber: "#b45309", amberLight: "#fef3c7",
@@ -315,6 +316,53 @@ function briefCacheMatches(cache: { ids: string[] }, ids: string[]): boolean {
 // Default example case IDs when user opens brief with no cases — acts as template + user guide
 const EXAMPLE_BRIEF_IDS = ["ID_40", "ID_32", "ID_19"];
 
+// ── Guided tour steps ─────────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    key: "welcome",
+    title: "Welcome to Brief mode",
+    body: "This is a live example of a HIVE Cross-Case Intelligence Brief. It synthesises evidence from multiple case studies into a structured analytical document. Step through this tour to understand each section before building your own.",
+    anchor: null,
+  },
+  {
+    key: "evidence_base",
+    title: "Evidence Base",
+    body: "The tiles at the top show the case studies this brief draws from. Click any tile to highlight its evidence throughout the document — useful for checking that specific citations are well-supported. The badge in the corner shows UK transferability (High / Medium / Low).",
+    anchor: null,
+  },
+  {
+    key: "executive_summary",
+    title: "Executive Summary",
+    body: "Opens with one specific measurable finding — a percentage, £ figure, or concrete outcome. The brief is designed to open with the strongest quantified result, not a generic scene-setter. Every claim carries an [ID_xx] citation you can trace back to the source case.",
+    anchor: "executive_summary",
+  },
+  {
+    key: "adaptation_approaches",
+    title: "Adaptation Approaches table",
+    body: "Structured as a markdown table: Approach / Case Studies / Notes. Where your cases are linked to the DfT Options Framework, those measures appear here with a 'Aligns with DfT options framework' note. This section is best for comparing interventions side-by-side.",
+    anchor: "adaptation_approaches",
+  },
+  {
+    key: "costs_and_resourcing",
+    title: "Costs & Resourcing",
+    body: "Pulls investment figures directly from the article_cards structured data — not from raw text paragraphs. Where investment_band and investment_detail are populated (from the AI card generation step), they appear here as specific figures rather than ranges.",
+    anchor: "costs_and_resourcing",
+  },
+  {
+    key: "uk_applicability",
+    title: "Transfer Intelligence",
+    body: "This section names specific transfer conditions for each case: what transfers directly to UK infrastructure, what needs adapting, and which UK infrastructure types are most relevant. It avoids generic conclusions like 'applicable to UK transport' in favour of named asset types and locations.",
+    anchor: "uk_applicability",
+  },
+  {
+    key: "confidence",
+    title: "Confidence levels",
+    body: "Every section carries a confidence badge: High (2+ cases agree), Partial (some evidence, interpretation required), or Indicative (single-case or reasoned inference). Use these to decide how to characterise the evidence in any formal document you produce from this brief.",
+    anchor: null,
+  },
+];
+const TOUR_LS_KEY = "hiveBriefTourDone";
+
 const FOCUS_LENSES: { id: "all" | "Rail" | "Highways" | "Aviation" | "Maritime" | "Costs" | "Policy context"; label: string }[] = [
   { id: "all", label: "All" },
   { id: "Rail", label: "Rail" },
@@ -334,6 +382,33 @@ export default function HIVEBriefWithChat() {
   const [error, setError] = useState<string | null>(null);
   const [aiLabel, setAiLabel] = useState<string | null>(null);
   const [isExampleMode, setIsExampleMode] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
+  // Spotlight the referenced section element — lift it above the dim backdrop
+  useEffect(() => {
+    if (!tourOpen) return;
+    const anchor = TOUR_STEPS[tourStep]?.anchor;
+    const el = anchor ? sectionRefs.current[anchor] : null;
+    if (el) {
+      el.style.position = "relative";
+      el.style.zIndex = "1001";
+      el.style.borderRadius = "10px";
+      el.style.outline = `3px solid ${T.accent}`;
+      el.style.outlineOffset = "6px";
+      el.style.background = T.surface;
+    }
+    return () => {
+      if (el) {
+        el.style.position = "";
+        el.style.zIndex = "";
+        el.style.borderRadius = "";
+        el.style.outline = "";
+        el.style.outlineOffset = "";
+        el.style.background = "";
+      }
+    };
+  }, [tourOpen, tourStep]);
   const [activeCase, setActiveCase] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("executive_summary");
   const [editingSectionKey, setEditingSectionKey] = useState<string | null>(null);
@@ -429,19 +504,29 @@ export default function HIVEBriefWithChat() {
         generateBrief(ids);
       }
     } else {
-      // No cases: show default example brief as template + user guide (do not write to sessionStorage)
+      // No cases: load static prebuilt example brief instantly — no OpenAI call
       const resolved = EXAMPLE_BRIEF_IDS
         .map(id => CASE_STUDIES.find(c => c.id === id))
         .filter((cs): cs is (typeof CASE_STUDIES)[number] => cs != null);
       if (resolved.length > 0) {
         setBriefCases(resolved.map(cs => normaliseCaseForBrief(cs)));
         setIsExampleMode(true);
-        const cache = getBriefCache();
-        if (cache && briefCacheMatches(cache, EXAMPLE_BRIEF_IDS)) {
-          setSections(cache.sections);
-          setAiLabel(cache.label);
-        } else {
+        // Import the prebuilt static brief — sync, no API call
+        import("@/data/example-brief.json").then(mod => {
+          const { sections: exSections, label: exLabel } = mod.default as {
+            sections: BriefSection[];
+            label: string;
+          };
+          setSections(exSections);
+          setAiLabel(exLabel);
+        }).catch(() => {
+          // Fallback: generate if static file missing
           generateBrief(EXAMPLE_BRIEF_IDS);
+        });
+        // Open tour on first ever visit
+        if (!window.localStorage.getItem(TOUR_LS_KEY)) {
+          setTourOpen(true);
+          setTourStep(0);
         }
       }
     }
@@ -715,20 +800,33 @@ export default function HIVEBriefWithChat() {
 
       {/* ── Example brief banner (when opened with no cases) ─────────────────── */}
       {isExampleMode && !loading && sections && (
-        <div style={{ background: T.accentLight, borderBottom: `1px solid ${T.accentMid}`, padding: "10px 24px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ background: T.accentLight, borderBottom: `1px solid ${T.accentMid}`, padding: "10px 24px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ width: 20, height: 20, borderRadius: 4, background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>
-            Example brief — this shows what a HIVE brief looks like. Add cases from the handbook to build your own. Use <strong>Clear</strong> in the menu to start from scratch.
+          <span style={{ fontSize: 12, fontWeight: 600, color: T.text, flex: 1 }}>
+            Example brief — this shows what a HIVE brief looks like.
           </span>
+          <button
+            type="button"
+            onClick={() => { setTourStep(0); setTourOpen(true); }}
+            style={{ fontSize: 12, fontWeight: 700, padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${T.accent}`, background: T.surface, color: T.accent, cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            ▶ Start walkthrough
+          </button>
+          <Link
+            href="/handbook/cases"
+            style={{ fontSize: 12, fontWeight: 700, padding: "5px 14px", borderRadius: 20, border: "none", background: T.accent, color: "#fff", textDecoration: "none", whiteSpace: "nowrap" }}
+          >
+            Browse cases to build your own →
+          </Link>
         </div>
       )}
 
-      {/* ── AI-generated warning banner ─────────────────────────────────── */}
-      {aiLabel && !loading && sections && (
+      {/* ── AI-generated warning banner (real briefs only, not the prebuilt example) */}
+      {aiLabel && !isExampleMode && !loading && sections && (
         <div style={{ background: T.amberLight, borderBottom: "1px solid #fcd34d", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={T.amber} strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -822,14 +920,26 @@ export default function HIVEBriefWithChat() {
             {/* Report header */}
             <div style={{ paddingBottom: 28, marginBottom: 28, borderBottom: `2px solid ${T.text}` }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 10 }}>
-                Cross-Case Intelligence Brief &middot; HIVE &middot; {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                {isExampleMode
+                  ? <>Example Brief &middot; HIVE &middot; Prebuilt illustration</>
+                  : <>Cross-Case Intelligence Brief &middot; HIVE &middot; {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</>}
               </div>
               <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, fontWeight: 400, color: T.text, lineHeight: 1.2, marginBottom: 10 }}>
                 {briefTitle.main}<br /><em>{briefTitle.sub}</em>
               </h1>
+              {isExampleMode && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.accentLight, border: `1px solid ${T.accentMid}`, borderRadius: 6, padding: "5px 10px", marginBottom: 10 }}>
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke={T.accent} strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: T.accent }}>Prebuilt example — not AI-generated on this load</span>
+                </div>
+              )}
               <p style={{ fontSize: 13, color: T.textSec, lineHeight: 1.6, maxWidth: 560, marginBottom: 14 }}>
                 {sections
-                  ? <>AI-generated synthesis across {briefCases.length} curated case {briefCases.length === 1 ? "study" : "studies"}. Click any source chip to highlight that case. Use <strong>Ask about this brief</strong> to interrogate, reframe, or extend this report.</>
+                  ? isExampleMode
+                    ? <>Curated example across {briefCases.length} case {briefCases.length === 1 ? "study" : "studies"} — illustrating what a HIVE brief looks like. Click any source chip to highlight that case, or browse case studies to build your own.</>
+                    : <>AI-generated synthesis across {briefCases.length} curated case {briefCases.length === 1 ? "study" : "studies"}. Click any source chip to highlight that case. Use <strong>Ask about this brief</strong> to interrogate, reframe, or extend this report.</>
                   : <>{briefCases.length} case {briefCases.length === 1 ? "study" : "studies"} selected. Click <strong>Generate Brief</strong> to synthesise.</>}
               </p>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -846,7 +956,7 @@ export default function HIVEBriefWithChat() {
                   const isActive = activeCase === c.id;
                   const isOther = activeCase != null && activeCase !== c.id;
                   return (
-                    <div key={c.id} onClick={() => toggleCase(c.id)} style={{
+                    <div key={c.id} role="button" tabIndex={0} aria-pressed={activeCase === c.id} aria-label={c.title} onClick={() => toggleCase(c.id)} onKeyDown={e => (e.key === "Enter" || e.key === " ") && toggleCase(c.id)} style={{
                       background: isActive ? a.light : isOther ? T.surfaceAlt : T.surface,
                       border: `1.5px solid ${isActive ? a.mid : T.border}`,
                       borderTop: `3px solid ${isActive ? a.base : "transparent"}`,
@@ -940,6 +1050,8 @@ export default function HIVEBriefWithChat() {
                   return <div key={nav.key}>{renderSection(section)}</div>;
                 })}
 
+                <BriefOptionsCoverage caseIds={caseIds} briefCases={briefCases} />
+
                 {/* Disclaimer */}
                 <div style={{ marginTop: 14, padding: "12px 14px", background: T.surfaceAlt, borderRadius: 8, border: `1px solid ${T.border}` }}>
                   <p style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.6 }}>
@@ -977,6 +1089,80 @@ export default function HIVEBriefWithChat() {
           </div>
         </div>
       )}
+
+      {/* ── Guided tour overlay ──────────────────────────────────────────── */}
+      {tourOpen && (() => {
+        const step = TOUR_STEPS[tourStep];
+        const isLast = tourStep === TOUR_STEPS.length - 1;
+        const closeTour = () => {
+          setTourOpen(false);
+          try { window.localStorage.setItem(TOUR_LS_KEY, "1"); } catch { /* ignore */ }
+          if (step.anchor) {
+            sectionRefs.current[step.anchor]?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        };
+        const next = () => {
+          if (isLast) { closeTour(); return; }
+          const nextStep = TOUR_STEPS[tourStep + 1];
+          setTourStep(tourStep + 1);
+          if (nextStep.anchor) {
+            setTimeout(() => sectionRefs.current[nextStep.anchor!]?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+          }
+        };
+        const prev = () => { if (tourStep > 0) setTourStep(tourStep - 1); };
+        return (
+          <>
+            {/* Backdrop — dim only, no blur so spotlighted section stays readable */}
+            <div
+              onClick={closeTour}
+              style={{ position: "fixed", inset: 0, background: "rgba(26,24,20,0.55)", zIndex: 999 }}
+            />
+            {/* Card */}
+            <div style={{
+              position: "fixed", bottom: 36, left: "50%", transform: "translateX(-50%)",
+              zIndex: 1000, background: T.surface, border: `1px solid ${T.border}`,
+              borderRadius: 14, boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
+              padding: "28px 32px", maxWidth: 520, width: "calc(100% - 48px)",
+            }}>
+              {/* Step indicator */}
+              <div style={{ display: "flex", gap: 5, marginBottom: 18 }}>
+                {TOUR_STEPS.map((_, i) => (
+                  <div key={i} style={{
+                    height: 3, flex: 1, borderRadius: 2,
+                    background: i <= tourStep ? T.accent : T.border,
+                    transition: "background 0.25s",
+                  }} />
+                ))}
+              </div>
+              {/* Content */}
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, marginBottom: 8 }}>
+                Step {tourStep + 1} of {TOUR_STEPS.length}
+              </div>
+              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, fontWeight: 400, color: T.text, marginBottom: 10 }}>
+                {step.title}
+              </h3>
+              <p style={{ fontSize: 13, color: T.textSec, lineHeight: 1.7, marginBottom: 24 }}>
+                {step.body}
+              </p>
+              {/* Controls */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {tourStep > 0 && (
+                  <button type="button" onClick={prev} style={{ fontSize: 12, fontWeight: 600, padding: "7px 16px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: T.textSec, cursor: "pointer" }}>
+                    ← Back
+                  </button>
+                )}
+                <div style={{ flex: 1 }} />
+                <button type="button" onClick={closeTour} style={{ fontSize: 12, fontWeight: 500, padding: "7px 12px", borderRadius: 8, border: "none", background: "transparent", color: T.textMuted, cursor: "pointer" }}>
+                  Skip tour
+                </button>
+                <button type="button" onClick={next} style={{ fontSize: 12, fontWeight: 700, padding: "7px 20px", borderRadius: 8, border: "none", background: T.accent, color: "#fff", cursor: "pointer" }}>
+                  {isLast ? "Done" : "Next →"}
+                </button>
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Chat panel */}
       <ChatPanel
