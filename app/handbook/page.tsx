@@ -1849,7 +1849,7 @@ function HandbookLandingPageContent() {
                               <>
                                 <button
                                   onClick={() => setShowAllUnified(p => !p)}
-                                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: "var(--text-muted)", background: "none", border: "1px dashed var(--border)", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontFamily: "inherit", width: "100%", justifyContent: "center" }}
+                                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--accent)", background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 8, padding: "12px 16px", cursor: "pointer", fontFamily: "inherit", width: "100%", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
                                 >
                                   <svg style={{ width: 14, height: 14, transition: "transform 0.2s", transform: showAllUnified ? "rotate(180deg)" : "none" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                                   {showAllUnified ? `Hide ${others.length} additional case${others.length === 1 ? "" : "s"}` : `Show ${others.length} more related case${others.length === 1 ? "" : "s"} in library`}
