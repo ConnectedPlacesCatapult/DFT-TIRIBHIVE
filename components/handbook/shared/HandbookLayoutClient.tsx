@@ -7,10 +7,11 @@ import { HandbookNav } from "./HandbookNav";
 import { ChatPanel } from "./ChatPanel";
 import { OnboardingTooltips } from "./OnboardingTooltips";
 import { FeedbackSurvey } from "./FeedbackSurvey";
+import { FeedbackReviewPanel } from "./FeedbackReviewPanel";
 
 export function HandbookLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { chatOpen, chatContext, closeChat } = useChatContext();
+  const { chatOpen, chatContext, closeChat, reviewMode } = useChatContext();
 
   const isBriefPage =
     pathname === "/handbook/brief" ||
@@ -28,13 +29,15 @@ export function HandbookLayoutClient({ children }: { children: ReactNode }) {
         id="handbook-main"
         style={{
           transition: "padding-right 0.25s cubic-bezier(0.4,0,0.2,1)",
-          paddingRight: chatOpen ? "420px" : 0,
+          paddingRight: reviewMode ? "320px" : chatOpen ? "420px" : 0,
         }}
       >
         {children}
       </main>
 
       <ChatPanel context={chatContext} open={chatOpen} onClose={closeChat} />
+
+      {reviewMode && <FeedbackReviewPanel />}
 
       <OnboardingTooltips />
       <FeedbackSurvey />

@@ -67,6 +67,7 @@ interface FilterRowProps {
 
 const HAZARD_OPTIONS = [
   "Heavy rainfall",
+  "Flooding",
   "High temperatures",
   "Storms",
   "Sea level rise",

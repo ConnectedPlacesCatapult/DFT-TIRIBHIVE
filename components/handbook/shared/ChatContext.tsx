@@ -100,6 +100,11 @@ type HandbookContextType = {
   /** Search mode for the handbook landing page: classic two-call system vs unified one-brain */
   searchMode: "classic" | "unified";
   setSearchMode: (mode: "classic" | "unified") => void;
+  /** Feedback review mode — floating panel for live client walkthroughs; demo only */
+  reviewMode: boolean;
+  setReviewMode: (v: boolean) => void;
+  reviewOverrides: { titleCopy: "current" | "proposed"; subtitleCopy: "current" | "proposed" };
+  setReviewOverride: (key: "titleCopy" | "subtitleCopy", value: "current" | "proposed") => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -146,10 +151,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [backgroundEffect, setBackgroundEffectState] = useState<
     "none" | "particles" | "hero"
   >(() => {
-    if (typeof window === "undefined") return "hero";
+    if (typeof window === "undefined") return "none";
     const stored = localStorage.getItem(BACKGROUND_EFFECT_KEY);
-    return stored === "none" || stored === "particles" || stored === "hero" ? stored : "hero";
+    return stored === "none" || stored === "particles" || stored === "hero" ? stored : "none";
   });
+
+  const [reviewMode, setReviewMode] = useState(false);
+  const [reviewOverrides, setReviewOverridesState] = useState<{
+    titleCopy: "current" | "proposed";
+    subtitleCopy: "current" | "proposed";
+  }>({ titleCopy: "current", subtitleCopy: "current" });
+  const setReviewOverride = useCallback(
+    (key: "titleCopy" | "subtitleCopy", value: "current" | "proposed") =>
+      setReviewOverridesState((prev) => ({ ...prev, [key]: value })),
+    []
+  );
   const setBackgroundEffect = useCallback((v: "none" | "particles" | "hero") => {
     setBackgroundEffectState(v);
     if (typeof window !== "undefined") {
@@ -287,6 +303,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setExclusiveFilter,
         searchMode,
         setSearchMode,
+        reviewMode,
+        setReviewMode,
+        reviewOverrides,
+        setReviewOverride,
       }}
     >
       {children}

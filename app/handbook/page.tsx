@@ -25,6 +25,15 @@ function HeroBackplateWrapper({
   return <>{children}</>;
 }
 
+function sanitizeInlineMarkdown(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+}
+
 const TRIB_MEASURES: Array<{
   trib_article_id: string;
   project_title: string;
@@ -149,7 +158,7 @@ const MARQUEE_CASE_STUDIES = (() => {
 // ── CASE STUDIES FROM DATA LAYER (37 from JSON, enriched with hand-curated overrides) ──
 const CASE_STUDIES = SEED_CASE_STUDIES;
 
-const HAZARDS_CAUSE = ["Heavy rainfall", "High temperatures", "Storms", "Sea level rise", "Drought", "Freeze-thaw"];
+const HAZARDS_CAUSE = ["Heavy rainfall", "Flooding", "High temperatures", "Storms", "Sea level rise", "Drought", "Freeze-thaw"];
 const SECTORS = ["Rail", "Aviation", "Maritime", "Highways"];
 const UK_REGIONS = ["London & South East", "East of England", "East Midlands", "North West", "Scotland", "Wales", "Coastal UK", "UK-wide"];
 const COST_BANDS = ["Under £1m", "£1m–£10m", "£10m–£100m", "£100m+", "Large programme"];
@@ -344,6 +353,7 @@ const DEFAULT_SECTOR_STYLE = { background: "#fafaf9", color: "#57534e", borderCo
 
 const HAZARD_CAUSE_STYLES: Record<string, { background: string; color: string; borderColor: string }> = {
   "Heavy rainfall": { background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" },
+  Flooding: { background: "#dbeafe", color: "#1558a0", borderColor: "#93c5fd" },
   "High temperatures": { background: "#fff7ed", color: "#c2410c", borderColor: "#fed7aa" },
   Storms: { background: "#faf5ff", color: "#7e22ce", borderColor: "#e9d5ff" },
   "Sea level rise": { background: "#f0fdfa", color: "#0f766e", borderColor: "#99f6e4" },
@@ -585,7 +595,7 @@ function getEffectiveCard(cs) {
   }
   return null;
 }
-const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, suggested = false }) => {
+const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, suggested = false, uxTypographyScaleEnhanced = false, uxSpacingEnhanced = false, uxCardHierarchyEnhanced = false }) => {
   const card = getEffectiveCard(cs);
   const transferabilityLevel = card?.uk_transferability ?? cs.transferability;
   const investmentBand = card?.investment_band ?? cs.costBand;
@@ -606,7 +616,7 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, sugge
       borderRadius: 16,
       border: suggested ? "2px solid var(--accent)" : "1px solid",
       transition: "all 0.2s",
-      padding: 20,
+      padding: uxSpacingEnhanced ? 24 : 20,
       display: "flex",
       flexDirection: "column",
       fontFamily: "'DM Sans', sans-serif",
@@ -615,20 +625,20 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, sugge
     <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>{cs.sector}</span>
+          <span style={{ fontSize: uxTypographyScaleEnhanced ? 13 : 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>{cs.sector}</span>
           <span style={{ color: "var(--text-muted)" }}>·</span>
-          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{cs.location}</span>
+          <span style={{ fontSize: uxTypographyScaleEnhanced ? 13 : 12, color: "var(--text-secondary)" }}>{cs.location}</span>
           <span style={{ color: "var(--text-muted)" }}>·</span>
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs.year}</span>
+          <span style={{ fontSize: uxTypographyScaleEnhanced ? 13 : 12, color: "var(--text-muted)" }}>{cs.year}</span>
         </div>
-        <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.375, transition: "color 0.2s" }}>{cs.title}</h3>
+        <h3 style={{ fontSize: uxCardHierarchyEnhanced ? 18 : uxTypographyScaleEnhanced ? 17 : 16, fontWeight: uxCardHierarchyEnhanced ? 700 : 600, lineHeight: 1.35, transition: "color 0.2s" }}>{cs.title}</h3>
       </div>
       {suggested && (
         <span style={{ fontSize: 11, fontWeight: 600, background: "var(--accent)", color: "#fff", paddingLeft: 8, paddingRight: 8, paddingTop: 3, paddingBottom: 3, borderRadius: 6, alignSelf: "flex-start", flexShrink: 0 }}>Suggested by HIVE</span>
       )}
     </div>
-    <p style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", marginBottom: 8 }}>{cs.hook}</p>
-    <p className="line-clamp-2" style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12, flex: 1 }}>{cs.summary}</p>
+    <p style={{ fontSize: uxCardHierarchyEnhanced ? 13 : 12, fontWeight: 600, color: "var(--accent)", marginBottom: uxSpacingEnhanced ? 10 : 8 }}>{cs.hook}</p>
+    <p className="line-clamp-2" style={{ fontSize: uxTypographyScaleEnhanced ? 15 : 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: uxSpacingEnhanced ? 14 : 12, flex: 1 }}>{cs.summary}</p>
     {cs._semanticSimilarity && (
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
         <svg style={{ width: 12, height: 12, color: "var(--accent)", flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -644,11 +654,11 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, sugge
         {matchReasons.map(r => <span key={r} style={{ fontSize: 12, background: "var(--accent-bg)", color: "var(--accent-text)", border: "1px solid", borderColor: "var(--accent)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 6, fontWeight: 500 }}>{r}</span>)}
       </div>
     )}
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: uxSpacingEnhanced ? 14 : 12 }}>
       {cs.hazards.cause.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="cause" />)}
       {cs.hazards.effect.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="effect" />)}
     </div>
-    <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "var(--accent)", borderRadius: 12, paddingLeft: 12, paddingRight: 12, paddingTop: 8, paddingBottom: 8, marginBottom: 12, opacity: 0.85 }}>
+    <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "var(--accent)", borderRadius: 12, paddingLeft: 12, paddingRight: 12, paddingTop: 8, paddingBottom: 8, marginBottom: uxSpacingEnhanced ? 14 : 12, opacity: uxCardHierarchyEnhanced ? 0.92 : 0.85 }}>
       {hasArticleCard ? (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
           <div>
@@ -708,7 +718,7 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief, sugge
   );
 };
 
-const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAddToBrief, inBrief, matchReasons }) => {
+const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAddToBrief, inBrief, matchReasons, uxTypographyScaleEnhanced = false, uxSpacingEnhanced = false, uxCardHierarchyEnhanced = false }) => {
   const sectorStyle = SECTOR_STYLES[cs.sector] || DEFAULT_SECTOR_STYLE;
   return (
     <div
@@ -718,15 +728,15 @@ const MeasureResultCard = ({ measureName, measureDescription, cs, onClick, onAdd
       onClick={() => onClick(cs)}
       onKeyDown={e => (e.key === "Enter" || e.key === " ") && onClick(cs)}
       className="hive-card"
-      style={{ cursor: "pointer", borderRadius: 16, border: "1px solid", transition: "all 0.2s", padding: 20, display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif" }}>
+      style={{ cursor: "pointer", borderRadius: 16, border: "1px solid", transition: "all 0.2s", padding: uxSpacingEnhanced ? 24 : 20, display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, border: "1px solid", ...sectorStyle }}>{cs.sector}</span>
+        <span style={{ fontSize: uxTypographyScaleEnhanced ? 13 : 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, border: "1px solid", ...sectorStyle }}>{cs.sector}</span>
         <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)", background: "var(--surface-alt)", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 4 }}>Measure</span>
       </div>
-      <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.375, marginBottom: 6, transition: "color 0.2s" }}>{measureName}</h3>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8, fontWeight: 500 }}>Part of: {cs.title}</p>
+      <h3 style={{ fontSize: uxCardHierarchyEnhanced ? 18 : uxTypographyScaleEnhanced ? 17 : 16, fontWeight: uxCardHierarchyEnhanced ? 700 : 600, lineHeight: 1.375, marginBottom: 6, transition: "color 0.2s" }}>{measureName}</h3>
+      <p style={{ fontSize: uxTypographyScaleEnhanced ? 13 : 12, color: "var(--text-muted)", marginBottom: 8, fontWeight: 500 }}>Part of: {cs.title}</p>
       {measureDescription && (
-        <p className="line-clamp-2" style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12, flex: 1 }}>{measureDescription}</p>
+        <p className="line-clamp-2" style={{ fontSize: uxTypographyScaleEnhanced ? 15 : 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: uxSpacingEnhanced ? 14 : 12, flex: 1 }}>{measureDescription}</p>
       )}
       {matchReasons && matchReasons.length > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -1034,8 +1044,23 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, reviewMode, reviewOverrides } = useChatContext();
   const T = THEMES[themeKey];
+  const heroTitleSize = "2.5rem";
+  const heroSubtextSize = 16;
+  const heroSubtextLineHeight = 1.6;
+  const heroSubtextMarginBottom = 28;
+  const heroSearchPaddingY = 18;
+  const heroFilterMarginTop = 24;
+  const uxTypographyScaleEnhanced = true;
+  const uxSpacingEnhanced = true;
+  const uxCardHierarchyEnhanced = true;
+  const heroTitle = reviewMode && reviewOverrides.titleCopy === "proposed"
+    ? "What climate hazards are you managing?"
+    : "What risk are you managing?";
+  const heroCopy = reviewMode && reviewOverrides.subtitleCopy === "proposed"
+    ? "Describe your transport infrastructure weather challenges to find proven adaptations, comparable cases, and evidence."
+    : "Search by infrastructure challenge to find proven adaptations, comparable cases, and evidence.";
 
   // Unified mode: collapse/expand the non-AI-cited "more cases" section
   const [showAllUnified, setShowAllUnified] = useState(false);
@@ -1395,7 +1420,7 @@ function HandbookLandingPageContent() {
           <div className="fade-up" style={{ maxWidth: 768 }}>
             <h1
               style={{
-                fontSize: "2.25rem",
+                fontSize: heroTitleSize,
                 fontWeight: 400,
                 lineHeight: 1.25,
                 marginBottom: 10,
@@ -1406,22 +1431,22 @@ function HandbookLandingPageContent() {
                   : {}),
               }}
             >
-              What risk are you
+              {heroTitle.replace(/ managing\?$/, "")}
               <span style={{ fontStyle: "italic", color: T.accent }}> managing?</span>
             </h1>
             <p
               style={{
-                fontSize: 15,
-                marginBottom: 22,
+                fontSize: heroSubtextSize,
+                marginBottom: heroSubtextMarginBottom,
                 maxWidth: 520,
-                lineHeight: 1.55,
+                lineHeight: heroSubtextLineHeight,
                 color: T.textSecondary,
                 ...(backgroundEffect === "hero"
                   ? { textShadow: themeKey === "dark" ? "0 1px 2px rgba(0,0,0,0.7)" : "0 1px 2px rgba(255,255,255,0.85), 0 0 18px rgba(247,245,240,0.75)" }
                   : {}),
               }}
             >
-              Search in plain English for adaptations, comparable case studies, and evidence you can use.
+              {heroCopy}
             </p>
           </div>
 
@@ -1451,7 +1476,7 @@ function HandbookLandingPageContent() {
                   }
                 }}
                 className="hive-input"
-                style={{ width: "100%", paddingLeft: 44, paddingRight: 40, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1.5px solid var(--input-border)", transition: "all 0.2s" }}
+                style={{ width: "100%", paddingLeft: 44, paddingRight: 40, paddingTop: heroSearchPaddingY, paddingBottom: heroSearchPaddingY, fontSize: uxTypographyScaleEnhanced ? 17 : 16, borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1.5px solid var(--input-border)", transition: "all 0.2s" }}
               />
               {query && (
                 <button onClick={() => setQuery("")} aria-label="Clear search" style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
@@ -1493,8 +1518,8 @@ function HandbookLandingPageContent() {
                         }
                       </span>
                     </div>
-                    <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", margin: "0 0 10px" }}>
-                      {unified.synthesis}
+                    <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-primary)", margin: "0 0 10px" }}>
+                      {sanitizeInlineMarkdown(unified.synthesis)}
                     </p>
                     {unified.chips && unified.chips.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
@@ -1552,9 +1577,9 @@ function HandbookLandingPageContent() {
           </div>
 
           {/* Filters */}
-          <div className="fade-up" style={{ marginTop: 20, maxWidth: 768, animationDelay: "0.15s", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="fade-up" style={{ marginTop: heroFilterMarginTop, maxWidth: 768, animationDelay: "0.15s", display: "flex", flexDirection: "column", gap: uxSpacingEnhanced ? 14 : 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Narrow results with filters—hazard, sector, region, and more.</p>
+              <p style={{ fontSize: uxTypographyScaleEnhanced ? 13 : 12, color: "var(--text-muted)", margin: 0 }}>Narrow results with filters—hazard, sector, region, and more.</p>
               <button onClick={() => setFiltersOpen(!filtersOpen)}
                 style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}>
                 {filtersOpen ? "Hide filters" : "Show filters"}
@@ -1661,7 +1686,7 @@ function HandbookLandingPageContent() {
                   </div>
                   {cs ? (
                     <div style={{ maxWidth: 512 }}>
-                      <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={[]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} />
+                      <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={[]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                     </div>
                   ) : (
                     <div style={{ maxWidth: 512 }}>
@@ -1770,6 +1795,9 @@ function HandbookLandingPageContent() {
                             onAddToBrief={toggleBrief}
                             inBrief={brief.some(b => b.id === item.article.id)}
                             matchReasons={activeMatchReasons[item.article.id]}
+                            uxTypographyScaleEnhanced={uxTypographyScaleEnhanced}
+                            uxSpacingEnhanced={uxSpacingEnhanced}
+                            uxCardHierarchyEnhanced={uxCardHierarchyEnhanced}
                           />
                         </div>
                       ))}
@@ -1786,7 +1814,7 @@ function HandbookLandingPageContent() {
                           <>
                             {aiCited.map((cs, i) => (
                               <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
-                                <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={true} />
+                                <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={true} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                               </div>
                             ))}
                             {others.length > 0 && (
@@ -1800,7 +1828,7 @@ function HandbookLandingPageContent() {
                                 </button>
                                 {showAllUnified && others.map((cs, i) => (
                                   <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: 0.75 }}>
-                                    <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={false} />
+                                    <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={false} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                                   </div>
                                 ))}
                               </>
@@ -1810,7 +1838,7 @@ function HandbookLandingPageContent() {
                       }
                       return displayResults.map((cs, i) => (
                         <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
-                          <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} />
+                          <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                         </div>
                       ));
                     })()}

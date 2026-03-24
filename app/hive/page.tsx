@@ -41,7 +41,7 @@ const MQ = [
 ];
 
 const SECTORS = ["Rail","Aviation","Maritime","Highways"];
-const HAZARDS = ["Heavy rainfall","High temperatures","Storms","Sea level rise","Drought","Freeze-thaw"];
+const HAZARDS = ["Heavy rainfall","Flooding","High temperatures","Storms","Sea level rise","Drought","Freeze-thaw"];
 const SC = { Rail:["#EBF4FF","#1A4A8A"], Aviation:["#F3EEF9","#5B3FA0"], Maritime:["#E6F5EE","#156840"], Highways:["#FDF0E5","#9A4812"] };
 
 const score = (cs, q) => {
@@ -323,7 +323,7 @@ const B_CASE_STUDIES = [
   { id:"ID_11",title:"Deutsche Bahn Climate Adaptation Measures",organisation:"Deutsche Bahn",sector:"Rail",hook:"25% storm damage reduction · 20% fewer heat disruptions · IoT across national network",hazards:{cause:["High temperatures","Storms and high winds"],effect:["Vegetation dieback","Storm damage","Track overheating"]},assets:["Tracks","Trains","Overhead lines","Lineside vegetation"],measures:["Air-conditioned rolling stock (ICE 4)","AI-assisted vegetation mapping","IoT temperature sensors","DB Climate Forest programme"],location:"Germany",ukRegion:"Applicable UK-wide",year:"2007–2024",cost:"€6bn (ICE 4 fleet); €625m (vegetation programme)",costBand:"Large programme",summary:"Phased adaptation combining air-conditioned rolling stock, AI-assisted vegetation management via satellite data, and IoT sensor networks to address escalating heat and storm risks.",transferability:"High",transferabilityNote:"Vegetation management and rolling stock air-conditioning directly applicable to UK rail. Highest priority in South and East England.",ukApplicability:["Network Rail Southern region","East Midlands Railway","UK rolling stock procurement","Lineside vegetation management"],insight:"Vegetation management delivered 25% reduction in storm damage between 2018 and 2020 — one of the highest ROI findings in the HIVE database.",tags:["rail","heat","temperature","vegetation","sensors","rolling stock","storms","heatwave","overheating"] },
 ];
 
-const B_HAZARDS_CAUSE = ["Heavy rainfall","High temperatures","Storms","Sea level rise","Drought","Freeze-thaw"];
+const B_HAZARDS_CAUSE = ["Heavy rainfall","Flooding","High temperatures","Storms","Sea level rise","Drought","Freeze-thaw"];
 const B_UK_REGIONS = ["London & South East","East of England","East Midlands","North West","Scotland","Wales","Coastal UK","UK-wide"];
 const B_COST_BANDS = ["Under £1m","£1m–£10m","£10m–£100m","£100m+","Large programme"];
 
@@ -431,7 +431,7 @@ const B_TransferabilityBadge = ({ level }) => (
 );
 
 const B_HazardBadge = ({ hazard, type }) => {
-  const causeColors = { "Heavy rainfall":["#eff6ff","#1d4ed8","#bfdbfe"], "High temperatures":["#fff7ed","#c2410c","#fed7aa"], "Storms":["#faf5ff","#7e22ce","#e9d5ff"], "Sea level rise":["#f0fdfa","#0f766e","#99f6e4"], "Drought":["#fffbeb","#b45309","#fde68a"], "Freeze-thaw":["#f0f9ff","#0369a1","#bae6fd"] };
+  const causeColors = { "Heavy rainfall":["#eff6ff","#1d4ed8","#bfdbfe"], "Flooding":["#dbeafe","#1558a0","#93c5fd"], "High temperatures":["#fff7ed","#c2410c","#fed7aa"], "Storms":["#faf5ff","#7e22ce","#e9d5ff"], "Sea level rise":["#f0fdfa","#0f766e","#99f6e4"], "Drought":["#fffbeb","#b45309","#fde68a"], "Freeze-thaw":["#f0f9ff","#0369a1","#bae6fd"] };
   const [bg, col, border] = type === "cause" ? (causeColors[hazard] || ["#f9fafb","#374151","#e5e7eb"]) : ["#f9fafb","#374151","#e5e7eb"];
   return (
     <span style={{ display:"inline-flex",alignItems:"center",border:`1px solid ${border}`,borderRadius:4,fontSize:11,fontWeight:500,padding:"2px 8px",background:bg,color:col }}>

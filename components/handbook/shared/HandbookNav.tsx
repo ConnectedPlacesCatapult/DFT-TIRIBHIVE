@@ -40,6 +40,8 @@ export function HandbookNav() {
     setHeroTextTreatmentExtent,
     searchMode,
     setSearchMode,
+    reviewMode,
+    setReviewMode,
   } = useChatContext();
 
   const [demoOpen, setDemoOpen] = useState(false);
@@ -513,6 +515,28 @@ export function HandbookNav() {
                       ))}
                     </div>
                   </div>
+                  <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Meeting tools</div>
+                    <button
+                      type="button"
+                      onClick={() => { setReviewMode(!reviewMode); setDemoOpen(false); }}
+                      style={{
+                        width: "100%",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        background: reviewMode ? "#dcfce7" : T.accent,
+                        color: reviewMode ? "#166534" : "#fff",
+                        textAlign: "left",
+                      }}
+                    >
+                      {reviewMode ? "✓ Review mode active" : "Feedback review →"}
+                    </button>
+                  </div>
+
                   {backgroundEffect === "hero" && (
                     <>
                       <div>
@@ -564,24 +588,6 @@ export function HandbookNav() {
                 </div>
               )}
             </div>
-            <button
-              className="hive-show-md"
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: "#fff",
-                padding: "5px 14px",
-                borderRadius: 20,
-                border: "none",
-                cursor: "pointer",
-                background: T.accent,
-                transition: "background 0.15s",
-                whiteSpace: "nowrap",
-              }}
-            >
-              DfT Partner
-            </button>
-
             <ChatTrigger
               onClick={handleChatToggle}
               hasMessages={hasMessages}

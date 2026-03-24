@@ -127,6 +127,26 @@ export function CaseBody({ cs }: CaseBodyProps) {
         </p>
       </div>
 
+      {/* Original PDF link — at top so users don't miss the source document */}
+      <a
+        href={getCaseStudyPdfUrl(cs)}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#1d70b8",
+          textDecoration: "none",
+          padding: "10px 0",
+          borderBottom: "1px solid #f3f4f6",
+        }}
+      >
+        View original PDF →
+      </a>
+
       {/* Summary */}
       <div
         style={{
@@ -272,26 +292,6 @@ export function CaseBody({ cs }: CaseBodyProps) {
           })}
         </div>
       )}
-
-      {/* Original PDF link */}
-      <a
-        href={getCaseStudyPdfUrl(cs)}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 13,
-          fontWeight: 600,
-          color: "#1d70b8",
-          textDecoration: "none",
-          padding: "10px 0",
-          borderTop: "1px solid #f3f4f6",
-        }}
-      >
-        View original PDF →
-      </a>
 
       {/* Reference */}
       <p style={{ fontSize: 11, color: "#9ca3af", borderTop: "1px solid #f3f4f6", paddingTop: 12 }}>
