@@ -97,6 +97,9 @@ type HandbookContextType = {
   /** When non-null, the grid is filtered to only these IDs (set via suggest_cases Apply in browse/discovery mode) */
   exclusiveFilter: string[] | null;
   setExclusiveFilter: (ids: string[] | null) => void;
+  /** Search mode for the handbook landing page: classic two-call system vs unified one-brain */
+  searchMode: "classic" | "unified";
+  setSearchMode: (mode: "classic" | "unified") => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -129,7 +132,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isThinking, setThinking] = useState(false);
   const [pendingBriefMessage, setPendingBriefMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cases" | "measures">("cases");
-  const [marqueeView, setMarqueeView] = useState<"marquee" | "velocity">("marquee");
+  const [marqueeView, setMarqueeView] = useState<"marquee" | "velocity">("velocity");
   const [demoCounts, setDemoCountsState] = useState({ cases: 0, measures: 0 });
   const setDemoCounts = useCallback((counts: { cases: number; measures: number }) => {
     setDemoCountsState(counts);
@@ -138,13 +141,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [semanticChunks, setSemanticChunks] = useState<Array<{ article_id: string; section_key: string; chunk_text: string }>>([]);
   const [suggestionsShown, setSuggestionsShown] = useState<string[]>([]);
   const [exclusiveFilter, setExclusiveFilter] = useState<string[] | null>(null);
+  const [searchMode, setSearchMode] = useState<"classic" | "unified">("unified");
 
   const [backgroundEffect, setBackgroundEffectState] = useState<
     "none" | "particles" | "hero"
   >(() => {
-    if (typeof window === "undefined") return "none";
+    if (typeof window === "undefined") return "hero";
     const stored = localStorage.getItem(BACKGROUND_EFFECT_KEY);
-    return stored === "particles" || stored === "hero" ? stored : "none";
+    return stored === "none" || stored === "particles" || stored === "hero" ? stored : "hero";
   });
   const setBackgroundEffect = useCallback((v: "none" | "particles" | "hero") => {
     setBackgroundEffectState(v);
@@ -168,10 +172,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const [heroTextTreatmentExtent, setHeroTextTreatmentExtentState] = useState<number>(() => {
-    if (typeof window === "undefined") return 24;
+    if (typeof window === "undefined") return 120;
     const stored = localStorage.getItem(HERO_TEXT_EXTENT_KEY);
-    const n = stored ? parseInt(stored, 10) : 24;
-    return Number.isFinite(n) && n >= 0 && n <= 120 ? n : 24;
+    const n = stored ? parseInt(stored, 10) : 120;
+    return Number.isFinite(n) && n >= 0 && n <= 120 ? n : 120;
   });
   const setHeroTextTreatmentExtent = useCallback((v: number) => {
     const clamped = Math.round(Math.max(0, Math.min(120, v)));
@@ -281,6 +285,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setSuggestionsShown,
         exclusiveFilter,
         setExclusiveFilter,
+        searchMode,
+        setSearchMode,
       }}
     >
       {children}

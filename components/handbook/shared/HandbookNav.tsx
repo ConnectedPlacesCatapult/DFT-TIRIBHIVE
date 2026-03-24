@@ -7,6 +7,9 @@ import { useChatContext } from "./ChatContext";
 import { ChatTrigger } from "./ChatTrigger";
 import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 
+const DEMO_UNLOCK_KEY = "hiveDemoUnlocked";
+const DEMO_PASSWORD = "1234";
+
 const NAV_LINKS = [
   { href: "/handbook/cases", label: "Case Studies" },
   { href: "/handbook/brief", label: "Brief mode" },
@@ -35,19 +38,33 @@ export function HandbookNav() {
     setHeroTextTreatment,
     heroTextTreatmentExtent,
     setHeroTextTreatmentExtent,
+    searchMode,
+    setSearchMode,
   } = useChatContext();
 
   const [demoOpen, setDemoOpen] = useState(false);
+  const [demoUnlockOpen, setDemoUnlockOpen] = useState(false);
+  const [demoUnlocked, setDemoUnlocked] = useState(false);
+  const [demoPassword, setDemoPassword] = useState("");
+  const [demoError, setDemoError] = useState("");
   const demoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!demoOpen) return;
+    if (!demoOpen && !demoUnlockOpen) return;
     const close = (e: MouseEvent) => {
-      if (demoRef.current && !demoRef.current.contains(e.target as Node)) setDemoOpen(false);
+      if (demoRef.current && !demoRef.current.contains(e.target as Node)) {
+        setDemoOpen(false);
+        setDemoUnlockOpen(false);
+      }
     };
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
-  }, [demoOpen]);
+  }, [demoOpen, demoUnlockOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setDemoUnlocked(sessionStorage.getItem(DEMO_UNLOCK_KEY) === "1");
+  }, []);
 
   const T = THEMES[themeKey];
   const hasMessages = messages.length > 1;
@@ -65,6 +82,32 @@ export function HandbookNav() {
       : pathname?.match(/^\/handbook\/ID_/)
         ? "Ask about this case"
         : "Ask HIVE";
+
+  const handleDemoButton = () => {
+    if (demoUnlocked) {
+      setDemoUnlockOpen(false);
+      setDemoOpen((o) => !o);
+      return;
+    }
+    setDemoOpen(false);
+    setDemoUnlockOpen((o) => !o);
+    setDemoError("");
+  };
+
+  const handleDemoUnlock = () => {
+    if (demoPassword.trim() !== DEMO_PASSWORD) {
+      setDemoError("Incorrect password");
+      return;
+    }
+    setDemoUnlocked(true);
+    setDemoUnlockOpen(false);
+    setDemoOpen(true);
+    setDemoPassword("");
+    setDemoError("");
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(DEMO_UNLOCK_KEY, "1");
+    }
+  };
 
   return (
     <>
@@ -215,8 +258,8 @@ export function HandbookNav() {
             <div ref={demoRef} style={{ position: "relative" }}>
               <button
                 type="button"
-                onClick={() => setDemoOpen((o) => !o)}
-                aria-expanded={demoOpen}
+                onClick={handleDemoButton}
+                aria-expanded={demoUnlocked ? demoOpen : demoUnlockOpen}
                 aria-haspopup="true"
                 aria-label="Demo options"
                 style={{
@@ -233,11 +276,77 @@ export function HandbookNav() {
                   gap: 6,
                 }}
               >
-                Demo options
+                {!demoUnlocked ? "🔒 " : ""}Demo options
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ transform: demoOpen ? "rotate(180deg)" : "none" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+              {demoUnlockOpen && !demoUnlocked && (
+                <div
+                  role="dialog"
+                  aria-label="Unlock demo options"
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: 4,
+                    minWidth: 220,
+                    padding: 10,
+                    borderRadius: 12,
+                    border: `1px solid ${T.border}`,
+                    background: T.surface,
+                    boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
+                    zIndex: 50,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.textSecondary, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                    Demo options locked
+                  </div>
+                  <input
+                    type="password"
+                    value={demoPassword}
+                    onChange={(e) => setDemoPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleDemoUnlock();
+                      }
+                    }}
+                    placeholder="Enter password"
+                    style={{
+                      fontSize: 12,
+                      padding: "7px 9px",
+                      borderRadius: 8,
+                      border: `1px solid ${T.border}`,
+                      background: T.surfaceAlt,
+                      color: T.textPrimary,
+                      outline: "none",
+                    }}
+                  />
+                  {demoError && (
+                    <div style={{ fontSize: 11, color: "#b91c1c" }}>{demoError}</div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleDemoUnlock}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      padding: "7px 10px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: T.accent,
+                      color: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Unlock
+                  </button>
+                </div>
+              )}
               {demoOpen && (
                 <div
                   role="menu"
@@ -309,6 +418,35 @@ export function HandbookNav() {
                             cursor: "pointer",
                             background: viewMode === v.id ? T.accent : T.surfaceAlt,
                             color: viewMode === v.id ? "#fff" : T.textSecondary,
+                          }}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Search</div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {([
+                        { id: "unified" as const, label: "Unified ✦" },
+                        { id: "classic" as const, label: "Classic" },
+                      ]).map((v) => (
+                        <button
+                          key={v.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={searchMode === v.id}
+                          onClick={() => setSearchMode(v.id)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            background: searchMode === v.id ? T.accent : T.surfaceAlt,
+                            color: searchMode === v.id ? "#fff" : T.textSecondary,
                           }}
                         >
                           {v.label}

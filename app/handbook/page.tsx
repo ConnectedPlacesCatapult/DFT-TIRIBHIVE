@@ -1034,11 +1034,9 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode } = useChatContext();
   const T = THEMES[themeKey];
 
-  // Toggle: "classic" uses v1 two-call system; "unified" uses one-brain v2
-  const [searchMode, setSearchMode] = useState<"classic" | "unified">("classic");
   // Unified mode: collapse/expand the non-AI-cited "more cases" section
   const [showAllUnified, setShowAllUnified] = useState(false);
   // Unified mode: typo correction — stores the original mistyped query
@@ -1461,60 +1459,6 @@ function HandbookLandingPageContent() {
                 </button>
               )}
             </div>
-            {/* Search mode — segmented control (single visual unit) */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: 8, gap: 8 }}>
-              <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Search mode</span>
-              <div
-                role="group"
-                aria-label="Search mode"
-                style={{
-                  display: "inline-flex",
-                  padding: 2,
-                  borderRadius: 8,
-                  background: "var(--surface-alt)",
-                  border: "1px solid var(--border)",
-                  gap: 0,
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setSearchMode("classic")}
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: "5px 12px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: searchMode === "classic" ? "var(--surface)" : "transparent",
-                    color: searchMode === "classic" ? "var(--text-primary)" : "var(--text-muted)",
-                    boxShadow: searchMode === "classic" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  Classic
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSearchMode("unified")}
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: "5px 12px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: searchMode === "unified" ? "var(--surface)" : "transparent",
-                    color: searchMode === "unified" ? "var(--text-primary)" : "var(--text-muted)",
-                    boxShadow: searchMode === "unified" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  Unified ✦
-                </button>
-              </div>
-            </div>
-
             {/* Unified mode: typo correction banner */}
             {searchMode === "unified" && typoOriginal && (
               <div style={{ marginTop: 8, padding: "8px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, display: "flex", alignItems: "center", gap: 8, fontSize: 12, animation: "fadeUp 0.2s ease" }}>

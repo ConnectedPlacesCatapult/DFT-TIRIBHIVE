@@ -11,10 +11,15 @@ const HERO_IMAGES = [
   { src: "/hero/hero-3-rockfall.jpg", caption: "Austrian Federal Railways · ID_06" },
   { src: "/hero/hero-4-panama.jpg", caption: "Panama Canal Authority · ID_37" },
   { src: "/hero/hero-5-heathrow.jpg", caption: "Heathrow Airport Balancing Ponds · ID_32" },
-  { src: "/hero/hero-6-dawlish-waves.jpg", caption: "Severe weather, waves over trains · Dawlish Sea Wall" },
+  {
+    src: "/hero/hero-6-dawlish-waves.jpg",
+    caption: "Severe weather, waves over trains · Dawlish Sea Wall",
+    // Shift framing so right-edge black band is cropped out.
+    position: "35% center",
+  },
 ];
 
-const CYCLE_MS = 6000;
+const CYCLE_MS = 7500;
 const CROSSFADE_MS = 2000;
 const FADE_START = (CYCLE_MS - CROSSFADE_MS) / CYCLE_MS;
 
@@ -73,8 +78,12 @@ export function HeroImageCycle() {
 
   const imageStyle = {
     objectFit: "cover" as const,
-    objectPosition: "right center" as const,
+    objectPosition: (current as { position?: string }).position ?? "right center",
     filter: "grayscale(60%) brightness(0.7)",
+  };
+  const nextImageStyle = {
+    ...imageStyle,
+    objectPosition: (next as { position?: string }).position ?? "right center",
   };
   const captionStyle = {
     position: "absolute" as const,
@@ -137,7 +146,7 @@ export function HeroImageCycle() {
               alt=""
               fill
               sizes="100vw"
-              style={imageStyle}
+              style={nextImageStyle}
               onLoad={() => setLoaded((l) => ({ ...l, [nextIndex]: true }))}
               onError={() => setLoaded((l) => ({ ...l, [nextIndex]: false }))}
             />
