@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/handbook", label: "Handbook" },
   { href: "/roadmap", label: "Roadmap" },
-  { href: "/hive", label: "HIVE" },
 ] as const;
 
 export interface NavPillProps {
