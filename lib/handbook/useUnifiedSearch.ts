@@ -45,7 +45,7 @@ const EMPTY: UnifiedSearchResult = {
  * Returns both case card data and AI synthesis from the same response —
  * no coordination layer, no timing gap, no count mismatch.
  */
-export function useUnifiedSearch(query: string): UnifiedSearchResult {
+export function useUnifiedSearch(query: string, includeGuidance = false): UnifiedSearchResult {
   const [result, setResult] = useState<UnifiedSearchResult>(EMPTY);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -70,7 +70,7 @@ export function useUnifiedSearch(query: string): UnifiedSearchResult {
         const res = await fetch("/api/handbook/unified-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: trimmed }),
+          body: JSON.stringify({ q: trimmed, includeGuidance }),
           signal: controller.signal,
         });
 
@@ -135,7 +135,7 @@ export function useUnifiedSearch(query: string): UnifiedSearchResult {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (abortRef.current) abortRef.current.abort();
     };
-  }, [query]);
+  }, [query, includeGuidance]);
 
   return result;
 }

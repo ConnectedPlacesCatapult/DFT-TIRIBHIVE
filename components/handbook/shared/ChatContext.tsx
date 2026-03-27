@@ -100,6 +100,9 @@ type HandbookContextType = {
   /** Search mode for the handbook landing page: classic two-call system vs unified one-brain */
   searchMode: "classic" | "unified";
   setSearchMode: (mode: "classic" | "unified") => void;
+  /** Include guidance documents in AI synthesis (demo toggle — pending effectiveness testing) */
+  includeGuidance: boolean;
+  setIncludeGuidance: (v: boolean) => void;
   /** Feedback review mode — floating panel for live client walkthroughs; demo only */
   reviewMode: boolean;
   setReviewMode: (v: boolean) => void;
@@ -156,6 +159,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return stored === "none" || stored === "particles" || stored === "hero" ? stored : "none";
   });
 
+  const [includeGuidance, setIncludeGuidance] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewOverrides, setReviewOverridesState] = useState<{
     titleCopy: "current" | "proposed";
@@ -303,6 +307,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setExclusiveFilter,
         searchMode,
         setSearchMode,
+        includeGuidance,
+        setIncludeGuidance,
         reviewMode,
         setReviewMode,
         reviewOverrides,

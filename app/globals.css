@@ -167,6 +167,17 @@ a:hover {
 .hive-show-md { display: none; }
 @media (min-width: 768px) { .hive-show-md { display: inline-flex; } }
 
+/* Guidance page cards (server-rendered; CSS hover avoids client handlers) */
+.guidance-link-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.guidance-link-card:hover {
+  border-color: #1d9e75 !important;
+  box-shadow: 0 2px 10px rgba(29, 158, 117, 0.12);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
 /* ─── WCAG 2.2 AA — Focus indicators ────────────────────────────────────────── */
 *:focus-visible {
   outline: 2px solid #21808b;

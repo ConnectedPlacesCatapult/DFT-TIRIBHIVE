@@ -14,8 +14,7 @@ function escapeHtml(str: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/\n/g, "<br/>");
+    .replace(/"/g, "&quot;");
 }
 
 function renderCaseIdLinks(text: string): string {
@@ -23,6 +22,72 @@ function renderCaseIdLinks(text: string): string {
     /\[?(ID_[\w]+)\]?/g,
     '<span style="color:#1d70b8;font-weight:600">[$1]</span>'
   );
+}
+
+function renderInline(text: string): string {
+  return renderCaseIdLinks(escapeHtml(text));
+}
+
+function parseMarkdownTable(lines: string[]): { headers: string[]; rows: string[][] } | null {
+  const pipeLines = lines.filter((l) => l.trim().startsWith("|") && l.trim().endsWith("|"));
+  if (pipeLines.length < 2) return null;
+  const splitRow = (row: string) => row.split("|").slice(1, -1).map((c) => c.trim());
+  const headers = splitRow(pipeLines[0]);
+  if (headers.length === 0) return null;
+  const isSeparator = (l: string) => /^\|[\s\-:|]+\|$/.test(l.trim());
+  const rows = pipeLines.slice(1).filter((l) => !isSeparator(l)).map(splitRow);
+  return { headers, rows };
+}
+
+function renderTable(headers: string[], rows: string[][]): string {
+  const thead = headers
+    .map(
+      (h) =>
+        `<th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#6b7280;background:#f3f4f6;border-bottom:2px solid #1d70b8">${renderInline(h)}</th>`
+    )
+    .join("");
+
+  const tbody = rows
+    .map((row, ri) => {
+      const cells = row
+        .map(
+          (cell) =>
+            `<td style="padding:8px 10px;font-size:12px;line-height:1.6;color:#374151;border-bottom:1px solid #e5e7eb">${renderInline(cell)}</td>`
+        )
+        .join("");
+      const rowBg = ri % 2 === 1 ? "background:#f9fafb" : "";
+      return `<tr style="${rowBg}">${cells}</tr>`;
+    })
+    .join("");
+
+  return `<table style="width:100%;border-collapse:collapse;margin:8px 0 12px">${`<thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody>`}</table>`;
+}
+
+function renderSectionContent(content: string): string {
+  if (!content) return "";
+  const blocks = content.split(/\n\n+/);
+
+  return blocks
+    .map((block) => {
+      const lines = block.split("\n").filter((l) => l.trim());
+      if (lines.length === 0) return "";
+
+      const table = parseMarkdownTable(lines);
+      if (table) {
+        return renderTable(table.headers, table.rows);
+      }
+
+      const isBullets = lines.every((l) => l.trim().startsWith("- "));
+      if (isBullets) {
+        const items = lines
+          .map((line) => `<li style="margin-bottom:4px">${renderInline(line.replace(/^-\s*/, ""))}</li>`)
+          .join("");
+        return `<ul style="margin:8px 0 12px;padding-left:20px;font-size:13px;line-height:1.7;color:#374151">${items}</ul>`;
+      }
+
+      return `<p style="margin:0 0 10px">${renderInline(block).replace(/\n/g, "<br/>")}</p>`;
+    })
+    .join("");
 }
 
 export async function POST(req: NextRequest) {
@@ -64,7 +129,7 @@ export async function POST(req: NextRequest) {
             <h2 style="font-size:16px;font-weight:700;color:#0b0c0c;margin:0">${escapeHtml(s.section_title)}</h2>
             ${confidenceBadge(s.confidence)}
           </div>
-          <div style="font-size:13px;line-height:1.7;color:#374151">${renderCaseIdLinks(escapeHtml(s.content))}</div>
+          <div style="font-size:13px;line-height:1.7;color:#374151">${renderSectionContent(s.content)}</div>
         </div>`
       )
       .join("");

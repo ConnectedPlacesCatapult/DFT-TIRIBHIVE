@@ -31,7 +31,7 @@ const STEPS: TooltipStep[] = [
     id: "brief",
     targetSelector: "[data-onboard='brief-nav']",
     title: "Build a brief",
-    body: "Add case studies to your brief using the + button. Generate a cross-case AI report from Brief mode.",
+    body: "Add case studies to your brief using the + button. Generate a cross-case AI report from Build Brief.",
     position: "bottom",
   },
   {

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
-import type { ThemeKey } from "@/lib/hive/themes";
 import { useEffect, useState } from "react";
 
 const HERO_IMAGES = [
@@ -24,7 +23,7 @@ const CROSSFADE_MS = 2000;
 const FADE_START = (CYCLE_MS - CROSSFADE_MS) / CYCLE_MS;
 
 export function HeroImageCycle() {
-  const { themeKey, heroTextTreatment, heroTextTreatmentExtent } = useChatContext();
+  const { themeKey } = useChatContext();
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -35,17 +34,8 @@ export function HeroImageCycle() {
   const dark = (a: number) => `rgba(13,17,23,${a})`;
   const L = isDark ? dark : light;
 
-  // Gradient: extent 0–120 → slide RIGHT = more cover (fade ends 35% → 90%); strong opacity on left for text contrast
-  const fadeEndPct = 35 + (heroTextTreatmentExtent / 120) * 55;
-  const taperStart = Math.min(40, Math.max(20, fadeEndPct - 12));
-  const gradientOverlay =
-    heroTextTreatment === "gradient"
-      ? `linear-gradient(to right, ${L(1)} 0%, ${L(0.98)} 20%, ${L(0.92)} ${taperStart}%, ${L(0)} ${fadeEndPct}%, ${L(0)} 100%)`
-      : heroTextTreatment === "scrim" || heroTextTreatment === "backplate"
-        ? `linear-gradient(to right, ${L(0.75)} 0%, ${L(0.5)} 35%, ${L(0.2)} 65%, ${L(0)} 100%)`
-        : isDark
-          ? "linear-gradient(to right, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.7) 40%, rgba(13,17,23,0.2) 70%, rgba(13,17,23,0) 100%)"
-          : "linear-gradient(to right, rgba(247,245,240,0.95) 0%, rgba(247,245,240,0.7) 40%, rgba(247,245,240,0.2) 70%, rgba(247,245,240,0) 100%)";
+  // Left-edge fade: image fades in from page background colour so text zone stays clean
+  const gradientOverlay = `linear-gradient(to right, ${L(1)} 0%, ${L(0.85)} 20%, ${L(0.3)} 45%, ${L(0)} 60%, ${L(0)} 100%)`;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -99,7 +89,10 @@ export function HeroImageCycle() {
       aria-hidden
       style={{
         position: "absolute",
-        inset: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: "52%",
         zIndex: 0,
         pointerEvents: "none",
         overflow: "hidden",

@@ -4,9 +4,8 @@ import Link from "next/link";
 import { CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { ChatPanel } from "@/components/handbook/shared/ChatPanel";
-import { ChatTrigger } from "@/components/handbook/shared/ChatTrigger";
+import { HandbookNav } from "@/components/handbook/shared/HandbookNav";
 import { BriefOptionsCoverage } from "@/components/handbook/brief/BriefOptionsCoverage";
-import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const T = {
@@ -320,7 +319,7 @@ const EXAMPLE_BRIEF_IDS = ["ID_40", "ID_32", "ID_19"];
 const TOUR_STEPS = [
   {
     key: "welcome",
-    title: "Welcome to Brief mode",
+    title: "Welcome to Build Brief",
     body: "This is a live example of a HIVE Cross-Case Intelligence Brief. It synthesises evidence from multiple case studies into a structured analytical document. Step through this tour to understand each section before building your own.",
     anchor: null,
   },
@@ -424,10 +423,7 @@ export default function HIVEBriefWithChat() {
     setOnBriefSectionUpdate: setCtxOnBriefSectionUpdate,
     setPendingBriefMessage,
     themeKey,
-    messages,
   } = useChatContext();
-  const navT = THEMES[themeKey as ThemeKey] ?? T;
-
   const [focusLens, setFocusLens] = useState<"all" | "Rail" | "Highways" | "Aviation" | "Maritime" | "Costs" | "Policy context">("all");
 
   const caseIds = briefCases.map(c => c.id);
@@ -753,38 +749,35 @@ export default function HIVEBriefWithChat() {
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif" }}>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" />
       <style>{FONT}</style>
-      {/* DfT green stripe — match HandbookNav */}
-      {themeKey === "dft" && <div aria-hidden="true" style={{ height: 5, background: "#006853" }} />}
-      {themeKey !== "dft" && <div style={{ height: 5, background: T.green }} />}
-
-      {/* Nav — aligned with HandbookNav (Case Studies, Brief mode, Options Library) */}
-      <nav aria-label="HIVE handbook navigation" style={{ position: "sticky", top: 0, zIndex: 40, background: (navT as { navBg?: string }).navBg ?? T.navBg, borderBottom: `1px solid ${(navT as { border?: string }).border ?? T.border}`, backdropFilter: "blur(10px)" }}>
+      <HandbookNav />
+      <div style={{ borderBottom: `1px solid ${T.border}`, background: T.surface, position: "sticky", top: 56, zIndex: 30 }}>
         {loading && <div className="loading-bar" />}
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, transition: "padding-right 0.25s", paddingRight: chatOpen ? "calc(24px + 420px)" : "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <Link href="/handbook" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-              <div style={{ width: 24, height: 24, borderRadius: 5, background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064" /></svg>
-              </div>
-              <span style={{ fontSize: 14, fontWeight: 700, color: (navT as { textPrimary?: string }).textPrimary ?? T.text }}>HIVE</span>
-            </Link>
-            <span style={{ fontSize: 12, color: (navT as { textSecondary?: string }).textSecondary ?? T.textSec, whiteSpace: "nowrap" }}>Transport Climate Adaptation Intelligence</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }} role="list">
-              <Link href="/handbook/cases" style={{ fontSize: 13, fontWeight: 500, color: T.textSec, textDecoration: "none", padding: "4px 10px", borderRadius: 5, borderBottom: "2px solid transparent" }}>Case Studies</Link>
-              <Link href="/handbook/brief" style={{ fontSize: 13, fontWeight: 700, color: T.accent, textDecoration: "none", padding: "4px 10px", borderRadius: 5, borderBottom: `2px solid ${T.accent}` }}>Brief mode</Link>
-              <Link href="/handbook/options" style={{ fontSize: 13, fontWeight: 500, color: T.textSec, textDecoration: "none", padding: "4px 10px", borderRadius: 5, borderBottom: "2px solid transparent" }}>Options Library</Link>
-            </div>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "8px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: T.textSec, display: "flex", alignItems: "center", gap: 10 }}>
+            {isExampleMode && !loading && sections ? (
+              <>
+                <span style={{ fontWeight: 600, color: T.text }}>Example brief</span>
+                <span aria-hidden style={{ color: T.textMuted }}>-</span>
+                <span>This shows what a HIVE brief looks like.</span>
+              </>
+            ) : (
+              <span style={{ fontWeight: 600, color: T.text }}>Build Brief workspace</span>
+            )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {loading && (
               <span style={{ fontSize: 12, color: T.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.green, display: "inline-block", animation: "pulse 1s infinite" }} />
                 Generating&hellip;
               </span>
             )}
-            {!loading && briefCases.length > 0 && sections && (
-              <button type="button" onClick={() => generateBrief(caseIds)} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: (navT as { surfaceAlt?: string }).surfaceAlt ?? T.surfaceAlt, color: T.textSec, cursor: "pointer" }}>
-                &#x21bb; Regenerate
+            {isExampleMode && !loading && sections && (
+              <button
+                type="button"
+                onClick={() => { setTourStep(0); setTourOpen(true); }}
+                style={{ fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 20, border: `1px solid ${T.accent}`, background: T.surface, color: T.accent, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                ▶ Start walkthrough
               </button>
             )}
             {briefCases.length > 0 && !loading && (
@@ -793,37 +786,9 @@ export default function HIVEBriefWithChat() {
             <button type="button" onClick={handleExportPDF} disabled={loading || !sections?.length} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: loading || !sections?.length ? T.textMuted : T.textSec, cursor: loading || !sections?.length ? "not-allowed" : "pointer", opacity: loading || !sections?.length ? 0.6 : 1 }}>
               &darr; PDF
             </button>
-            <ChatTrigger onClick={() => chatOpen ? closeChat() : openChat()} hasMessages={messages.length > 1} label={chatOpen ? "Close chat" : "Ask about this brief"} />
           </div>
         </div>
-      </nav>
-
-      {/* ── Example brief banner (when opened with no cases) ─────────────────── */}
-      {isExampleMode && !loading && sections && (
-        <div style={{ background: T.accentLight, borderBottom: `1px solid ${T.accentMid}`, padding: "10px 24px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ width: 20, height: 20, borderRadius: 4, background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: T.text, flex: 1 }}>
-            Example brief — this shows what a HIVE brief looks like.
-          </span>
-          <button
-            type="button"
-            onClick={() => { setTourStep(0); setTourOpen(true); }}
-            style={{ fontSize: 12, fontWeight: 700, padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${T.accent}`, background: T.surface, color: T.accent, cursor: "pointer", whiteSpace: "nowrap" }}
-          >
-            ▶ Start walkthrough
-          </button>
-          <Link
-            href="/handbook/cases"
-            style={{ fontSize: 12, fontWeight: 700, padding: "5px 14px", borderRadius: 20, border: "none", background: T.accent, color: "#fff", textDecoration: "none", whiteSpace: "nowrap" }}
-          >
-            Browse cases to build your own →
-          </Link>
-        </div>
-      )}
+      </div>
 
       {/* ── AI-generated warning banner (real briefs only, not the prebuilt example) */}
       {aiLabel && !isExampleMode && !loading && sections && (

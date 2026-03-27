@@ -368,10 +368,10 @@ export function FeedbackReviewPanel() {
 
         <ItemCard
           num={4}
-          title="Brief mode placement"
+          title="Build Brief placement"
           status="discussing"
           notes={[
-            "Heather and Olivia have split opinions: should Brief mode summary be the homepage default with the full case library as a tab, or current approach (case library first)?",
+            "Heather and Olivia have split opinions: should Build Brief summary be the homepage default with the full case library as a tab, or current approach (case library first)?",
             "Our recommendation: keep current architecture — users need to find relevant cases before a brief makes sense. Instead, make the synthesis panel more prominent on the homepage when results are present.",
             "No rebuild needed at this stage. Revisit after user testing data.",
           ]}

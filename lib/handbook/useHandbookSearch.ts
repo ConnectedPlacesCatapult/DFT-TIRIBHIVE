@@ -114,7 +114,8 @@ export function useHandbookSearch(query: string) {
     chatRoutingRef.current = true;
     openChat("browse");
     const userMsg = { role: "user" as const, text: q };
-    setMessages([userMsg]);
+    const placeholder = { role: "ai" as const, text: "" };
+    setMessages([userMsg, placeholder]);
     setThinking(true);
     try {
       const res = await fetch("/api/handbook/chat", {
@@ -128,27 +129,58 @@ export function useHandbookSearch(query: string) {
           result_chunks: semanticChunks.length > 0 ? semanticChunks : undefined,
         }),
       });
-      const data = await res.json();
-      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
-      setMessages([
-        userMsg,
-        {
-          role: "ai" as const,
-          text: data.message ?? data.text ?? "",
-          chips: data.chips,
-          gap: data.gap,
-          actions: data.actions,
-          sources: data.sources,
-          retrieval_mode: data.retrieval_mode,
-          action: data.action,
-          actionDismissed: false,
-        },
-      ]);
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      setThinking(false); // hide spinner once stream starts
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.token !== undefined) {
+              setMessages((prev) => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === "ai") {
+                  updated[updated.length - 1] = { ...last, text: last.text + data.token };
+                }
+                return updated;
+              });
+            } else if (data.done) {
+              if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+              setMessages((prev) => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === "ai") {
+                  updated[updated.length - 1] = {
+                    role: "ai",
+                    text: data.text ?? last.text,
+                    chips: data.chips,
+                    gap: data.gap,
+                    actions: data.actions,
+                    sources: data.sources,
+                    retrieval_mode: data.retrieval_mode,
+                    action: data.action,
+                    actionDismissed: false,
+                  };
+                }
+                return updated;
+              });
+            }
+          } catch { /* skip malformed SSE line */ }
+        }
+      }
     } catch {
-      setMessages([
-        userMsg,
-        { role: "ai" as const, text: "Something went wrong. Please try again." },
-      ]);
+      setMessages([userMsg, { role: "ai" as const, text: "Something went wrong. Please try again." }]);
     } finally {
       setThinking(false);
       chatRoutingRef.current = false;

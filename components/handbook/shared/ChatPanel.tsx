@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useChatContext, type ChatMessage, type ChatActionPayload } from "./ChatContext";
+import { CASE_STUDIES } from "@/lib/hive/seed-data";
 
 interface ChatPanelProps {
   context: string;
@@ -89,7 +90,32 @@ function getConfig(context: string): ContextConfig {
   return CONTEXT_CONFIGS[context] ?? CONTEXT_CONFIGS.browse;
 }
 
+const CASE_TITLE_MAP: Record<string, string> = Object.fromEntries(
+  CASE_STUDIES.map((cs) => [cs.id, cs.title])
+);
+
+const GUIDANCE_URL_MAP: Record<string, string> = {
+  "Climate Adaptation Strategy for Transport": "https://www.gov.uk/government/publications/climate-adaptation-strategy-for-transport",
+  "Climate Adaptation Strategy 2025": "https://www.gov.uk/government/publications/climate-adaptation-strategy-for-transport",
+  "Climate Risk Assessment Guidance": "https://www.gov.uk/guidance/climate-change-risk-assessment-guidance",
+  "HS2 Learning Legacy": "https://learninglegacy.hs2.co.uk/categories/climate-change/",
+  "Met Office Climate Data Portal": "https://climatedataportal.metoffice.gov.uk/",
+  "DARe Publications": "https://dare-uk.org/publications/",
+  "DARe Hub": "https://dare.ac.uk/",
+  "CIHT Resilience Framework": "https://www.ciht.org.uk/resilience",
+  "CIHT": "https://www.ciht.org.uk/resilience",
+  "ADEPT RAPA Toolkit": "https://www.adeptnet.org.uk/rapa-toolkit",
+  "PIARC Climate Change Adaptation Framework 2023": "https://www.piarc.org/en/order-library/42628-en",
+  "PIARC Adaptation Framework 2023": "https://www.piarc.org/en/order-library/42628-en",
+  "PIARC Climate Change Resilience and Disaster Management": "https://www.piarc.org/en/order-library/42098-en",
+  "PIARC Case Studies Collection": "https://www.piarc.org/en/order-library/39873-en",
+  "PIARC Road Bridges Climate Change Adaptation": "https://www.piarc.org/en/order-library/38687-en",
+  "PIARC Earthworks and Rural Roads": "https://www.piarc.org/en/order-library/34433-en",
+  "PIARC Adaptation Methodologies and Strategies": "https://www.piarc.org/en/order-library/31335-en",
+};
+
 function SourceChip({ id }: { id: string }) {
+  const title = CASE_TITLE_MAP[id] ?? id;
   return (
     <Link
       href={`/handbook/${id}`}
@@ -109,8 +135,36 @@ function SourceChip({ id }: { id: string }) {
         cursor: "pointer",
       }}
     >
-      {id} ↗
+      {title} ↗
     </Link>
+  );
+}
+
+function GuideChip({ title }: { title: string }) {
+  const url = GUIDANCE_URL_MAP[title] ?? "#";
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 3,
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "2px 8px",
+        borderRadius: 4,
+        background: "#fef3c7",
+        color: "#92400e",
+        border: "1px solid #fde68a",
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+        cursor: "pointer",
+      }}
+    >
+      Guide: {title} ↗
+    </a>
   );
 }
 
@@ -154,12 +208,14 @@ function getActionDescription(action: ChatActionPayload): string {
 }
 
 function MessageText({ text }: { text: string }) {
-  const parts = text.split(/\b(ID_[\w]+)\b/);
+  const parts = text.split(/(\bID_[\w]+\b|\[Guide:[^\]]+\])/);
   return (
     <>
       {parts.map((part, i) =>
         /^ID_[\w]+$/.test(part) ? (
           <SourceChip key={i} id={part} />
+        ) : /^\[Guide:/.test(part) ? (
+          <GuideChip key={i} title={part.slice(7, -1).trim()} />
         ) : (
           <span
             key={i}
@@ -420,7 +476,8 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     setInput("");
     const userMsg: ChatMessage = { role: "user", text: q };
     const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    // Show user message + empty AI placeholder immediately (optimistic + streaming target)
+    setMessages([...updatedMessages, { role: "ai", text: "" }]);
     setTyping(true);
     try {
       const res = await fetch("/api/handbook/chat", {
@@ -436,31 +493,75 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           suggestions_shown: suggestionsShown,
         }),
       });
-      const data = await res.json();
-      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
-      const aiMsg: ChatMessage = {
-        role: "ai",
-        text: data.message ?? data.text ?? "",
-        chips: data.chips,
-        gap: data.gap,
-        actions: data.actions,
-        sources: data.sources,
-        retrieval_mode: data.retrieval_mode,
-        action: data.action,
-        actionDismissed: false,
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      const responseText = aiMsg.text ?? "";
-      const matched = SUGGESTION_DETECTORS.find(([, re]) => re.test(responseText));
-      if (matched) {
-        const [id] = matched;
-        setSuggestionsShown((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      setTyping(false); // hide dots once streaming starts
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.token !== undefined) {
+              // Append token to the last AI message
+              setMessages((prev) => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === "ai") {
+                  updated[updated.length - 1] = { ...last, text: last.text + data.token };
+                }
+                return updated;
+              });
+            } else if (data.done) {
+              if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+              // Replace placeholder with fully-hydrated message
+              setMessages((prev) => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === "ai") {
+                  updated[updated.length - 1] = {
+                    role: "ai",
+                    text: data.text ?? last.text,
+                    chips: data.chips,
+                    gap: data.gap,
+                    actions: data.actions,
+                    sources: data.sources,
+                    retrieval_mode: data.retrieval_mode,
+                    action: data.action,
+                    actionDismissed: false,
+                  };
+                }
+                return updated;
+              });
+              const responseText = data.text ?? "";
+              const matched = SUGGESTION_DETECTORS.find(([, re]) => re.test(responseText));
+              if (matched) {
+                const [id] = matched;
+                setSuggestionsShown((prev) => (prev.includes(id) ? prev : [...prev, id]));
+              }
+            }
+          } catch { /* skip malformed SSE line */ }
+        }
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", text: "Something went wrong. Please try again." },
-      ]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.role === "ai" && !last.text) {
+          updated[updated.length - 1] = { role: "ai", text: "Something went wrong. Please try again." };
+        } else {
+          updated.push({ role: "ai", text: "Something went wrong. Please try again." });
+        }
+        return updated;
+      });
     } finally {
       setTyping(false);
     }

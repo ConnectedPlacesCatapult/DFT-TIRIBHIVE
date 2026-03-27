@@ -73,8 +73,40 @@ async function setCachedResponse(hash: string, queryText: string, response: obje
   }
 }
 
+async function fetchGuidanceChunks(query: string): Promise<{ article_id: string | null; section_key: string; chunk_text: string }[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return [];
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const sb = createClient(supabaseUrl, supabaseKey, { db: { schema: "hive" } });
+    // Keyword match on guidance chunks — pragmatic for demo mode (no extra embedding call needed)
+    const keywords = query
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+      .slice(0, 4);
+    if (keywords.length === 0) return [];
+    // Build OR filter: chunk_text ILIKE any keyword
+    const filter = keywords.map((k) => `chunk_text.ilike.%${k}%`).join(",");
+    const { data } = await sb
+      .from("document_chunks")
+      .select("chunk_text, section_key, metadata")
+      .or(filter)
+      .limit(4);
+    return (data ?? []).map((r) => ({
+      article_id: null,
+      section_key: r.section_key ?? "guidance",
+      chunk_text: r.chunk_text as string,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function POST(req: NextRequest) {
-  let body: { q?: string; skipCache?: boolean };
+  let body: { q?: string; skipCache?: boolean; includeGuidance?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -89,10 +121,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const includeGuidance = body.includeGuidance === true;
   const hash = hashQuery(query);
 
-  // ── Cache check (skip only when explicitly requested, e.g. prewarm refresh) ──
-  if (!body.skipCache) {
+  // ── Cache check (skip when explicitly requested or guidance mode changes the response) ──
+  if (!body.skipCache && !includeGuidance) {
     const cached = await getCachedResponse(hash);
     if (cached) {
       return NextResponse.json({ ...cached, cached: true });
@@ -119,16 +152,22 @@ export async function POST(req: NextRequest) {
     else if (cases.length > 0) scenario = "B";
     else scenario = "C";
 
+    // ── Step 1b: guidance chunk retrieval (only when toggled on in demo) ────
+    const guidanceChunks = includeGuidance ? await fetchGuidanceChunks(query) : [];
+
     // ── Step 2: LLM synthesis ────────────────────────────────────────────────
     const aiResult = await getAIResponse(
       [{ role: "user", text: query }],
       {
         mode: "explore",
-        result_chunks: cases.map((c) => ({
-          article_id: c.article_id,
-          section_key: c.section_key,
-          chunk_text: c.chunk_text,
-        })),
+        result_chunks: [
+          ...cases.map((c) => ({
+            article_id: c.article_id,
+            section_key: c.section_key,
+            chunk_text: c.chunk_text,
+          })),
+          ...guidanceChunks,
+        ],
         session_intent: query,
       }
     );
@@ -143,8 +182,8 @@ export async function POST(req: NextRequest) {
       retrieval_mode: mode,
     };
 
-    // ── Write to cache (non-blocking) ────────────────────────────────────────
-    setCachedResponse(hash, query, response);
+    // ── Write to cache (non-blocking, only for standard queries without guidance) ──
+    if (!includeGuidance) setCachedResponse(hash, query, response);
 
     return NextResponse.json(response);
   } catch (err) {

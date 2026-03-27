@@ -412,15 +412,24 @@ CORE RULES (apply to all HIVE AI responses):
 1. Only use information present in the retrieved context or provided case study text
 2. Never invent case study names, organisations, costs, dates, or outcomes
 3. If evidence is absent, say "The knowledge base does not cover this" — never fill gaps with general knowledge
-4. Cite every factual claim with [ID_xx]
+4. Cite every factual claim with the appropriate citation format (see below)
 5. If uncertain, say so explicitly
+CITATION RULES BY SOURCE TYPE:
+- Case study evidence: cite as [ID_xx] immediately after the name or claim — e.g. "Sheffield Grey to Green [ID_40]"
+- Guidance document evidence: cite as [Guide: short_title] — e.g. "DfT recommends a risk-based approach [Guide: Climate Adaptation Strategy for Transport]"
+- Never use [ID_xx] for guidance documents. Never use [Guide:] for case studies.
+- When combining both in one response, cite each claim with its own source type — e.g. "Case study evidence shows 87% discharge reduction [ID_40], consistent with DfT guidance [Guide: Climate Adaptation Strategy for Transport]"
 </core_rules>`;
 
 // LAYER 0 — CITATION RULE (first instruction the model sees — non-negotiable)
 const CITATION_RULE = `<citation_rule>
-MANDATORY: Every case study, project, or organisation you mention MUST include its case ID in square brackets immediately after the name — e.g. "Sheffield Grey to Green [ID_40]", "Austrian Federal Railways [ID_06]". Every factual claim about a case (cost, measure, outcome, hazard) MUST end with a citation in brackets.
+MANDATORY: Every case study, project, or organisation you mention MUST include its source citation immediately after the name.
 
-Use the case ID format shown in the retrieved context (e.g. [ID_40], [ID_06]). NEVER cite raw database UUIDs. If you cannot find a matching ID in the retrieved context below, DO NOT mention that project. Uncited case references are forbidden. This rule overrides all other instructions.
+CASE STUDIES: Use [ID_xx] format — e.g. "Sheffield Grey to Green [ID_40]", "Austrian Federal Railways [ID_06]". Use the ID exactly as shown in the retrieved context. NEVER cite raw database UUIDs. If you cannot find a matching ID, DO NOT mention that project.
+
+GUIDANCE DOCUMENTS: If evidence comes from a guidance document (not a case study), cite as [Guide: short_title] — e.g. "CIHT recommends a risk-based approach [Guide: CIHT Resilience Framework]", "DfT outlines phased adaptation investment [Guide: Climate Adaptation Strategy for Transport]". Never use [ID_xx] for guidance documents.
+
+COMBINING SOURCES: When a single response draws on both case studies and guidance documents, cite each claim with its own format. Uncited factual claims are forbidden. This rule overrides all other instructions.
 </citation_rule>`;
 
 // LAYER 1 — PERSONA
@@ -893,7 +902,7 @@ const MOCK: Record<string, MockResponse[]> = {
 
 const mockCounters: Record<string, number> = {};
 
-function getMockResponse(mode: string): ChatApiResponse {
+export function getMockResponse(mode: string): ChatApiResponse {
   const pool = MOCK[mode] ?? MOCK.explore;
   const count = mockCounters[mode] ?? 0;
   mockCounters[mode] = (count + 1) % pool.length;
@@ -935,20 +944,26 @@ export type GetAIResponseOptions = {
   max_tokens?: number;
 };
 
-export async function getAIResponse(
+// ---------------------------------------------------------------------------
+// Shared internals: retrieval setup + post-processing (used by both streaming
+// and non-streaming paths to avoid duplication)
+// ---------------------------------------------------------------------------
+
+type PreparedAICall = {
+  systemPrompt: string;
+  openaiMessages: Array<{ role: "user" | "assistant"; content: string }>;
+  retrieval: { chunks: RetrievedChunk[]; formatted: string; mode: "rag" | "fallback" };
+  maxTokens: number;
+};
+
+async function prepareAICall(
   messages: ChatMessageIn[],
   context: ChatContext,
   options?: GetAIResponseOptions
-): Promise<ChatApiResponse> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return getMockResponse(context.mode);
-  }
-
+): Promise<PreparedAICall> {
   const lastUserMessage =
     [...messages].reverse().find((m) => m.role === "user")?.text ?? "";
 
-  // Synthesis with pre-loaded brief chunks/sections: skip retrieveContext (meta-instructions don't match vector search)
   const synthesisHasPreloaded =
     context.mode === "synthesis" &&
     (context.brief_case_chunks?.length || context.brief_sections?.length);
@@ -987,51 +1002,30 @@ export async function getAIResponse(
       mode: "rag",
     };
   } else {
-    // No pre-loaded chunks — fresh pgvector search (standalone chat, no prior search)
-    // deep_dive uses a fixed higher threshold; explore uses dynamic threshold calibrated to query length
     const threshold = context.mode === "deep_dive" ? 0.4 : getDynamicThreshold(lastUserMessage);
-    retrieval = await retrieveContext(lastUserMessage, {
-      limit: 12,
-      threshold,
-    });
+    retrieval = await retrieveContext(lastUserMessage, { limit: 12, threshold });
   }
 
   const retrievedCaseIds = [...new Set(retrieval.chunks.map((c) => c.article_id))];
+  const systemPrompt = buildSystemPrompt(context, retrieval.formatted, retrieval.mode, retrievedCaseIds);
+  const maxTokens = options?.max_tokens ?? (context.mode === "synthesis" ? 1200 : 600);
+  const openaiMessages = messages.map((m) => ({
+    role: (m.role === "ai" ? "assistant" : "user") as "assistant" | "user",
+    content: m.text,
+  }));
 
-  const systemPrompt = buildSystemPrompt(
-    context,
-    retrieval.formatted,
-    retrieval.mode,
-    retrievedCaseIds,
-  );
+  return { systemPrompt, openaiMessages, retrieval, maxTokens };
+}
 
-  const { default: OpenAI } = await import("openai");
-  const openai = new OpenAI({ apiKey });
-
-  const maxTokens =
-    options?.max_tokens ??
-    (context.mode === "synthesis" ? 1200 : 600);
-
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-    { role: "system", content: systemPrompt },
-    ...messages.map((m) => ({
-        role: (m.role === "ai" ? "assistant" : "user") as "assistant" | "user",
-      content: m.text,
-    })),
-    ],
-    temperature: 0.2,
-    max_tokens: maxTokens,
-  });
-
-  let rawText =
-    completion.choices[0]?.message?.content ??
-    "I couldn't generate a response.";
-
-  // Parse ---PROPOSED_UPDATE--- block if present (synthesis mode section rewrites)
+/** Extract structured metadata from a completed LLM response. */
+export function postProcessChatText(
+  rawText: string,
+  retrieval: { chunks: RetrievedChunk[]; mode: "rag" | "fallback" }
+): { text: string; chips?: string[]; sources?: string[]; action?: ChatApiResponse["action"]; retrieval_mode: "rag" | "fallback" } {
+  let text = rawText;
   let action: ChatApiResponse["action"];
-  const updateMatch = rawText.match(
+
+  const updateMatch = text.match(
     /---\s*PROPOSED[_ ]UPDATE\s*---\s*[\r\n]+\s*section[_ ]key\s*:\s*(.+?)[\r\n]+\s*reason\s*:\s*(.+?)[\r\n]+\s*content\s*:\s*([\s\S]*?)[\r\n]+\s*---\s*END[_ ]UPDATE\s*---/i
   );
   if (updateMatch) {
@@ -1043,27 +1037,15 @@ export async function getAIResponse(
         new_content: updateMatch[3].trim(),
       },
     };
-    rawText = rawText.replace(/---\s*PROPOSED[_ ]UPDATE\s*---[\s\S]*?---\s*END[_ ]UPDATE\s*---/i, "").trim();
-  } else if (/---\s*PROPOSED[_ ]?UPDATE/i.test(rawText)) {
-    console.warn(
-      "[HIVE] PROPOSED_UPDATE block found but failed to parse:",
-      rawText.substring(rawText.search(/---\s*PROPOSED/i), rawText.search(/---\s*PROPOSED/i) + 500)
-    );
+    text = text.replace(/---\s*PROPOSED[_ ]UPDATE\s*---[\s\S]*?---\s*END[_ ]UPDATE\s*---/i, "").trim();
+  } else if (/---\s*PROPOSED[_ ]?UPDATE/i.test(text)) {
+    console.warn("[HIVE] PROPOSED_UPDATE block found but failed to parse:", text.substring(text.search(/---\s*PROPOSED/i), text.search(/---\s*PROPOSED/i) + 500));
   }
 
-  const text = rawText;
-
-  // Extract cited case IDs from both LLM output and retrieved chunks
   const chipMatches = text.match(/\[?(ID_[\w]+)\]?/g);
-  const chips = chipMatches
-    ? [...new Set(chipMatches.map((m) => m.replace(/[[\]]/g, "")))]
-    : undefined;
+  const chips = chipMatches ? [...new Set(chipMatches.map((m) => m.replace(/[[\]]/g, "")))] : undefined;
+  const sources = retrieval.chunks.length ? [...new Set(retrieval.chunks.map((c) => c.article_id))] : chips;
 
-  const sources = retrieval.chunks.length
-    ? [...new Set(retrieval.chunks.map((c) => c.article_id))]
-    : chips;
-
-  // Infer structured action for Apply/Dismiss card when no explicit update block was parsed
   if (!action && chips && chips.length > 0) {
     const lower = text.toLowerCase();
     if (/\badd to (your )?brief\b|\badd (these |them )?to (your )?brief\b/i.test(lower)) {
@@ -1075,12 +1057,70 @@ export async function getAIResponse(
     }
   }
 
+  return { text, chips, sources, action, retrieval_mode: retrieval.mode };
+}
+
+export async function getAIResponse(
+  messages: ChatMessageIn[],
+  context: ChatContext,
+  options?: GetAIResponseOptions
+): Promise<ChatApiResponse> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return getMockResponse(context.mode);
+
+  const { systemPrompt, openaiMessages, retrieval, maxTokens } = await prepareAICall(messages, context, options);
+
+  const { default: OpenAI } = await import("openai");
+  const openai = new OpenAI({ apiKey });
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
+    temperature: 0.2,
+    max_tokens: maxTokens,
+  });
+
+  const rawText = completion.choices[0]?.message?.content ?? "I couldn't generate a response.";
+  const processed = postProcessChatText(rawText, retrieval);
+
   return {
-    message: text,
-    text,
-    chips,
-    sources,
-    retrieval_mode: retrieval.mode,
-    action,
+    message: processed.text,
+    text: processed.text,
+    chips: processed.chips,
+    sources: processed.sources,
+    retrieval_mode: processed.retrieval_mode,
+    action: processed.action,
   };
+}
+
+/**
+ * Streaming variant — returns the OpenAI stream iterator and retrieval info.
+ * The route uses these to pipe tokens as SSE and send metadata at the end.
+ * Returns null when no API key (caller falls back to getMockResponse).
+ */
+export async function streamAIResponse(
+  messages: ChatMessageIn[],
+  context: ChatContext,
+  options?: GetAIResponseOptions
+): Promise<{
+  stream: AsyncIterable<import("openai").OpenAI.Chat.Completions.ChatCompletionChunk>;
+  retrieval: { chunks: RetrievedChunk[]; mode: "rag" | "fallback" };
+} | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+
+  const { systemPrompt, openaiMessages, retrieval, maxTokens } = await prepareAICall(messages, context, options);
+
+  const { default: OpenAI } = await import("openai");
+  const openai = new OpenAI({ apiKey });
+
+  const stream = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
+    temperature: 0.2,
+    max_tokens: maxTokens,
+    stream: true,
+  });
+
+  return { stream, retrieval };
 }

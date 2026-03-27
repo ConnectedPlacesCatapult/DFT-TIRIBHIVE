@@ -10,10 +10,27 @@ import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 const DEMO_UNLOCK_KEY = "hiveDemoUnlocked";
 const DEMO_PASSWORD = "1234";
 
-const NAV_LINKS = [
-  { href: "/handbook/cases", label: "Case Studies" },
-  { href: "/handbook/brief", label: "Brief mode" },
-  { href: "/handbook/options", label: "Options Library" },
+const NAV_LINKS: { href: string; label: string; title: string }[] = [
+  {
+    href: "/handbook/cases",
+    label: "Case Studies",
+    title: "Browse curated climate adaptation case studies with filters",
+  },
+  {
+    href: "/handbook/brief",
+    label: "Build Brief",
+    title: "Collect case studies and generate a cross-case AI synthesis report",
+  },
+  {
+    href: "/handbook/options",
+    label: "Options Library",
+    title: "Explore adaptation options and measures from the library",
+  },
+  {
+    href: "/handbook/guidance",
+    label: "Additional Resources",
+    title: "External guidance and reference links",
+  },
 ];
 
 export function HandbookNav() {
@@ -40,6 +57,8 @@ export function HandbookNav() {
     setHeroTextTreatmentExtent,
     searchMode,
     setSearchMode,
+    includeGuidance,
+    setIncludeGuidance,
     reviewMode,
     setReviewMode,
   } = useChatContext();
@@ -84,6 +103,14 @@ export function HandbookNav() {
       : pathname?.match(/^\/handbook\/ID_/)
         ? "Ask about this case"
         : "Ask HIVE";
+
+  const chatTitle = chatOpen
+    ? "Close the assistant panel"
+    : pathname?.startsWith("/handbook/brief")
+      ? "Discuss this brief, request section edits, or explore evidence"
+      : pathname?.match(/^\/handbook\/ID_/)
+        ? "Ask about this case study in context"
+        : "Open HIVE assistant — answers use the page you are on";
 
   const handleDemoButton = () => {
     if (demoUnlocked) {
@@ -146,6 +173,7 @@ export function HandbookNav() {
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <Link
               href="/handbook"
+              title="HIVE handbook home — search and explore"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -219,6 +247,7 @@ export function HandbookNav() {
                     href={link.href}
                     role="listitem"
                     data-onboard={link.href === "/handbook/brief" ? "brief-nav" : undefined}
+                    title={link.title}
                     style={{
                       fontSize: 13,
                       fontWeight: isActive ? 700 : 500,
@@ -535,6 +564,50 @@ export function HandbookNav() {
                     >
                       {reviewMode ? "✓ Review mode active" : "Feedback review →"}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setIncludeGuidance(!includeGuidance)}
+                      style={{
+                        width: "100%",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        background: includeGuidance ? "#fef9c3" : T.surfaceAlt,
+                        color: includeGuidance ? "#713f12" : T.textSecondary,
+                        textAlign: "left",
+                        marginTop: 4,
+                      }}
+                    >
+                      {includeGuidance ? "✓ Guidance in answers" : "Include guidance in AI →"}
+                    </button>
+                  </div>
+
+                  <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>System</div>
+                    <a
+                      href="/admin/status"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        width: "100%",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        background: T.surfaceAlt,
+                        color: T.textSecondary,
+                        textDecoration: "none",
+                        boxSizing: "border-box",
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>🟦</span> System status →
+                    </a>
                   </div>
 
                   {backgroundEffect === "hero" && (
@@ -592,6 +665,7 @@ export function HandbookNav() {
               onClick={handleChatToggle}
               hasMessages={hasMessages}
               label={chatLabel}
+              title={chatTitle}
               data-onboard="chat-trigger"
             />
           </div>

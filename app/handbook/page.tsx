@@ -1044,7 +1044,7 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, reviewMode, reviewOverrides } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides } = useChatContext();
   const T = THEMES[themeKey];
   const heroTitleSize = "2.5rem";
   const heroSubtextSize = 16;
@@ -1071,7 +1071,7 @@ function HandbookLandingPageContent() {
   const { semanticResults, semanticScenario, semanticPrompt, routeQueryToChat } = useHandbookSearch(query);
 
   // v2 unified search — active only when searchMode === "unified"
-  const unified = useUnifiedSearch(searchMode === "unified" ? query : "");
+  const unified = useUnifiedSearch(searchMode === "unified" ? query : "", includeGuidance);
 
   useEffect(() => {
     setDemoCounts({ cases: CASE_STUDIES.length, measures: TOTAL_MEASURE_COUNT });
@@ -1212,10 +1212,14 @@ function HandbookLandingPageContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unified.cases.length, unified.synthesis, unified.loading, searchMode]);
 
-  // Scroll to results only once per search session, after typing settles
+  // Scroll to results only once per search session, after the user stops typing.
+  // query is included so the timer resets on every keystroke and only fires
+  // after an 800ms pause — prevents mid-typing jumps.
   useEffect(() => {
     if (!hasActiveFilters) { setScrolledToResults(false); return; }
     if (scrolledToResults) return;
+    const hasResults = results.length > 0 || unified.cases.length > 0;
+    if (!hasResults) return;
     const timer = setTimeout(() => {
       if (resultsRef.current) {
         resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1223,7 +1227,7 @@ function HandbookLandingPageContent() {
       }
     }, 800);
     return () => clearTimeout(timer);
-  }, [hasActiveFilters, query, selectedHazards, selectedSectors]);
+  }, [hasActiveFilters, query, results.length, unified.cases.length, selectedHazards, selectedSectors]);
 
   const measureDisplayItems = useMemo(() => {
     return results.flatMap(a => {
@@ -1392,30 +1396,13 @@ function HandbookLandingPageContent() {
       <div className="hive-root" style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
 
         {/* Hero — wrapper is relative; background from Demo options: None / Particles / Hero (cycling images) */}
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", minHeight: backgroundEffect === "hero" ? 340 : undefined }}>
           {backgroundEffect === "hero" && <HeroImageCycle />}
           <BackgroundEffect />
           <div style={{ position: "relative", zIndex: 1, maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingTop: 56, paddingBottom: 24 }}>
-          {backgroundEffect === "hero" && heroTextTreatment === "scrim" && (
-            <div
-              aria-hidden
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: "60%",
-                maxWidth: 520,
-                background: themeKey === "dark" ? "rgba(13,17,23,0.72)" : "rgba(247,245,240,0.78)",
-                backdropFilter: `blur(${heroTextTreatmentExtent}px)`,
-                WebkitBackdropFilter: `blur(${heroTextTreatmentExtent}px)`,
-                pointerEvents: "none",
-              }}
-            />
-          )}
           <HeroBackplateWrapper
-            wrap={backgroundEffect === "hero" && heroTextTreatment === "backplate"}
-            backplateStyle={{ background: T.bg, borderRadius: heroTextTreatmentExtent, padding: 24, maxWidth: 800 }}
+            wrap={false}
+            backplateStyle={{}}
           >
           <div className="fade-up" style={{ maxWidth: 768 }}>
             <h1
@@ -1426,9 +1413,6 @@ function HandbookLandingPageContent() {
                 marginBottom: 10,
                 fontFamily: "'DM Serif Display', serif",
                 color: T.textPrimary,
-                ...(backgroundEffect === "hero"
-                  ? { textShadow: themeKey === "dark" ? "0 1px 3px rgba(0,0,0,0.75)" : "0 1px 2px rgba(255,255,255,0.9), 0 0 24px rgba(247,245,240,0.85)" }
-                  : {}),
               }}
             >
               {heroTitle.replace(/ managing\?$/, "")}
@@ -1441,9 +1425,6 @@ function HandbookLandingPageContent() {
                 maxWidth: 520,
                 lineHeight: heroSubtextLineHeight,
                 color: T.textSecondary,
-                ...(backgroundEffect === "hero"
-                  ? { textShadow: themeKey === "dark" ? "0 1px 2px rgba(0,0,0,0.7)" : "0 1px 2px rgba(255,255,255,0.85), 0 0 18px rgba(247,245,240,0.75)" }
-                  : {}),
               }}
             >
               {heroCopy}
@@ -1648,17 +1629,6 @@ function HandbookLandingPageContent() {
               </div>
             </div>
           )}
-          </div>
-        </div>
-
-        {/* ── MARQUEE — always visible; view mode & animation toggles are in nav "Demo options" ── */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
-          {marqueeView === "marquee"
-            ? <Marquee2D cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
-            : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
-          }
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginTop: 16 }}>
-            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Hover to pause · Click any card to view case study · Search above to find specific cases</p>
           </div>
         </div>
 
@@ -1896,6 +1866,17 @@ function HandbookLandingPageContent() {
         )}
 
         {selectedCase && <CaseStudyDetail cs={selectedCase} onClose={() => setSelectedCase(null)} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === selectedCase.id)} />}
+
+        {/* ── MARQUEE — browse all cases; below results so search cards appear first ── */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
+          {marqueeView === "marquee"
+            ? <Marquee2D cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
+            : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
+          }
+          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginTop: 16 }}>
+            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Browse all cases below · Search above to filter by hazard, sector, or keyword</p>
+          </div>
+        </div>
 
         {/* ── BRIEF PANEL ── */}
         {briefOpen && (

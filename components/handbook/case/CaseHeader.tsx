@@ -140,7 +140,7 @@ export function CaseHeader({ cs, inBrief, onAddToBrief, onAskAboutCase }: CaseHe
               gap: 6,
             }}
           >
-            {inBrief ? "✓ In brief" : "+ Add to Brief"}
+            {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
           </button>
           <button
             onClick={onAskAboutCase}

@@ -4,6 +4,7 @@ interface ChatTriggerProps {
   onClick: () => void;
   hasMessages: boolean;
   label?: string;
+  title?: string;
   "data-onboard"?: string;
 }
 
@@ -11,12 +12,15 @@ export function ChatTrigger({
   onClick,
   hasMessages,
   label = "Ask HIVE",
+  title,
   "data-onboard": dataOnboard,
 }: ChatTriggerProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-label={label}
+      title={title}
       data-onboard={dataOnboard}
       style={{
         display: "flex",

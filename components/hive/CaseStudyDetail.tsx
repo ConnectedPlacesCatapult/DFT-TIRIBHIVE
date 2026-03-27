@@ -83,6 +83,20 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
         </div>
       )}
 
+      {pdfUrl && (
+        <a
+          href={pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#1D9E75", textDecoration: "none", fontWeight: 500, marginBottom: 16 }}
+        >
+          ↗ View full case study
+        </a>
+      )}
+      <div style={{ marginBottom: 16 }}>
+        <LinkButton href="/handbook/guidance" label="Browse additional guidance →" />
+      </div>
+
       <hr style={{ border: "none", borderTop: "0.5px solid rgba(0,0,0,0.1)", margin: "16px 0" }} />
 
       {/* Main applications */}
@@ -208,16 +222,8 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
           onClick={() => { onAddToBrief(cs); onClose(); }}
           style={{ background: inBrief ? "transparent" : "#1D9E75", color: inBrief ? "#1a1a1a" : "white", border: inBrief ? "0.5px solid rgba(0,0,0,0.25)" : "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
         >
-          {inBrief ? "✓ In AI brief" : "+ Add to AI brief"}
+          {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
         </button>
-        <a
-          href={pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ background: "transparent", color: "#1a1a1a", border: "0.5px solid rgba(0,0,0,0.25)", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer", textDecoration: "none", display: "inline-block" }}
-        >
-          View original PDF
-        </a>
       </div>
 
       {/* Footer */}
@@ -243,6 +249,20 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief }: {
       <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "12px 16px", borderLeft: "3px solid #1D9E75", marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 500, color: "#0F6E56", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Key insight</div>
         <p style={{ fontSize: 14, color: "#085041", lineHeight: 1.6, margin: 0 }}>{cs.insight}</p>
+      </div>
+
+      {getCaseStudyPdfUrl(cs) && (
+        <a
+          href={getCaseStudyPdfUrl(cs)}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#1D9E75", textDecoration: "none", fontWeight: 500, marginBottom: 16 }}
+        >
+          ↗ View full case study
+        </a>
+      )}
+      <div style={{ marginBottom: 16 }}>
+        <LinkButton href="/handbook/guidance" label="Browse additional guidance →" />
       </div>
 
       <div style={{ background: "#f7f5f0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
@@ -307,16 +327,8 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief }: {
           onClick={() => { onAddToBrief(cs); onClose(); }}
           style={{ background: inBrief ? "transparent" : "#1D9E75", color: inBrief ? "#1a1a1a" : "white", border: inBrief ? "0.5px solid rgba(0,0,0,0.25)" : "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
         >
-          {inBrief ? "✓ In AI brief" : "+ Add to AI brief"}
+          {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
         </button>
-        <a
-          href={getCaseStudyPdfUrl(cs)}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ background: "transparent", color: "#1a1a1a", border: "0.5px solid rgba(0,0,0,0.25)", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer", textDecoration: "none", display: "inline-block" }}
-        >
-          View original PDF
-        </a>
       </div>
 
       <p style={{ fontSize: 11, color: "#aaa", marginTop: 12 }}>
@@ -350,6 +362,25 @@ function BulletList({ items }: { items: string[] }) {
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function LinkButton({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 13,
+        color: "#1D9E75",
+        textDecoration: "none",
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </a>
+  );
 }
 
 // ---------------------------------------------------------------------------
