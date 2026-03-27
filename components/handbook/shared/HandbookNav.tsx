@@ -45,8 +45,6 @@ export function HandbookNav() {
     setThemeKey,
     viewMode,
     setViewMode,
-    marqueeView,
-    setMarqueeView,
     demoCaseCount,
     demoMeasureCount,
     backgroundEffect,
@@ -55,8 +53,6 @@ export function HandbookNav() {
     setHeroTextTreatment,
     heroTextTreatmentExtent,
     setHeroTextTreatmentExtent,
-    searchMode,
-    setSearchMode,
     includeGuidance,
     setIncludeGuidance,
     reviewMode,
@@ -457,69 +453,10 @@ export function HandbookNav() {
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Search</div>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {([
-                        { id: "unified" as const, label: "Unified ✦" },
-                        { id: "classic" as const, label: "Classic" },
-                      ]).map((v) => (
-                        <button
-                          key={v.id}
-                          type="button"
-                          role="menuitemradio"
-                          aria-checked={searchMode === v.id}
-                          onClick={() => setSearchMode(v.id)}
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: "4px 10px",
-                            borderRadius: 6,
-                            border: "none",
-                            cursor: "pointer",
-                            background: searchMode === v.id ? T.accent : T.surfaceAlt,
-                            color: searchMode === v.id ? "#fff" : T.textSecondary,
-                          }}
-                        >
-                          {v.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Animation</div>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {[
-                        { id: "marquee" as const, label: "Marquee" },
-                        { id: "velocity" as const, label: "Scroll velocity" },
-                      ].map((v) => (
-                        <button
-                          key={v.id}
-                          type="button"
-                          role="menuitemradio"
-                          aria-checked={marqueeView === v.id}
-                          onClick={() => setMarqueeView(v.id)}
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: "4px 10px",
-                            borderRadius: 6,
-                            border: "none",
-                            cursor: "pointer",
-                            background: marqueeView === v.id ? T.accent : T.surfaceAlt,
-                            color: marqueeView === v.id ? "#fff" : T.textSecondary,
-                          }}
-                        >
-                          {v.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Background (demo)</div>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                       {[
                         { id: "none" as const, label: "None" },
-                        { id: "particles" as const, label: "Particles" },
                         { id: "hero" as const, label: "Hero" },
                       ].map((v) => (
                         <button

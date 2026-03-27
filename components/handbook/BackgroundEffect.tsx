@@ -184,13 +184,5 @@ export function BackgroundEffect() {
 
   if (backgroundEffect === "none") return null;
 
-  try {
-    return (
-      <>
-        {backgroundEffect === "particles" && <ParticlesEffect themeKey={themeKey} />}
-      </>
-    );
-  } catch {
-    return null;
-  }
+  return null;
 }

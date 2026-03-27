@@ -77,8 +77,8 @@ type HandbookContextType = {
   demoMeasureCount: number;
   setDemoCounts: (counts: { cases: number; measures: number }) => void;
   /** Background effect for landing hero (demo only); persisted in localStorage 'hiveBackgroundEffect' */
-  backgroundEffect: "none" | "particles" | "hero";
-  setBackgroundEffect: (v: "none" | "particles" | "hero") => void;
+  backgroundEffect: "none" | "hero";
+  setBackgroundEffect: (v: "none" | "hero") => void;
   /** Hero text readability when background is Hero: gradient (steep) | scrim | backplate; persisted */
   heroTextTreatment: "gradient" | "scrim" | "backplate";
   setHeroTextTreatment: (v: "gradient" | "scrim" | "backplate") => void;
@@ -152,11 +152,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [searchMode, setSearchMode] = useState<"classic" | "unified">("unified");
 
   const [backgroundEffect, setBackgroundEffectState] = useState<
-    "none" | "particles" | "hero"
+    "none" | "hero"
   >(() => {
-    if (typeof window === "undefined") return "none";
+    if (typeof window === "undefined") return "hero";
     const stored = localStorage.getItem(BACKGROUND_EFFECT_KEY);
-    return stored === "none" || stored === "particles" || stored === "hero" ? stored : "none";
+    return stored === "none" || stored === "hero" ? stored : "hero";
   });
 
   const [includeGuidance, setIncludeGuidance] = useState(false);
@@ -170,7 +170,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setReviewOverridesState((prev) => ({ ...prev, [key]: value })),
     []
   );
-  const setBackgroundEffect = useCallback((v: "none" | "particles" | "hero") => {
+  const setBackgroundEffect = useCallback((v: "none" | "hero") => {
     setBackgroundEffectState(v);
     if (typeof window !== "undefined") {
       localStorage.setItem(BACKGROUND_EFFECT_KEY, v);
