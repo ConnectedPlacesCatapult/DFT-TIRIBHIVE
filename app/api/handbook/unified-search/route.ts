@@ -73,7 +73,7 @@ async function setCachedResponse(hash: string, queryText: string, response: obje
   }
 }
 
-async function fetchGuidanceChunks(query: string): Promise<{ article_id: string | null; section_key: string; chunk_text: string }[]> {
+async function fetchGuidanceChunks(query: string): Promise<{ article_id: string; section_key: string; chunk_text: string }[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) return [];
@@ -96,7 +96,7 @@ async function fetchGuidanceChunks(query: string): Promise<{ article_id: string 
       .or(filter)
       .limit(4);
     return (data ?? []).map((r) => ({
-      article_id: null,
+      article_id: "",
       section_key: r.section_key ?? "guidance",
       chunk_text: r.chunk_text as string,
     }));
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
         mode: "explore",
         result_chunks: [
           ...cases.map((c) => ({
-            article_id: c.article_id,
+            article_id: c.article_id ?? "",
             section_key: c.section_key,
             chunk_text: c.chunk_text,
           })),
