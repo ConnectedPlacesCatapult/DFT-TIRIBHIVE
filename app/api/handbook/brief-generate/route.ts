@@ -415,14 +415,22 @@ export async function POST(req: NextRequest) {
       }));
     }
 
-    const session = await createSynthesisSession(
-      ids,
-      sections.map((s, i) => ({ ...s, sort_order: i, source_chunk_ids: [] })),
-      queryContext
-    );
+    // Session persistence is best-effort — a DB write failure must never
+    // prevent the user from seeing the generated brief.
+    let sessionId = `session-${Date.now()}`;
+    try {
+      const session = await createSynthesisSession(
+        ids,
+        sections.map((s, i) => ({ ...s, sort_order: i, source_chunk_ids: [] })),
+        queryContext
+      );
+      sessionId = session.id;
+    } catch (sessionErr) {
+      console.warn("[HIVE] brief-generate: session persistence failed (non-blocking):", sessionErr);
+    }
 
     return NextResponse.json({
-      sessionId: session.id,
+      sessionId,
       sections,
       label: `AI-generated from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — review before use`,
     });
