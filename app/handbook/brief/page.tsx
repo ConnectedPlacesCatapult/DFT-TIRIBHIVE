@@ -754,6 +754,22 @@ export default function HIVEBriefWithChat() {
         {loading && <div className="loading-bar" />}
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "8px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div style={{ fontSize: 12, color: T.textSec, display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              title="Beta — under active refinement (outputs should be reviewed before use)"
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                padding: "2px 8px",
+                borderRadius: 9999,
+                background: "#e8f1fb",
+                color: T.accent,
+                border: `1px solid ${T.accentMid}`,
+              }}
+            >
+              Beta
+            </span>
             {isExampleMode && !loading && sections ? (
               <>
                 <span style={{ fontWeight: 600, color: T.text }}>Example brief</span>

@@ -1114,7 +1114,7 @@ function HandbookLandingPageContent() {
   const marqueeMatchingSectors = allActiveSectors;
   const marqueeMatchingHazards = allActiveHazards;
   const marqueeHasFilters = marqueeMatchingSectors.length > 0 || marqueeMatchingHazards.length > 0;
-  const [scrolledToResults, setScrolledToResults] = useState(false);
+  const scrollToResults = () => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   const [heatmapPosition, setHeatmapPosition] = useState("above"); // 'above' | 'below'
 
   useEffect(() => {
@@ -1212,22 +1212,6 @@ function HandbookLandingPageContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unified.cases.length, unified.synthesis, unified.loading, searchMode]);
 
-  // Scroll to results only once per search session, after the user stops typing.
-  // query is included so the timer resets on every keystroke and only fires
-  // after an 800ms pause — prevents mid-typing jumps.
-  useEffect(() => {
-    if (!hasActiveFilters) { setScrolledToResults(false); return; }
-    if (scrolledToResults) return;
-    const hasResults = results.length > 0 || unified.cases.length > 0;
-    if (!hasResults) return;
-    const timer = setTimeout(() => {
-      if (resultsRef.current) {
-        resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        setScrolledToResults(true);
-      }
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [hasActiveFilters, query, results.length, unified.cases.length, selectedHazards, selectedSectors]);
 
   const measureDisplayItems = useMemo(() => {
     return results.flatMap(a => {
@@ -1249,7 +1233,7 @@ function HandbookLandingPageContent() {
   const toggleBrief = (cs) => setBrief(prev => prev.some(x => x.id === cs.id) ? prev.filter(x => x.id !== cs.id) : [...prev, cs]);
   const removeAiHazard = h => setAiDetectedHazards(prev => prev.filter(x => x !== h));
   const removeAiSector = s => setAiDetectedSectors(prev => prev.filter(x => x !== s));
-  const clearAll = () => { setQuery(""); setSelectedHazards([]); setSelectedSectors([]); setSelectedRegions([]); setSelectedCosts([]); setAiDetectedHazards([]); setAiDetectedSectors([]); setScrolledToResults(false); setMarqueeSelectedId(null); };
+  const clearAll = () => { setQuery(""); setSelectedHazards([]); setSelectedSectors([]); setSelectedRegions([]); setSelectedCosts([]); setAiDetectedHazards([]); setAiDetectedSectors([]); setMarqueeSelectedId(null); };
 
   const handleMarqueeCardClick = (c) => {
     if (c.caseStudyId) {
@@ -1453,6 +1437,7 @@ function HandbookLandingPageContent() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && query.trim()) {
                     e.preventDefault();
+                    scrollToResults();
                     routeQueryToChat(query.trim());
                   }
                 }}
@@ -1575,14 +1560,14 @@ function HandbookLandingPageContent() {
                     <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-secondary)" }}>Climate driver</span>
                     {selectedHazards.length > 0 && <span style={{ fontSize: 12, color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500, background: "var(--accent)" }}>{selectedHazards.length}</span>}
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{HAZARDS_CAUSE.map(h => <FilterPill key={h} label={h} selected={selectedHazards.includes(h)} onClick={() => toggle(setSelectedHazards, h)} color="emerald" />)}</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{HAZARDS_CAUSE.map(h => <FilterPill key={h} label={h} selected={selectedHazards.includes(h)} onClick={() => { toggle(setSelectedHazards, h); if (!selectedHazards.includes(h)) scrollToResults(); }} color="emerald" />)}</div>
                 </div>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-secondary)" }}>Transport sector</span>
                     {selectedSectors.length > 0 && <span style={{ fontSize: 12, color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500, background: "var(--text-primary)" }}>{selectedSectors.length}</span>}
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{SECTORS.map(s => <FilterPill key={s} label={s} selected={selectedSectors.includes(s)} onClick={() => toggle(setSelectedSectors, s)} color="stone" />)}</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{SECTORS.map(s => <FilterPill key={s} label={s} selected={selectedSectors.includes(s)} onClick={() => { toggle(setSelectedSectors, s); if (!selectedSectors.includes(s)) scrollToResults(); }} color="stone" />)}</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
                   <div>
@@ -1590,14 +1575,14 @@ function HandbookLandingPageContent() {
                       <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-secondary)" }}>UK geography</span>
                       {selectedRegions.length > 0 && <span style={{ fontSize: 12, background: "#4338ca", color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{selectedRegions.length}</span>}
                     </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{UK_REGIONS.map(r => <FilterPill key={r} label={r} selected={selectedRegions.includes(r)} onClick={() => toggle(setSelectedRegions, r)} color="indigo" />)}</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{UK_REGIONS.map(r => <FilterPill key={r} label={r} selected={selectedRegions.includes(r)} onClick={() => { toggle(setSelectedRegions, r); if (!selectedRegions.includes(r)) scrollToResults(); }} color="indigo" />)}</div>
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)" }}>Cost band</span>
                       {selectedCosts.length > 0 && <span style={{ fontSize: 12, background: "#292524", color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{selectedCosts.length}</span>}
                     </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{COST_BANDS.map(c => <FilterPill key={c} label={c} selected={selectedCosts.includes(c)} onClick={() => toggle(setSelectedCosts, c)} color="stone" />)}</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{COST_BANDS.map(c => <FilterPill key={c} label={c} selected={selectedCosts.includes(c)} onClick={() => { toggle(setSelectedCosts, c); if (!selectedCosts.includes(c)) scrollToResults(); }} color="stone" />)}</div>
                   </div>
                 </div>
               </div>

@@ -432,7 +432,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       sessionId,
       sections,
-      label: `AI-generated from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — review before use`,
+      label: `AI-generated (beta) from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — review before use`,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

@@ -58,6 +58,24 @@ export const SECTORS = ["Rail", "Aviation", "Maritime", "Highways"] as const;
 
 export const HAZARDS_CAUSE = ["Heavy rainfall", "High temperatures", "Storms", "Sea level rise", "Drought", "Freeze-thaw"] as const;
 
+function normaliseBulletGlyphs(input: string): string {
+  if (!input) return "";
+  // Fix Word/PDF "Symbol/Wingdings" bullet (often rendered as tofu squares in web fonts)
+  return input
+    .replace(/\uF0B7/g, "•")
+    .replace(//g, "•")
+    .replace(/\s*•\s*/g, "• "); // ensure consistent spacing
+}
+
+function normaliseSections(sections?: Record<string, string>): Record<string, string> | undefined {
+  if (!sections) return sections;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(sections)) {
+    out[k] = normaliseBulletGlyphs(v ?? "");
+  }
+  return out;
+}
+
 export const MARQUEE_ENTRIES: MarqueeEntry[] = [
   { id: "01", title: "Port of Calais Extension", sector: "Maritime", measure: "Port extension", hazards: ["Sea level rise", "Storm surge"], hook: "+65ha reclaimed · €863m (2021)", caseStudyId: "ID_01" },
   { id: "02", title: "Port of Calais Sea Defence", sector: "Maritime", measure: "Sea defence", hazards: ["Sea level rise", "Storm surge"], hook: "3.3km seawall · 100ha basin", caseStudyId: "ID_01" },
@@ -236,28 +254,33 @@ function mapSector(raw?: string | null): string {
 function mapJsonToCaseStudy(json: any): CaseStudy {
   const id = json.trib_id;
   const override = SEED_OVERRIDES[id];
-  const challengeText = json.sections?.challenge ?? "";
-  const adaptText = json.sections?.adaptation_measures ?? "";
+  const challengeText = normaliseBulletGlyphs(json.sections?.challenge ?? "");
+  const adaptText = normaliseBulletGlyphs(json.sections?.adaptation_measures ?? "");
   const summaryFallback = challengeText
     ? challengeText.split(". ").slice(0, 3).join(". ") + "."
     : "";
 
   return {
     id,
-    title: override?.title ?? json.organisation ?? id,
-    organisation: json.organisation ?? "",
+    title: normaliseBulletGlyphs(override?.title ?? json.organisation ?? id),
+    organisation: normaliseBulletGlyphs(json.organisation ?? ""),
     sector: override?.sector ?? mapSector(json.transport_subsector),
-    hook: override?.hook ?? (json.measure_title ?? "").slice(0, 80),
+    hook: normaliseBulletGlyphs(override?.hook ?? (json.measure_title ?? "").slice(0, 80)),
     hazards: override?.hazards ?? {
       cause: json.hazard_cause ? json.hazard_cause.split(", ").filter(Boolean) : [],
       effect: json.hazard_effect ? json.hazard_effect.split(", ").filter(Boolean) : [],
     },
-    summary: override?.summary ?? json.case_study_text ?? summaryFallback,
+    summary: normaliseBulletGlyphs(override?.summary ?? json.case_study_text ?? summaryFallback),
     transferability: override?.transferability ?? "Medium",
-    transferabilityNote: override?.transferabilityNote ?? json.sections?.applicability?.split(". ").slice(0, 2).join(". ") ?? "—",
+    transferabilityNote: normaliseBulletGlyphs(
+      override?.transferabilityNote ??
+        json.sections?.applicability?.split(". ").slice(0, 2).join(". ") ??
+        "—"
+    ),
     ukApplicability: override?.ukApplicability ?? [],
-    insight: override?.insight ?? json.sections?.evaluation?.split(". ").slice(0, 2).join(". ") ?? "—",
-    measures: override?.measures ?? (json.measures?.length ? json.measures : json.measure_title ? [json.measure_title] : []),
+    insight: normaliseBulletGlyphs(override?.insight ?? json.sections?.evaluation?.split(". ").slice(0, 2).join(". ") ?? "—"),
+    measures: (override?.measures ?? (json.measures?.length ? json.measures : json.measure_title ? [json.measure_title] : []))
+      .map((m: string) => normaliseBulletGlyphs(m)),
     assets: override?.assets ?? (json.asset_type ? json.asset_type.split(", ").filter(Boolean) : []),
     tags: override?.tags ?? [],
     location: json.sections ? (json.organisation ?? "—") : "—",
@@ -265,7 +288,7 @@ function mapJsonToCaseStudy(json: any): CaseStudy {
     year: "—",
     cost: override?.cost ?? "—",
     costBand: override?.costBand ?? "—",
-    sections: json.sections,
+    sections: normaliseSections(json.sections),
     source_pdf_url: json.source_pdf_url,
   };
 }
