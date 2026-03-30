@@ -4,13 +4,13 @@
       "title": "Passenger movement and behaviour digital twin",
       "body": [
         "OpenSpace is creating a Digital Twin platform to visualise passenger movements and behaviours in railway stations, in order to monitor station performance and help operators provide better information and improve the customer experience.",
-        "The company has developed Digital Twins for three stations on the HS1 network: St Pancras International, Stratford International and Ebbsfleet International and combined them into one 'federated' Digital Twin network to predict passenger flows at each station. The aims of the project include allowing operators to make more informed decisions during disruption, better match train service supply to demand, and provide customers with personalised journey information."
+        "The company has developed Digital Twins for three stations on the HS1 network: St Pancras International, Stratford International and Ebbsfleet International and combined them into one ‘federated’ Digital Twin network to predict passenger flows at each station. The aims of the project include allowing operators to make more informed decisions during disruption, better match train service supply to demand, and provide customers with personalised journey information."
       ]
     },
     {
       "title": "Electric chargers for heavy goods vehicles",
       "body": [
-        "Syselek is developing Digital Twin capabilities for a project designed to provide the most effective use of electric chargers for heavy goods vehicles at fleet operators' depot sites. The system will analyse when charging infrastructure is scheduled to be used and consider the recharging requirements of vehicles.",
+        "Syselek is developing Digital Twin capabilities for a project designed to provide the most effective use of electric chargers for heavy goods vehicles at fleet operators’ depot sites. The system will analyse when charging infrastructure is scheduled to be used and consider the recharging requirements of vehicles.",
         "It is hoped that the Digital Twin system will help to inform investment decisions and guard against the specification of unnecessary installations. The company plans to consider preventative maintenance cycles in the model, and use it to reduce costs by ensuring that charging is encouraged at the most cost efficient times of day."
       ]
     },
@@ -31,15 +31,15 @@
     {
       "title": "Air pollution monitoring from road traffic",
       "body": [
-        "Digilab is building a Digital Twin called twinAir which monitors air pollution from road traffic in real time. It is also developing an associated platform called twinlab and is launching a 'digilab academy' to provide specialist training to artificial intelligence practitioners. ",
-        "The company has created what it calls a 'physics informed surrogate' for the city of Exeter that collects air quality data from the roadside. It then scales this information up in order to provide a more accurate picture of traffic related pollution right across the city throughout the day, rather than relying on data from a small number of sensors. "
+        "Digilab is building a Digital Twin called twinAir which monitors air pollution from road traffic in real time. It is also developing an associated platform called twinlab and is launching a ‘digilab academy’ to provide specialist training to artificial intelligence practitioners. ",
+        "The company has created what it calls a ‘physics informed surrogate’ for the city of Exeter that collects air quality data from the roadside. It then scales this information up in order to provide a more accurate picture of traffic related pollution right across the city throughout the day, rather than relying on data from a small number of sensors. "
       ]
     },
     {
       "title": "Underground freight transport system",
       "body": [
         "Mole Solutions is developing an underground freight transport system to propel goods through pipelines to help relieve congestion on the highway network, reduce air pollution and ease safety concerns associated with road haulage. The system plans to use magnetic tracks to carry driverless capsules, and could be installed between factories and distribution centres, providing a just-in-time delivery service.",
-        "Digital Twins are expected to be used to model and simulate the underground transport system prior to construction and, once built, monitor track condition and performance of the network. The use of Digital Twins could also oversee the network's propulsion system and supply chain requirements. "
+        "Digital Twins are expected to be used to model and simulate the underground transport system prior to construction and, once built, monitor track condition and performance of the network. The use of Digital Twins could also oversee the network’s propulsion system and supply chain requirements. "
       ]
     }
   ]

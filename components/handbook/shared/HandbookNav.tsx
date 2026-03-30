@@ -84,6 +84,9 @@ export function HandbookNav() {
   }, []);
 
   const T = THEMES[themeKey];
+  /** HIVE handbook wordmark — always product green; TRIB stays muted (parent programme) */
+  const hiveWordmarkColor =
+    themeKey === "dft" ? (T.dftGreen ?? "#006853") : T.accent;
   const hasMessages = messages.length > 1;
   const briefCount = briefIds.length;
 
@@ -155,83 +158,66 @@ export function HandbookNav() {
       >
         <div
           style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "0 24px",
-          height: 56,
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 24px",
+            minHeight: 56,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: 16,
+            flexWrap: "wrap",
+            rowGap: 10,
           }}
         >
-          {/* Logo + links */}
-          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <Link
-              href="/handbook"
-              title="HIVE handbook home — search and explore"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                textDecoration: "none",
-              }}
-            >
-              <div
+          {/* Brand + primary nav grouped (strapline last so links sit beside HIVE) */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "10px 14px",
+              flex: "1 1 auto",
+              minWidth: 0,
+            }}
+          >
+            <div className="hive-nav-brand-cluster hive-nav-brand-cluster--hive-forward">
+              <Link
+                href="/"
+                className="hive-nav-brand-link hive-nav-brand-link--trib"
+                title="Main TRIB site — programme home"
+                aria-current={pathname === "/" ? "page" : undefined}
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 5,
-                  background: T.accent,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: T.textSecondary,
                 }}
               >
-                <svg
-                  width="11"
-                  height="11"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="#fff"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064"
-                  />
-                </svg>
-              </div>
-              <span
+                TRIB
+              </Link>
+              <span aria-hidden style={{ color: T.textMuted, fontSize: 12, fontWeight: 500, padding: "0 1px" }}>
+                —
+              </span>
+              <Link
+                href="/handbook"
+                className="hive-nav-brand-link hive-nav-brand-link--hive"
+                title="Handbook home — search cases and measures"
+                aria-current={pathname?.startsWith("/handbook") ? "page" : undefined}
                 style={{
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: T.textPrimary,
-                  fontFamily: "var(--font-dm-sans), Arial, sans-serif",
+                  fontSize: 17,
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: hiveWordmarkColor,
                 }}
               >
                 HIVE
-              </span>
-            </Link>
+              </Link>
+            </div>
 
-            <span
-              className="hive-show-sm"
-              style={{
-                fontSize: 12,
-                color: T.textSecondary,
-                fontFamily: "var(--font-dm-sans), Arial, sans-serif",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Transport Climate Adaptation Intelligence
-            </span>
-
-            <div
-              style={{ display: "flex", alignItems: "center", gap: 4 }}
-              role="list"
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }} role="list">
               {NAV_LINKS.map((link) => {
                 const isActive =
                   link.href === "/handbook/cases"
@@ -278,6 +264,17 @@ export function HandbookNav() {
                 );
               })}
             </div>
+
+            <span
+              className="hive-show-sm hive-nav-strapline"
+              style={{
+                color: T.textSecondary,
+                fontFamily: "var(--font-dm-sans), Arial, sans-serif",
+              }}
+              title="Climate adaptation evidence and case intelligence for transport"
+            >
+              Climate adaptation evidence for transport
+            </span>
           </div>
 
           {/* Right: Demo options menu, DfT Partner, Ask HIVE */}

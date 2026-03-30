@@ -167,6 +167,44 @@ a:hover {
 .hive-show-md { display: none; }
 @media (min-width: 768px) { .hive-show-md { display: inline-flex; } }
 
+/* Handbook nav — TRIB / HIVE brand links read as clickable */
+.hive-nav-brand-cluster {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  font-family: var(--font-dm-sans), Arial, sans-serif;
+}
+.hive-nav-brand-cluster--hive-forward {
+  align-items: center;
+  gap: 8px;
+}
+.hive-nav-brand-cluster .hive-nav-brand-link {
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.hive-nav-brand-cluster .hive-nav-brand-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.hive-nav-strapline {
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  max-width: min(280px, 28vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (min-width: 1200px) {
+  .hive-nav-strapline {
+    max-width: 340px;
+  }
+}
+
 /* Guidance page cards (server-rendered; CSS hover avoids client handlers) */
 .guidance-link-card {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;

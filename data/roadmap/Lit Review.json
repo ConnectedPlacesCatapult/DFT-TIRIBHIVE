@@ -11,13 +11,352 @@
     "Source": "https://www.ukri.org/wp-content/uploads/2022/01/IUK-110122-UK-Transport-Vision-2050.pdf",
     "Author": "UKRI",
     "Publication date": "2021-08",
-    "Description": "A vision for a 2050 transport system"
+    "Description": "A vision for a 2050 transport system that enables the movement of people and goods through seamless, safe, net zero, connected, cost effective, accessible and reliable means​"
   },
   {
-    "Name": "Digital Twins: Ethics and the Gemini Principles",
+    "Name": "Digital Twins: Ethics and the Gemini Principles​",
     "Source": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
-    "Author": "CDBB",
+    "Author": "CDBB​",
     "Publication date": "2021-12",
-    "Description": "Industry paper into the ethics of connected digital twins"
+    "Description": "Industry paper into the ethics of connected digital twins, in relation to the Gemini Principles."
+  },
+  {
+    "Name": "Cyber Physical Infrastructure Vision",
+    "Source": "https://www.gov.uk/government/publications/cyber-physical-infrastructure",
+    "Author": "Robotics Growth Partnership​",
+    "Publication date": "2022-02",
+    "Description": "A vision document that underpins physical and digital infrastructure that supports cyber physical systems."
+  },
+  {
+    "Name": "Gemini Papers​",
+    "Source": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+    "Author": "CDBB​",
+    "Publication date": "2022-03",
+    "Description": "A set of three documents that summarise learning from 5 years at CDBB and present an approach to ecosystems of connected digital twins"
+  },
+  {
+    "Name": "The approach to delivering a NDT for the UK",
+    "Source": "https://www.cdbb.cam.ac.uk/files/approach_summaryreport_final.pdf",
+    "Author": "CDBB​",
+    "Publication date": "2022-05",
+    "Description": "A summary report providing an overview of the national digital twin and the approach to realise its benefits. "
+  },
+  {
+    "Name": "Global Railway review – Digital projects and strategies in Rail​",
+    "Source": "https://www.globalrailwayreview.com/whitepaper/138754/ebook-digital-projects-and-strategies-in-rail/",
+    "Author": "GRR",
+    "Publication date": "2022-11",
+    "Description": "Industry paper highlighting the opportunities for a digitalised rail service."
+  },
+  {
+    "Name": "Government Technology Innovation Strategy​",
+    "Source": "https://www.gov.uk/government/publications/the-government-technology-innovation-strategy/the-government-technology-innovation-strategy",
+    "Author": "BEIS​",
+    "Publication date": "2019​-06",
+    "Description": "Provides a framework that departments should reference as they develop their plans in regard to emerging technologies. Strategy is focused on the themes of people, process, data and technology."
+  },
+  {
+    "Name": "National Digital Twin Integration Architecture Pattern and Principles​",
+    "Source": "https://www.cdbb.cam.ac.uk/files/architecture_principles_final.pdf",
+    "Author": "CDBB​",
+    "Publication date": "2021​",
+    "Description": "Explores three general architectural pattern options are explored (centralised, distributed, and federated)"
+  },
+  {
+    "Name": "The Future of the Automotive Industry through Digitalisation​",
+    "Source": "https://roadmap.ide.uk/",
+    "Author": "Institute of Digital Engineering​",
+    "Publication date": "2021​",
+    "Description": "The IDE roadmap will maximise opportunities offered by new technology transitions and set a course to advance the automotive industry through digitalisation"
+  },
+  {
+    "Name": "Digital Twin Toolkit​",
+    "Source": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+    "Author": "CDBB",
+    "Publication date": "2021-02",
+    "Description": "Report from the DT Hub on annual progress towards objectives, lessons learned and opportunities for growth."
+  },
+  {
+    "Name": "UK Innovation Strategy​",
+    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009577/uk-innovation-strategy.pdf",
+    "Author": "BEIS​",
+    "Publication date": "2021-07",
+    "Description": "Vision to make the UK a global hub for innovation by 2035 with 4 key pillars, including major technology challenges. Discusses digital twins amongst infrastructure, stating the need for common, interoperable digital tools and platforms to form cyber physical shared infrastructure."
+  },
+  {
+    "Name": "The Pathway Towards an Information Management Framework​",
+    "Source": "https://www.cdbb.cam.ac.uk/news/pathway-towards-IMF",
+    "Author": "CDBB​",
+    "Publication date": "2021-07",
+    "Description": "Sets out the technical approach for the development of an Information Management Framework (IMF) to enable secure, resilient data sharing across the built environment."
+  },
+  {
+    "Name": "The key components of connected digital twins – NDTp roadmap V2.0​",
+    "Source": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/​",
+    "Author": "CDBB​",
+    "Publication date": "2022​",
+    "Description": "A roadmap to enable effective, secure, resilience and meaningful information sharing across organisational and sectoral boundaries on a national scale"
+  },
+  {
+    "Name": "New standard for Digital Twins - powered by Digital Engineering​",
+    "Source": "https://digitaltwinhub.co.uk/forums/topic/570-new-standard-for-digital-twins-powered-by-digital-engineering/",
+    "Author": "Rail innovation Board​",
+    "Publication date": "2022-02",
+    "Description": "Sets out new standard for digital engineering in rail. The document is out for consultation but provides background information of existing standards, key data challenges, principles, opportunities and need for digital ecosystems."
+  },
+  {
+    "Name": "Tomorrow’s Engineering Research Challenges​",
+    "Source": "https://www.ukri.org/wp-content/uploads/2022/07/EPSRC-090822-TERCReport.pdf​",
+    "Author": "UKRI​",
+    "Publication date": "2022-07",
+    "Description": "Report to identify the most important challenges that face engineers in the over the next 10-15 years and inform future research strategy for a variety of audiences."
+  },
+  {
+    "Name": "Digital Local Roads​",
+    "Source": "https://ttf.uk.net/news/new-report-sets-out-the-digital-step-change-coming-to-local-roads/",
+    "Author": "Transport Technology Forum",
+    "Publication date": "2022-11",
+    "Description": "Industry paper highlighting the need for a  step-change in the way roads are designed, built, managed and used through harnessing  connected digital technologies. "
+  },
+  {
+    "Name": "NaPTAN",
+    "Source": "https://dftdigital.blog.gov.uk/2020/07/06/naptan-the-most-popular-dataset-youve-never-heard-of/",
+    "Author": "DfT​",
+    "Publication date": "2002",
+    "Description": "NaPTAN (National Public Transport Access Nodes) is a national database that contains a unique entry for each point of access to public transport: railway stations, bus stops, airports, ferry terminals, coach terminus, taxi ranks, and so on"
+  },
+  {
+    "Name": "Decarbonising Transport - A Better, Greener Britain",
+    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009448/decarbonising-transport-a-better-greener-britain.pdf",
+    "Author": "DfT​",
+    "Publication date": "2021",
+    "Description": "Presents the path, commitment and actions to net zero transport"
+  },
+  {
+    "Name": "Areas of Research Interest 2021, Research and Evidence",
+    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009521/areas-of-research-interest-2021.pdf",
+    "Author": "DfT​",
+    "Publication date": "2021",
+    "Description": "Lists areas of research interest in the transportation sector"
+  },
+  {
+    "Name": "Global Britain in a competitive age - The Integrated Review of Security, Defence, Development and Foreign Policy",
+    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/975077/Global_Britain_in_a_Competitive_Age-_the_Integrated_Review_of_Security__Defence__Development_and_Foreign_Policy.pdf",
+    "Author": "Cabinet Office",
+    "Publication date": "2021",
+    "Description": "Presents the integrated approach towards security, defence, development and foreign policy"
+  },
+  {
+    "Name": "Data for the public good",
+    "Source": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+    "Author": "National Infrastructure Commission",
+    "Publication date": "2017",
+    "Description": "Identifies the need for data/ digitalisation across sectors"
+  },
+  {
+    "Name": "CPC Placed Based Digital Twins",
+    "Source": "https://cp.catapult.org.uk/wp-content/uploads/2021/01/Place-based-Digital-Twins-Report-1-1.pdf",
+    "Author": "Connected Places Catapult",
+    "Publication date": "2020",
+    "Description": "Explores use cases across three themes, as well as their data requirements, assessment framework and required datasets."
+  },
+  {
+    "Name": "Large-scale computing: the case for greater UK coordination",
+    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018875/UK_Computing_report_-_Final_20.09.21.pdf",
+    "Author": "Government Office of Science",
+    "Publication date": "2021",
+    "Description": "Builds a strong case for continued public investment in large-scale computing and gives recommendations"
+  },
+  {
+    "Name": "National Infrastructure Strategy",
+    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/938539/NIS_Report_Web_Accessible.pdf",
+    "Author": "HMT",
+    "Publication date": "2020",
+    "Description": "This Strategy sets out how the government will address issues and do things differently: how it will build back fairer, faster and greener"
+  },
+  {
+    "Name": "Agile Standards White Paper",
+    "Source": "https://www.bsigroup.com/globalassets/localfiles/en-gb/knowledge-services/agile-standards_ks.pdf",
+    "Author": "BSI",
+    "Publication date": "2022",
+    "Description": "Document exploring the agile approach to the development of standards including applications in the built environment, challenges and limitations."
+  },
+  {
+    "Name": "Embracing digital twin technology for engineering assets",
+    "Source": "https://engage.aveva.com/rs/986-YIS-805/images/Whitepaper_AVEVA_AIM_EmbracingDigitalTwinTech_22-07.pdf",
+    "Author": "AVEVA",
+    "Publication date": "2022",
+    "Description": "Whitepaper by Aveva on digital twin technology for engineering assets"
+  },
+  {
+    "Name": "Digital twins for the maritime sector",
+    "Source": "https://maritime-executive.com/editorials/digital-twins-for-the-maritime-sector",
+    "Author": "Maritime executive",
+    "Publication date": "2020",
+    "Description": "Report on digital twins for the maritime sector, including 3 use cases"
+  },
+  {
+    "Name": "Maritime digital twin architecture",
+    "Source": "https://www.degruyter.com/document/doi/10.1515/auto-2021-0082/html?lang=en",
+    "Author": "De Gruyter",
+    "Publication date": "2021",
+    "Description": "Provides brief insight into the current state of the maritime industry and shows possible use-cases for DT Ship applications throughout the entire product lifecycle"
+  },
+  {
+    "Name": "5 Benefits of Digital Twin in the Shipping Industry",
+    "Source": "https://marine-digital.com/article_5benefits_of_digital_twin",
+    "Author": "Marine Digital",
+    "Publication date": "",
+    "Description": "Report on 5 use cases of digital twins in maritime"
+  },
+  {
+    "Name": "Digital Railway Strategy ",
+    "Source": "https://www.networkrail.co.uk/wp-content/uploads/2018/05/Digital-Railway-Strategy.pdf",
+    "Author": "NR",
+    "Publication date": "2018",
+    "Description": "Describes the short, medium and long term digital strategy"
+  },
+  {
+    "Name": "Digital Rail Programme",
+    "Source": "https://www.networkrail.co.uk/wp-content/uploads/2018/05/Digital-Railway-Programme.pdf",
+    "Author": "NR",
+    "Publication date": "2018",
+    "Description": "Aims to support the industry by transforming the rail network for passengers, businesses, and freight operators, introducing modern signalling and train control technology to increase capacity, reduce delays, enhance safety and drive down costs"
+  },
+  {
+    "Name": "A Digital Twin for Better Operations",
+    "Source": "",
+    "Author": "NR",
+    "Publication date": "2021",
+    "Description": "An operational twin description which will enable control staff, engineering and train and freight operators to work better together. This will improve safety, remove inefficiencies and reduce cost across multiple future control periods"
+  },
+  {
+    "Name": "The Rail Sector and National Digital Twin ",
+    "Source": "https://www.rssb.co.uk/en/what-we-do/insights-and-news/blogs/the-rail-sector-and-the-national-digital-twin",
+    "Author": "RSSB",
+    "Publication date": "",
+    "Description": "Blog discussing the key elements of creating a digital twin ecosystem related to rail"
+  },
+  {
+    "Name": "Informing the information requirements of a digital twin: a rail industry case study",
+    "Source": "https://www.jacobs.com/sites/default/files/2022-03/Informing-the-information-requirements-of-a-digital-twin.pdf",
+    "Author": "Jacobs / ICE",
+    "Publication date": "2020",
+    "Description": "Presents the information requirements for a rail digital twin and its applications."
+  },
+  {
+    "Name": "Digital Twins in Railways",
+    "Source": "https://www.researchgate.net/publication/361724633_Digital_Twins_in_Railways",
+    "Author": "",
+    "Publication date": "2022-06",
+    "Description": "Academic report (thesis) discussing some of the enablers, and high level digital requirements for digital twins in rail."
+  },
+  {
+    "Name": "Network Rail and Atkins creating digital twin of Reading station",
+    "Source": "https://www.newcivilengineer.com/latest/network-rail-and-atkins-creating-digital-twin-of-reading-station-15-06-2022/",
+    "Author": "New Civil Engineer",
+    "Publication date": "",
+    "Description": "Case study of Reading Station"
+  },
+  {
+    "Name": "Alstom Develops a Rail Network Digital Twin for Railway Yard Design and Predictive Fleet Maintenance",
+    "Source": "https://www.anylogic.com/resources/case-studies/digital-twin-of-rail-network-for-train-fleet-maintenance-decision-support/",
+    "Author": "Anylogic",
+    "Publication date": "",
+    "Description": "Digital twin to manage fleet, depot and stations, maintenance regimes, and schedules."
+  },
+  {
+    "Name": "How IFS helps you use digital twins for commercial aviation",
+    "Source": "https://www.ifs.com/assets/enterprise-asset-management/whitepaper-digital-twins-in-aviation",
+    "Author": "IFS",
+    "Publication date": "",
+    "Description": "Brochure for IFS DT offering in commercial aviation"
+  },
+  {
+    "Name": "digital-twin-institute-position-paper",
+    "Source": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+    "Author": "AIAA",
+    "Publication date": "2020",
+    "Description": "Paper provides an aerospace industry (including civil, military, and commercial) perspectives on the Digital Twin and the significant benefits and rationale to accelerate embracing the fourth industrial revolution referred to as digital transformation."
+  },
+  {
+    "Name": "Introducing digital roads",
+    "Source": "https://nationalhighways.co.uk/media/2chotw13/introducing-digital-roads.pdf",
+    "Author": "National highways",
+    "Publication date": "",
+    "Description": "Industry report and vision document for digital roads on the strategic road network and applications for digital twins."
+  },
+  {
+    "Name": "Digital twins from design to handover of constructed assets",
+    "Source": "https://www.rics.org/globalassets/wbef-website/reports-and-research/digital-twins-from-design-to-handover-of-constructed-assets.pdf",
+    "Author": "RICS",
+    "Publication date": "2022",
+    "Description": "Looks at several dimensions of a digital twin, including the scale of application, the whole life cycle of the asset and use cases"
+  },
+  {
+    "Name": "Leader for research in digital twinning for decarbonising transport – UKRI",
+    "Source": "https://www.ukri.org/opportunity/leader-for-research-in-digital-twinning-for-decarbonising-transport/",
+    "Author": "EPSRC",
+    "Publication date": "2022-11",
+    "Description": ""
+  },
+  {
+    "Name": "Local authority transport: sharing data - GOV.UK (www.gov.uk)",
+    "Source": "https://www.gov.uk/government/collections/local-authority-transport-sharing-data",
+    "Author": "DfT",
+    "Publication date": "2023-03",
+    "Description": ""
+  },
+  {
+    "Name": "Transport Data Strategy 2023 - GOV.UK (www.gov.uk)",
+    "Source": "https://www.gov.uk/government/publications/transport-data-strategy-innovation-through-data",
+    "Author": "DfT",
+    "Publication date": "2023-03",
+    "Description": ""
+  },
+  {
+    "Name": "Government consultation response on Cyber Physical Infrastructure",
+    "Source": "https://www.gov.uk/government/consultations/enabling-a-national-cyber-physical-infrastructure-to-catalyse-innovation",
+    "Author": "DSIT & BEIS",
+    "Publication date": "2022-03"
+  },
+  {
+    "Name": "Manufacturing the Future Workforce",
+    "Source": "https://hvm.catapult.org.uk/wp-content/uploads/2022/06/Manufacturing-the-Future-Workforce-Full-Report.pdf",
+    "Author": "High Value Manufacturing Catapult",
+    "Publication date": "2020-01"
+  },
+  {
+    "Name": "Develop a UK digital twinning research community with a NetworkPlus",
+    "Source": "https://www.ukri.org/opportunity/develop-a-uk-digital-twinning-research-community-with-a-networkplus/",
+    "Author": "UKRI",
+    "Publication date": "2023-01"
+  },
+  {
+    "Name": "Untangling the requirements of a Digital Twin",
+    "Source": "https://www.amrc.co.uk/pages/digital-twin-report",
+    "Author": "AMRC",
+    "Publication date": "2021-03"
+  },
+
+  {
+    "Name": "Electech sector: a roadmap for the UK",
+    "Source": "https://www.ukri.org/publications/electech-sector-a-roadmap-for-the-uk/",
+    "Author": "Innovate UK",
+    "Publication date": "2019-09"
+  },
+
+  {
+    "Name": "The Apollo Protocol: unifying digital twins across sectors",
+    "Source": "https://www.theiet.org/impact-society/factfiles/built-environment-factfiles/the-apollo-protocol-unifying-digital-twins-across-sectors/",
+    "Author": "The Institute of Engineering and Technology",
+    "Publication date": "2022-09"
+  },
+
+  {
+    "Name": "Manufacturing Sector net Zero Roadmap",
+    "Source": "https://www.makeuk.org/insights/reports/manufacturing-sector-net-zero-roadmap",
+    "Author": "MAKE UK",
+    "Publication date": "2022-01"
   }
 ]

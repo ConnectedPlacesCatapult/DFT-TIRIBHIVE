@@ -55,7 +55,7 @@
           "relevant_links": [
             {
               "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
-              "title": "Digital Twins: Ethics and the Gemini Principles​"
+              "title": "Digital Twins: Ethics and the Gemini Principles​"
             },
             {
               "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
@@ -67,7 +67,7 @@
             },
             {
               "src": "https://roadmap.ide.uk/",
-              "title": "The Future of the Automotive Industry through Digitalisation​"
+              "title": "The Future of the Automotive Industry through Digitalisation​"
             },
             {
               "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
@@ -87,63 +87,1222 @@
           "title": "1.2 Business strategy",
           "icon": "Gov",
           "outputs": [
-            { "title": "Accessible procurement frameworks for connected digital twins", "start_date": 2025, "end_date": 2028 },
-            { "title": "Appropriate routes for the investment and finance community to invest in connected digital twins and provide maintenance and management funding throughout the lifecycle", "start_date": 2026, "end_date": 2028 },
-            { "title": "Commercial models in place to address funding needs for connected digital twins including maintenance", "start_date": 2024, "end_date": 2026 },
-            { "title": "Marketing strategy in place to communicate achievements in digital twins and attract stakeholders", "start_date": 2026, "end_date": 2028 }
+            {
+              "title": "Accessible procurement frameworks for connected digital twins",
+              "activities": [
+                "Review of existing framework/contract agreements",
+                "Design frameworks/contracts for procuring data or connected digital twins"
+              ],
+              "start_date": 2025,
+              "end_date": 2028,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry"]
+            },
+            {
+              "title": "Appropriate routes for the investment and finance community to invest in connected digital twins and provide maintenance and management funding throughout the lifecycle of connected digital twins and their assets",
+              "activities": [
+                "Engage with investment and finance community to understand their requirements for investing in connected digital twins and present value propositions",
+                "Explore how the investment finance community can leverage and benefit from the opportunities that connected digital twins present  ",
+                "Design appropriate mechanisms to attract investment from the finance and investment community",
+                "Design appropriate mechanisms to ensure that funding required to maintain and manage the connected digital twin as an asset is in place"
+              ],
+              "start_date": 2026,
+              "end_date": 2028,
+              "lead_contributor": "Innovation Funding Bodies",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Commercial models in place to address funding needs for connected digital twins including maintenance",
+              "activities": [
+                "Assess short and long term funding needs of connected digital twins ",
+                "Identify challenges and risks for future, based on mapping out current practices",
+                "Develop relevant commercial and operating models that align with vision, phase within the asset lifecycle, technical capabilities and level of interdependency required with others",
+                "Digital twin practitioners understand the needs of senior leaders when seeking to raise capital"
+              ],
+              "start_date": 2024,
+              "end_date": 2026,
+              "lead_contributor": "Innovation Funding Bodies",
+              "other_contributors": ["Government", "Industry"]
+            },
+            {
+              "title": "Marketing strategy in place to communicate achievements in digital twins and attract stakeholders",
+              "activities": ["Develop marketing and communications strategy to showcase progress and attract new stakeholders and investments"],
+              "start_date": 2026,
+              "end_date": 2028,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry"]
+            }
           ],
-          "outcomes": [],
-          "relevant_links": []
+          "outcomes": [
+            "Understanding of the types of procurement frameworks that are applicable to connected digital twins",
+            "Understanding of commercial models that are applicable to connected digital twins ",
+            "Better ways and approaches to create awareness of connected digital twins",
+            "Value of connected transport digital twins demonstrated in multiple applications and modes",
+            "Funding security in place to cover the long term maintenance strategy of the operationalised connected digital twin asset"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://www.rssb.co.uk/en/what-we-do/insights-and-news/blogs/the-rail-sector-and-the-national-digital-twin",
+              "title": "The Rail Sector and National Digital Twin"
+            },
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            }
+          ]
         },
         {
           "title": "1.3 Use case identification and prioritisation",
           "icon": "Leadership",
           "outputs": [
-            { "title": "Baseline for digitised assets to establish the direction for digital twins in the transport sector", "start_date": 2023, "end_date": 2025 },
-            { "title": "Use cases identified based on customer/industry/government needs and the value gained from combined data", "start_date": 2024, "end_date": 2026 },
-            { "title": "Business case for use cases that require government funding and for those that industry will invest in", "start_date": 2027, "end_date": 2028 },
-            { "title": "Operationalised connected digital twin use cases", "start_date": 2031, "end_date": 2035 }
+            {
+              "title": "Baseline for digitised assets to establish the direction for digital twins in the transport sector",
+              "activities": [
+                "Review early adopter case studies and learnings, codify best practice and use in leadership engagement",
+                "Assess the current level of digitised assets and establish the direction for digitisation of assets in the transport sector and other adjacent sectors"
+              ],
+              "start_date": 2023,
+              "end_date": 2025,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry"]
+            },
+            {
+              "title": "Use cases identified based on customer/industry/government needs and the value gained from combined data",
+              "activities": [
+                "Identify key stakeholders and relevant use cases based on customer/industry needs within various transport sectors for decarbonisation, improving transport for the user and economic growth",
+                "Identify relevant use cases on basis of government priorities - to align to government agenda and strengthen case for government funding",
+                "Identify opportunities for connected digital twins across sectors",
+
+                "Review examples and learnings from adjacent sectors (energy, built environment, telecoms), that could complement and intersect with transport related use cases"
+              ],
+              "start_date": 2024,
+              "end_date": 2026,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Academia", "Government", "Innovation Funding Bodies"]
+            },
+            {
+              "title": "Business case for use cases that require government funding and for those that industry will invest in ",
+              "activities": [
+                "Develop a proposal for a use case trial that enables the creation and testing of an ecosystem of digital twins",
+                "Develop business case and secure any funding and commitment required from government for identified use cases"
+              ],
+              "start_date": 2027,
+              "end_date": 2028,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government", "Innovation Funding Bodies"]
+            },
+            {
+              "title": "Operationalised connected digital twin use cases",
+              "activities": [
+                "Identify a set of digital twins to connect together in an ecosystem",
+                "Identify and test a set of prioritised use cases for connected digital twins "
+              ],
+              "start_date": 2031,
+              "end_date": 2035,
+              "lead_contributor": "Government",
+              "other_contributors": ["Academia", "Industry", "Innovation Funding Bodies"]
+            }
           ],
-          "outcomes": [],
-          "relevant_links": []
+          "outcomes": [
+            "Clarity on which connected digital twins use cases would provide most value for stakeholders, for example improved safety, increased efficiency, better maintenance",
+            "Connected digital twins use case trials, testing and implementation ",
+            "Connected digital twins are being tested in real world situations, covering ethical, security, resilience, legal, regulatory, commercial and sustainability considerations"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+              "title": "Digital Twin Toolkit​"
+            },
+
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009521/areas-of-research-interest-2021.pdf",
+              "title": "Areas of Research Interest 2021"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://cp.catapult.org.uk/wp-content/uploads/2021/01/Place-based-Digital-Twins-Report-1-1.pdf",
+              "title": "CPC Placed Based Digital Twins"
+            },
+            {
+              "src": "https://www.networkrail.co.uk/wp-content/uploads/2018/05/Digital-Railway-Strategy.pdf",
+              "title": "Digital Railway Strategy "
+            },
+            {
+              "src": "https://www.networkrail.co.uk/wp-content/uploads/2018/05/Digital-Railway-Programme.pdf",
+              "title": "Digital Rail Programme"
+            },
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            },
+            {
+              "src": "https://www.amrc.co.uk/files/document/406/1605271035_1604658922_AMRC_Digital_Twin_AW.pdf",
+              "title": "AMRC Digital Twin AW"
+            }
+          ]
         }
       ]
     },
     {
       "title": "2 Enabling environment",
-      "colour": "#9DEDDA",
+      "colour": "#C3EAFE",
       "text-colour": "#15335E",
-      "icon": "Leaf",
       "icon-filter": "",
+      "icon": "Leaf",
       "components": [
-        { "title": "2.1 Common standards and frameworks", "icon": "Policy", "outputs": [{ "title": "Cyber-physical standards for transport sector infrastructure for better connection and communication", "end_date": 2028 }, { "title": "Cyber-physical infrastructure deployment and management framework", "end_date": 2030 }], "outcomes": [], "relevant_links": [] },
-        { "title": "2.2 Legal and compliance", "icon": "Legal", "outputs": [{ "title": "Legal framework for data access, sharing and authorisation, IP and certification requirements", "end_date": 2026 }, { "title": "Operational guidance on legal frameworks", "end_date": 2028 }], "outcomes": [], "relevant_links": [] },
-        { "title": "2.3 Robustness and resilience", "icon": "Workforce", "outputs": [{ "title": "An up-to-date systems map of the transport networks highlighting flow of information and interdependencies", "end_date": 2026 }, { "title": "Resilience and risk management framework", "end_date": 2030 }], "outcomes": [], "relevant_links": [] }
+        {
+          "title": "2.1 Common standards and frameworks",
+          "icon": "Policy",
+          "outputs": [
+            {
+              "title": "Cyber-physical standards for transport sector infrastructure for better connection and communication",
+              "activities": ["Develop standards for developing cyber physical infrastructure in transport sector"],
+              "start_date": 2026,
+              "end_date": 2028,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Cyber-physical infrastructure deployment and management framework",
+              "activities": [
+                "Commission, deploy and manage a policy framework for cyber-physical infrastructure ",
+                "Enable an environment of sustainable, collaborative development including skills, public procurement, security, data, digital and technology policy, ethics and international collaboration"
+              ],
+              "start_date": 2028,
+              "end_date": 2029,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry"]
+            }
+          ],
+          "outcomes": [
+            "Policy and regulatory frameworks in place to support cyber-physical infrastructure development in transport ",
+            "Policy and regulatory frameworks in place to unlock the value of transport data",
+            "Increased number of international collaborations (academic/industry/ government) and growth in investment in UK companies developing and deploying transport digital twins"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+              "title": "Digital Twins: Ethics and the Gemini Principles​"
+            },
+            {
+              "src": "https://www.gov.uk/government/publications/the-government-technology-innovation-strategy/the-government-technology-innovation-strategy",
+              "title": "Government Technology Innovation Strategy​"
+            },
+
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://www.bsigroup.com/globalassets/localfiles/en-gb/knowledge-services/agile-standards_ks.pdf",
+              "title": "Agile Standards White Paper"
+            },
+            {
+              "src": "https://www.degruyter.com/document/doi/10.1515/auto-2021-0082/html?lang=en",
+              "title": "Maritime digital twin architecture"
+            },
+            {
+              "src": "https://www.jacobs.com/sites/default/files/2022-03/Informing-the-information-requirements-of-a-digital-twin.pdf",
+              "title": "Informing the information requirements of a digital twin: a rail industry case study"
+            },
+            {
+              "src": "https://www.researchgate.net/publication/361724633_Digital_Twins_in_Railways",
+              "title": "Digital Twins in Railways"
+            },
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            },
+            {
+              "src": "https://www.rics.org/news-insights/research-and-insights/digital-twins-from-design-to-handover-of-constructed-assets",
+              "title": "Digital twins from design to handover of constructed assets"
+            },
+            {
+              "title": "Transport Data Strategy 2023 - GOV.UK (www.gov.uk)",
+              "src": "https://www.gov.uk/government/publications/transport-data-strategy-innovation-through-data"
+            }
+          ]
+        },
+        {
+          "title": "2.2 Legal and compliance",
+          "icon": "Legal",
+          "outputs": [
+            {
+              "title": "Legal framework for data access, sharing and authorisation, IP and certification requirements ",
+              "activities": [
+                "Review current contractual frameworks and approaches, risk sharing and liability regimes",
+                "Develop the certification requirements for data access",
+                "Develop a legal framework for data sharing and authorisation, including possible international legal considerations",
+                "Outline key governance requirements, legal structure and agreements: e.g. collaboration agreement, protocols, data sharing agreements, Saas/platform agreement, rules supporting data-based decision making, funding agreements (if external)",
+                "Identify who has right to information eg regulators, HMRC, Health and Safety Executives",
+                "Organisations to define material points such as such as liability, IP, limitations of data use, risk sharing, transferability, accountability",
+                "Engage with insurance community"
+              ],
+              "start_date": 2025,
+              "end_date": 2027,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Operational guidance on legal frameworks",
+              "activities": [
+                "Develop operational guidance for legal frameworks including responsibility and accountability",
+                "Address key data sharing agreement terms including: intellectual property rights, data processing, information security, competition, liability, financial models; governance/legal structures "
+              ],
+              "start_date": 2026,
+              "end_date": 2028,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            }
+          ],
+          "outcomes": ["Legal framework are in place for data access, sharing and authorisation, IP and certification requirements"],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+              "title": "Digital Twin Toolkit​"
+            },
+
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            },
+            {
+              "src": "https://www.rics.org/news-insights/research-and-insights/digital-twins-from-design-to-handover-of-constructed-assets",
+              "title": "Digital twins from design to handover of constructed assets"
+            }
+          ]
+        },
+        {
+          "title": "2.3 Robustness and resillience",
+          "icon": "Workforce",
+          "outputs": [
+            {
+              "title": "An up-to-date systems map of the transport networks highlighting flow of information and interdependencies",
+              "activities": [
+                "Develop an up-to-date systems map of the transport network across modes highlighting the flow of data",
+                "Determine the required flow of data in a future integrated transport ecosystem"
+              ],
+              "start_date": 2023,
+              "end_date": 2025,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Academia", "Government"]
+            },
+            {
+              "title": "Resilience and risk management framework ",
+              "activities": [
+                "Analyse and assess vulnerabilities within connected digital twins, carry out a cost benefit analysis of prevention vs mitigation of vulnerabilities",
+                "Develop a risk management framework to increase the resilience of the ecosystem"
+              ],
+              "start_date": 2028,
+              "end_date": 2030,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Academia", "Government"]
+            }
+          ],
+          "outcomes": [
+            "A consistent approach to identifying and preventing risks and providing mitigation within the connected digital twins ecosystem",
+            "Organisations can engage with, and visualise, transport information in way that meets their needs and supports and optimises decision-making"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.ukri.org/wp-content/uploads/2022/01/IUK-110122-UK-Transport-Vision-2050.pdf",
+              "title": "UK transport vision 2050"
+            },
+            {
+              "src": "https://www.gov.uk/government/publications/the-government-technology-innovation-strategy/the-government-technology-innovation-strategy",
+              "title": "Government Technology Innovation Strategy​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1071905/enabling-national-cyber-physical-infrastructure.pdf",
+              "title": "Enabling national cyber physical infrastructure"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://www.ukri.org/wp-content/uploads/2022/07/EPSRC-090822-TERCReport.pdf",
+              "title": "EPSRC TERC Report"
+            }
+          ]
+        }
       ]
     },
     {
-      "title": "3 People, skills and culture",
-      "colour": "#9DEDDA",
-      "text-colour": "#15335E",
+      "title": "People, skills and culture",
+      "colour": "#21808B",
+      "text-colour": "#FFFFFF",
+      "icon-filter": "white",
       "icon": "People",
-      "icon-filter": "",
       "components": [
-        { "title": "3.1 Leadership", "icon": "Leadership", "outputs": [{ "title": "A well communicated vision outlining the purpose, benefits and strategic case for developing an ecosystem of connected digital twins in transport", "end_date": 2026 }, { "title": "Clear guidelines based on Gemini Principles detailing the values and ethical requirements for the delivery of a digital twin programme", "end_date": 2027 }, { "title": "Digital twin related programmes that focus on strategic priorities for transport have investment backing from senior leadership", "end_date": 2028 }, { "title": "Organisational alignment of relevant institutions in the ecosystem of connected digital twins with agreed roles and responsibilities", "end_date": 2030 }], "outcomes": [], "relevant_links": [] },
-        { "title": "3.2 Governance and metrics", "icon": "Gov", "outputs": [{ "title": "Scope of works and relevant key performance indicators including ESG metrics are in place to measure the success and objectives of the connected digital twins programme", "end_date": 2027 }, { "title": "Benefit realisation framework and metrics produced to track benefits to transport stakeholders, end customers and the environment", "end_date": 2028 }, { "title": "Agreed governance framework to ensure involvement from government, industry, academia and research and innovation funding organisations", "end_date": 2030 }], "outcomes": [], "relevant_links": [] },
-        { "title": "3.3 Collaboration and change management", "icon": "Collab", "outputs": [{ "title": "Agreed communication and engagement plans", "end_date": 2026 }, { "title": "Materials including frameworks and artifacts to facilitate collaboration and co-creation of resources", "end_date": 2028 }, { "title": "Defined collaboration strategy to facilitate coordination between researchers, industry and the research and innovation funding community", "end_date": 2030 }], "outcomes": [], "relevant_links": [] },
-        { "title": "3.4 Skills and capabilities", "icon": "Workforce", "outputs": [{ "title": "Skills and capabilities gap analysed and barriers to closing skills gap identified", "end_date": 2026 }, { "title": "Skills and Competency framework developed for technical and non-technical skills required to develop a national capability in digital twins", "end_date": 2028 }, { "title": "Clear education pathways and capability enhancement programme, informed by gap analysis", "end_date": 2030 }, { "title": "Established links to academic centres of excellence and learning hubs to deliver the training required by the workforce", "end_date": 2032 }], "outcomes": [], "relevant_links": [] }
+        {
+          "title": "3.1 Leadership",
+          "icon": "Leadership",
+          "outputs": [
+            {
+              "title": "A well communicated vision outlining the purpose, benefits and strategic case for developing an ecosystem of connected digital twins in transport and adjacent sectors",
+              "activities": [
+                "Identify aims, objective and scope of the connected digital twin programme",
+                "Conduct a strategic business case assessment to justify the deliverability of the vision",
+                "Communicate a coherent, consistent and achievable vision to all stakeholders and the general public "
+              ],
+              "start_date": 2023,
+              "end_date": 2023,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            },
+            {
+              "title": "Clear guidelines based on Gemini Principles detailing the values and ethical requirements for the delivery of a digital twin programme.   ",
+              "activities": [
+                "Define purpose, trust and function related guidance",
+                "Review the Gemini Principles and other relevant documents",
+                "Develop values and ethical guidelines for the connected digital twin community"
+              ],
+              "start_date": 2023,
+              "end_date": 2024,
+              "lead_contributor": "Government",
+              "other_contributors": ["Academia", "Industry"]
+            },
+            {
+              "title": "Digital twin related programmes that focus on strategic priorities for transport have investment backing from senior leadership",
+              "activities": [
+                "Understand relevant DfT and transport sector strategic priorities and where organisations fit into these",
+                "Research strategic investments available from R&D organisations (ESPRC, Innovate UK, NERC, DSIT, DBT, etc)",
+                "Ensure alignment of the connected digital twin programme with strategic priorities"
+              ],
+              "start_date": 2023,
+              "end_date": 2025,
+              "lead_contributor": "Government",
+              "other_contributors": ["Academia", "Industry", "Innovation Funding Bodies"]
+            },
+            {
+              "title": "Organisational alignment of relevant institutions in the ecosystem of connected digital twins with agreed roles and responsibilities",
+              "activities": [
+                "Identify the key stakeholders within organisations ",
+                "Engage with the key personnel from those organisations to define and agree a common path of travel to achieve strategic objectives",
+                "Ensure alignment of organisations within the vision and identify incentivisation measures to work collaboratively",
+                "Set up channels to allow the continuous sharing of best practice"
+              ],
+              "start_date": 2023,
+              "end_date": 2025,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            }
+          ],
+          "outcomes": [
+            "A well-articulated vision and objectives of the federated digital twins programme ",
+            "Values and ethical requirements of the roadmap will be supported by the relevant guidelines",
+            "Alignment with other DfT and national strategic investments in digital twins  ",
+            "Clarity, alignment and consistent approach agreed with all stakeholders",
+            "Executive and non-executive leaders understand the leadership styles that create environments where digital twins can be used to achieve desired outcomes",
+            "Digital twin practitioners can articulate the value offered by digital twins to their senior leaders"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+              "title": "Digital Twins: Ethics and the Gemini Principles​"
+            },
+            {
+              "src": "https://www.ukri.org/wp-content/uploads/2022/01/IUK-110122-UK-Transport-Vision-2050.pdf",
+              "title": "UK transport vision 2050"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1053955/cyber-physical-infrastructure-vision.pdf",
+              "title": "Cyber physical infrastructure vision"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/938539/NIS_Report_Web_Accessible.pdf",
+              "title": "National Infrastructure Strategy"
+            },
+            {
+              "src": "https://www.networkrail.co.uk/wp-content/uploads/2018/05/Digital-Railway-Programme.pdf",
+              "title": "Digital Rail Programme"
+            },
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            },
+            {
+              "title": "Leader for research in digital twinning for decarbonising transport – UKRI'",
+              "src": "https://www.ukri.org/opportunity/leader-for-research-in-digital-twinning-for-decarbonising-transport/"
+            },
+            {
+              "title": "Transport Data Strategy 2023 - GOV.UK (www.gov.uk)",
+              "src": "https://www.gov.uk/government/publications/transport-data-strategy-innovation-through-data"
+            },
+            {
+              "title": "Develop a UK digital twinning research community with a NetworkPlus",
+              "src": "https://www.ukri.org/opportunity/develop-a-uk-digital-twinning-research-community-with-a-networkplus/"
+            }
+          ]
+        },
+        {
+          "title": "3.2 Governance and metrics",
+          "icon": "Gov",
+          "outputs": [
+            {
+              "title": "Scope of works and relevant key performance indicators including ESG metrics are in place to measure the success and objectives of the connected digital twins programme",
+              "activities": [
+                "Review and agree on the stated aims, objectives and scope of connected digital twins with the aligned partners ",
+                "Identify the key performance indicators for the programme",
+                "Develop a logic model for the connected digital twin programme ",
+                "Utilise current and emerging ESG frameworks to develop relevant key performance indicators and metrics for the programme"
+              ],
+              "start_date": 2023,
+              "end_date": 2024,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            },
+            {
+              "title": "Benefit realisation framework and metrics produced to track benefits to transport stakeholders, end customers and the environment",
+              "activities": [
+                "Identify strategic case consistent with the formulated scenarios of the vision ",
+                "Establish the keys metrics to track benefits to ensure the programme is delivering value to government, industry, academia and innovation community"
+              ],
+              "start_date": 2024,
+              "end_date": 2025,
+              "lead_contributor": "Government",
+              "other_contributors": ["Academia", "Industry"]
+            },
+            {
+              "title": "Agreed governance framework to ensure involvement from government, industry, academia and research and innovation funding organisations",
+              "activities": [
+                "Formulate and agree on the terms of reference for the governance framework ",
+                "Review relevant organisation's documents for input ",
+                "Embed principles adopted by government to ensure cultural change ",
+                "Develop the governance model of the programme ensuring involvement from government, industry, academia and innovation community"
+              ],
+              "start_date": 2025,
+              "end_date": 2027,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            }
+          ],
+          "outcomes": [
+            "A governance framework based on identified vision, objectives and benefits for regulating the operations",
+            "Clearly defined set of metrics for tracking the benefits accrued from the project"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+              "title": "Digital Twins: Ethics and the Gemini Principles​"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1053955/cyber-physical-infrastructure-vision.pdf",
+              "title": "Cyber physical infrastructure vision"
+            },
+
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+              "title": "Digital Twin Toolkit​"
+            },
+
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://www.rics.org/news-insights/research-and-insights/digital-twins-from-design-to-handover-of-constructed-assets",
+              "title": "Digital twins from design to handover of constructed assets"
+            }
+          ]
+        },
+        {
+          "title": "3.3 Collaboration and change management",
+          "icon": "Collab",
+          "outputs": [
+            {
+              "title": "Agreed communication and engagement plans",
+              "activities": [
+                "Identify the target audience for the DT programme ",
+                "Establish preferred communication channels",
+                "Develop targeted comms and engagement plans"
+              ],
+              "start_date": 2023,
+              "end_date": 2025,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            },
+            {
+              "title": "Materials including frameworks and artifacts to facilitate collaboration and co-creation of resources",
+              "activities": ["Develop frameworks and artifacts to facilitate collaboration and co-creation of resources"],
+              "start_date": 2024,
+              "end_date": 2026,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            },
+            {
+              "title": "Defined collaboration strategy to facilitate coordination between researchers, industry and the research and innovation funding community",
+              "activities": [
+                "Build on existing TRIB Task & Finish Groups to drive progress in key organisations",
+                "Identify other key partners in academia, industry and innovation funding community ",
+                "Define a strategic approach to enhance and facilitate coordination between researchers, industry and the innovation community "
+              ],
+              "start_date": 2025,
+              "end_date": 2031,
+              "lead_contributor": "Government",
+              "other_contributors": []
+            },
+            {
+              "title": "Collaboration between demand and supply sides - industry alignment on requirements",
+              "activities": [
+                "Identify relevant industry partners ",
+                "Identify requirements from industry based on demands of the partners involved in digital twin programmes",
+                "Engage with industry to establish/facilitate ways and approaches to supply the required demand"
+              ],
+              "start_date": 2025,
+              "end_date": 2031,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Academic institutions identified who will deliver training and relevant research for connected digital twins in transport",
+              "activities": [
+                "Identify relevant research-led academic institutions aligned to the digital twin programme",
+                "Establish relevant 'Memorandum of Understanding' to facilitate collaborations for further research"
+              ],
+              "start_date": 2027,
+              "end_date": 2031,
+              "lead_contributor": "Government",
+              "other_contributors": ["Academia"]
+            },
+            {
+              "title": "Benefits from connected digital twins in transport tracked and communicated to facilitate wider acceptance and adoption by industry",
+              "activities": [
+                "Identify comprehensive list of stakeholders and develop an engagement strategy to outline benefits of connected digital twins",
+                "Establish stakeholder / Strategic Advisory board ",
+                "Learn from change management best practice",
+                "Embed theory of change principles to influence cultural change within organisations "
+              ],
+              "start_date": 2027,
+              "end_date": 2031,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            }
+          ],
+          "outcomes": [
+            "A collaboration framework with main stakeholders in order to ensure effective communication and engagement ",
+            "Collaborative design, development and dissemination of the shared foundations (e.g. models, algorithms, frameworks, technical standards, user applications, data assets etc.) of connected digital twins in transport",
+            "Collaboration across key stakeholders has enabled design, build, implement and connect solutions more quickly, easily and cost effectively",
+            "Stakeholder map",
+            "Stakeholder/Strategic Advisory board set up"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+              "title": "Digital Twins: Ethics and the Gemini Principles​"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1053955/cyber-physical-infrastructure-vision.pdf",
+              "title": "Cyber physical infrastructure vision"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://www.gov.uk/government/publications/the-government-technology-innovation-strategy/the-government-technology-innovation-strategy",
+              "title": "Government Technology Innovation Strategy​"
+            },
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/975077/Global_Britain_in_a_Competitive_Age-_the_Integrated_Review_of_Security__Defence__Development_and_Foreign_Policy.pdf",
+              "title": "Global Britain in a competitive age - The Integrated Review of Security, Defence, Development and Foreign Policy"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://www.degruyter.com/document/doi/10.1515/auto-2021-0082/html?lang=en",
+              "title": "Maritime digital twin architecture"
+            },
+            {
+              "title": "Leader for research in digital twinning for decarbonising transport – UKRI",
+              "src": "https://www.ukri.org/opportunity/leader-for-research-in-digital-twinning-for-decarbonising-transport/"
+            },
+            {
+              "title": "Develop a UK digital twinning research community with a NetworkPlus",
+              "src": "https://www.ukri.org/opportunity/develop-a-uk-digital-twinning-research-community-with-a-networkplus/"
+            },
+            {
+              "title": "Transport Data Strategy 2023 - GOV.UK (www.gov.uk)",
+              "src": "https://www.gov.uk/government/publications/transport-data-strategy-innovation-through-data"
+            }
+          ]
+        },
+        {
+          "title": "3.4 Skills and capabilities",
+          "icon": "Workforce",
+          "outputs": [
+            {
+              "title": "Skills and capabilities gap analysed and barriers to closing skills gap identified ",
+              "activities": [
+                "Review and analyse the digital twin capability landscape ",
+                "Identify gaps in transport related digital skills",
+                "Identify barriers to closing the skills gap",
+                "Provide remedial actions to enhance the digital skills capability"
+              ],
+              "start_date": 2024,
+              "end_date": 2025,
+              "lead_contributor": "Academia",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Skills and Competency framework developed for technical and non-technical skills required to develop a national capability in digital twins",
+              "activities": [
+                "Identify a holistic set of skill requirement for the transport DT programme ",
+                "Establish competency levels for the identified skills",
+                "Map out the capability expectation each level of identified skill",
+                "Map out the knowledge required to fulfil each level of identified skill "
+              ],
+              "start_date": 2024,
+              "end_date": 2027,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry", "Academia"]
+            },
+            {
+              "title": "Clear education pathways and capability enhancement programme, informed by gap analysis ",
+              "activities": [
+                "Identify the relevant education and training pathways (such as apprenticeship, further education, higher education, etc) ",
+                "Conduct a mapping exercise to align the identified pathways to the skill and competency framework"
+              ],
+              "start_date": 2027,
+              "end_date": 2032,
+              "lead_contributor": "Academia",
+              "other_contributors": ["Industry", "Government"]
+            },
+            {
+              "title": "Established links to academic centres of excellence and learning hubs to deliver the training required by the workforce",
+              "activities": [
+                "Identify academic centres of excellence and relevant learning hubs ",
+                "Link education and training pathways to the academic centres and learning hubs "
+              ],
+              "start_date": 2027,
+              "end_date": 2032,
+              "lead_contributor": "Academia",
+              "other_contributors": ["Government", "Innovation Funding Bodies"]
+            }
+          ],
+          "outcomes": [" Identified skills shortage", "Skills development framework ", "Educational pathways and learning hubs identified "],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://www.gov.uk/government/publications/the-government-technology-innovation-strategy/the-government-technology-innovation-strategy",
+              "title": "Government Technology Innovation Strategy​"
+            },
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+              "title": "Digital Twin Toolkit​"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009577/uk-innovation-strategy.pdf",
+              "title": "UK Innovation Strategy​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            },
+            {
+              "src": "https://gds.blog.gov.uk/2017/07/20/building-capability-and-community-through-the-government-data-science-partnership/",
+              "title": "Building capability and community through the goverment data science partnership"
+            },
+            {
+              "src": "https://www.gov.uk/government/collections/digital-data-and-technology-profession-capability-framework",
+              "title": "Digital data and technology profession capability framework"
+            }
+          ]
+        }
       ]
     },
+
     {
       "title": "4 Technology and data",
-      "colour": "#9DEDDA",
-      "text-colour": "#15335E",
+      "colour": "#197CBE",
+      "text-colour": "#FFFFFF",
+      "icon-filter": "white",
       "icon": "Tech",
-      "icon-filter": "",
       "components": [
-        { "title": "4.1 Data, interoperability and integration", "icon": "Data", "outputs": [{ "title": "Clear guidance and interoperability standards for better information integration across transport digital twins", "end_date": 2028 }, { "title": "Toolkit to inform data collection, calibration and validation techniques", "end_date": 2027 }, { "title": "Appropriate governance frameworks to enable management, access and sharing of data", "end_date": 2029 }, { "title": "Data framework to coordinate different systems based on data requirements and data sharing protocols", "end_date": 2030 }], "outcomes": [], "relevant_links": [] },
-        { "title": "4.2 Cyber physical infrastructure", "icon": "Cyber", "outputs": [{ "title": "Testing environment set up for digital twin components and processes", "end_date": 2027 }, { "title": "Physical infrastructure components in place (sensors, IoT devices, connectivity) that are secure by design", "end_date": 2029 }, { "title": "Digital infrastructure components in place (storage, high performance compute) that are secure by design", "end_date": 2029 }, { "title": "Detailed plans to address barriers and to provide high connectivity within cyber physical infrastructure", "end_date": 2030 }, { "title": "Framework for monitoring and managing of physical and digital assets", "end_date": 2032 }], "outcomes": [], "relevant_links": [] },
-        { "title": "4.3 Security and trust", "icon": "Security", "outputs": [{ "title": "Forward-looking trust framework for data sharing in place", "end_date": 2030 }, { "title": "Embedded security-mindedness approach in industry, supply chains delivering digital twins", "end_date": 2029 }, { "title": "Secure infrastructure, data and data transfers", "end_date": 2032 }], "outcomes": [], "relevant_links": [] }
+        {
+          "title": "4.1 Data, interoperability and integration ",
+          "icon": "Data",
+          "outputs": [
+            {
+              "title": "Clear guidance and interoperability standards for better information integration across transport digital twins",
+              "activities": [
+                "Review current standards and identify gaps",
+                "Define common standards to enable interoperability within an ecosystem of digital twins and to enable futureproofing",
+                "Establish forums and frameworks for collaboration on standards to ensure flexibility and progress"
+              ],
+              "start_date": 2024,
+              "end_date": 2025,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Toolkit to inform data collection, calibration and validation techniques",
+              "activities": ["Identify tools and techniques for Data Collection, Calibration and Validation"],
+              "start_date": 2025,
+              "end_date": 2027,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Academia", "Government", "Innovation Funding Bodies"]
+            },
+            {
+              "title": "Appropriate governance frameworks to enable management, access and sharing of data ",
+              "activities": [
+                "Identify types of datasets, sources and ownerships ",
+                "Identify legal and regulatory considerations for data sharing",
+                "Develop governance framework around data sharing and management",
+                "Understand the legal and policy compliance requirements for data sharing"
+              ],
+              "start_date": 2024,
+              "end_date": 2027,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Data framework to coordinate different systems based on data requirements and data sharing protocols",
+              "activities": [
+                "Design a data framework which can coordinate different systems based on data requirements and data sharing protocols",
+                "Test end-to-end data processes: data collection, transmission, sharing and management, interoperability, etc"
+              ],
+              "start_date": 2028,
+              "end_date": 2035,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            }
+          ],
+          "outcomes": [
+            "Common language, approaches and technical requirements acts as a key enabler for the development and deployment of digital twins",
+            "Interoperability facilitated by frameworks, guidelines and standardisation",
+            "Economic value of data in the transport system is unlocked",
+            "Data standards and interoperability framework to ensure a consistent approach to data collection, management, sharing and use",
+            "Increasing interconnection of systems is greater than the sum of its parts"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+              "title": "Digital Twins: Ethics and the Gemini Principles​"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://www.gov.uk/government/publications/the-government-technology-innovation-strategy/the-government-technology-innovation-strategy",
+              "title": "Government Technology Innovation Strategy​"
+            },
+
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+              "title": "Digital Twin Toolkit​"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/%E2%80%8B",
+              "title": "Components for connected digital twins"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/files/010321cdbb_skills_capability_framework_vfinal.pdf",
+              "title": "CDBB skills capability framework"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1071905/enabling-national-cyber-physical-infrastructure.pdf",
+              "title": "Enabling national cyber physical infrastructure"
+            },
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/975077/Global_Britain_in_a_Competitive_Age-_the_Integrated_Review_of_Security__Defence__Development_and_Foreign_Policy.pdf",
+              "title": "Global Britain in a competitive age - The Integrated Review of Security, Defence, Development and Foreign Policy"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/938539/NIS_Report_Web_Accessible.pdf",
+              "title": "National Infrastructure Strategy"
+            },
+            {
+              "src": "https://www.degruyter.com/document/doi/10.1515/auto-2021-0082/html?lang=en",
+              "title": "Maritime digital twin architecture"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1124593/London_Economics_-_cost_considerations_of_data_sharing_-_June_2022.pdf",
+              "title": "London Economics - cost consideration of data sharing"
+            },
+            {
+              "src": "https://www.rics.org/news-insights/research-and-insights/digital-twins-from-design-to-handover-of-constructed-assets",
+              "title": "Digital twins from design to handover of constructed assets"
+            },
+            {
+              "src": "https://www.jacobs.com/sites/default/files/2022-03/Informing-the-information-requirements-of-a-digital-twin.pdf",
+              "title": "Informing the information requirements of a digital twin: a rail industry case study"
+            },
+            {
+              "title": "Local authority transport: sharing data - GOV.UK (www.gov.uk)",
+              "src": "https://www.gov.uk/government/collections/local-authority-transport-sharing-data"
+            },
+            {
+              "title": "Transport Data Strategy 2023 - GOV.UK (www.gov.uk)",
+              "src": "https://www.gov.uk/government/publications/transport-data-strategy-innovation-through-data"
+            }
+          ]
+        },
+        {
+          "title": "4.2 Cyber physical infrastructure",
+          "icon": "Cyber",
+          "outputs": [
+            {
+              "title": "Testing environment set up for digital twin components and processes ",
+              "activities": [
+                "Identify suitable digital twins and adopt the cyber physical infrastructure",
+                "Test appropriate security and interconnectivity requirements ",
+                "Test relevant standards"
+              ],
+              "start_date": 2024,
+              "end_date": 2030,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government", "Innovation Funding Bodies"]
+            },
+            {
+              "title": "Physical infrastructure components in place (sensors, IoT devices, connectivity) that are secure by design",
+              "activities": [
+                "Identify the relevant physical infrastructure components ",
+                "Map, plan and deliver necessary physical infrastructure components"
+              ],
+              "start_date": 2026,
+              "end_date": 2029,
+              "lead_contributor": "Government",
+              "other_contributors": ["Innovation Funding Bodies", "Academia"]
+            },
+            {
+              "title": "Digital infrastructure components in place (storage, high performance compute) that are secure by design",
+              "activities": [
+                "Identify the relevant digital infrastructure components",
+                "Map, plan and deliver necessary digital infrastructure components"
+              ],
+              "start_date": 2026,
+              "end_date": 2029,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Detailed plans to address barriers and to provide high connectivity within cyber physical infrastructure ",
+              "activities": [
+                "Identify connectivity barriers to connecting the physical and digital twin components ",
+                "Develop the systems to enable high connectivity between the physical and digital components (e.g. 5G)"
+              ],
+              "start_date": 2026,
+              "end_date": 2029,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry"]
+            },
+            {
+              "title": "Framework for monitoring and managing of physical and digital assets",
+              "activities": [
+                "Identify the main requirements for monitoring digital twin assets ",
+                "Identify the main requirements for managing the digital twin assets ",
+                "Establish the framework to monitor and manage each of the identified requirement for the physical and digital assets"
+              ],
+              "start_date": 2027,
+              "end_date": 2030,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            }
+          ],
+          "outcomes": [
+            "Framework for planning and managing cyber physical infrastructure in order to make use case based deployments less time consuming",
+            "The value of individual transport digital twins increases with their ability to inter-connect and connect across sectors ",
+            "Advancements in technology readiness levels (TRLs) of underpinning technologies and applications"
+          ],
+          "relevant_links": [
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1053955/cyber-physical-infrastructure-vision.pdf",
+              "title": "Cyber physical infrastructure vision"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009577/uk-innovation-strategy.pdf",
+              "title": "UK Innovation Strategy​"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1071905/enabling-national-cyber-physical-infrastructure.pdf",
+              "title": "Enabling national cyber physical infrastructure"
+            },
+            {
+              "src": "https://www.rssb.co.uk/en/what-we-do/insights-and-news/blogs/the-rail-sector-and-the-national-digital-twin",
+              "title": "The Rail Sector and National Digital Twin "
+            },
+            {
+              "src": "https://www.jacobs.com/sites/default/files/2022-03/Informing-the-information-requirements-of-a-digital-twin.pdf",
+              "title": "Informing the information requirements of a digital twin: a rail industry case study"
+            },
+            {
+              "title": "Government consultation response on Cyber Physical Infrastructure",
+              "src": "https://www.gov.uk/government/consultations/enabling-a-national-cyber-physical-infrastructure-to-catalyse-innovation"
+            }
+          ]
+        },
+        {
+          "title": "4.3 Security and trust",
+          "icon": "Security",
+          "outputs": [
+            {
+              "title": "Forward-looking trust framework for data sharing in place",
+              "activities": [
+                "Forward looking trust frameworks from transport and other industries (e.g. open banking) developed",
+                "Outline key requirements for a framework to facilitate trusted data flow and sharing across transport sector ecosystem of connected digital twins",
+                "Develop the trust framework and develop a plan to operationalise it in the transport sector ecosystem of connected digital twins",
+                "Identify the research gaps that will need to be addressed in trust, identity, privacy and security, whilst mapping against current research outputs in these areas"
+              ],
+              "start_date": 2023,
+              "end_date": 2035,
+              "lead_contributor": "Government",
+              "other_contributors": ["Innovation Funding Bodies", "Academia"]
+            },
+            {
+              "title": "Embedded security-mindedness approach in industry, supply chains delivering digital twins",
+              "activities": [
+                "Develop and embed a security-mindedness approach with an understanding of key risks",
+                "Review government guidance and principles from relevant government bodies such as CPNI, DSIT and NCSC ",
+                "Ensure cyber and physical security are foundational embedding secure by design principles",
+                "Develop cyber security skills and capabilities within organisations"
+              ],
+              "start_date": 2024,
+              "end_date": 2027,
+              "lead_contributor": "Industry",
+              "other_contributors": ["Government"]
+            },
+            {
+              "title": "Secure infrastructure, data and data transfers",
+              "activities": [
+                "Undertake broader research into the security of sensors, IoT and other cyber physical infrastructure and components",
+                "Develop security systems and protocols to support the connected digital twin infrastructure and data storage and transfers. Ensure systems and protocols are applied consistently among digital twin owners to ensure security is robust.  ",
+                "Promote actions that will instil trust among digital twin and data owners "
+              ],
+              "start_date": 2027,
+              "end_date": 2030,
+              "lead_contributor": "Government",
+              "other_contributors": ["Industry"]
+            }
+          ],
+          "outcomes": [
+            "Data and infrastructure security framework In place to build trust among partners sharing data ",
+            "Greater resilience against cyber threats and incidents ",
+            "Ecosystem of connected digital twins is secure, resilient and competitive ",
+            "Security is an enabler to connected digital twins in transport and are secure by design "
+          ],
+          "relevant_links": [
+            {
+              "src": "https://www.cdbb.cam.ac.uk/system/files/documents/TheGeminiPrinciples.pdf",
+              "title": "Gemini Principles"
+            },
+            {
+              "src": "https://www.ukri.org/wp-content/uploads/2022/01/IUK-110122-UK-Transport-Vision-2050.pdf",
+              "title": "UK transport vision 2050"
+            },
+            {
+              "src": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+              "title": "Digital Twins: Ethics and the Gemini Principles"
+            },
+            {
+              "src": "https://www.gov.uk/government/publications/cyber-physical-infrastructure",
+              "title": "Cyber Physical Infrastructure"
+            },
+            {
+              "src": "https://www.cdbb.cam.ac.uk/news/gemini-papers",
+              "title": "Gemini Papers​"
+            },
+
+            {
+              "src": "https://roadmap.ide.uk/",
+              "title": "The Future of the Automotive Industry through Digitalisation​"
+            },
+            {
+              "src": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1071905/enabling-national-cyber-physical-infrastructure.pdf",
+              "title": "Enabling national cyber physical infrastructure"
+            },
+            {
+              "src": "https://ttf.uk.net/wp-content/uploads/2022/11/OS-Digital-Local-Roads-2022-v3.1.pdf",
+              "title": "Digital local roads"
+            },
+            {
+              "src": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+              "title": "Data for the public good"
+            },
+            {
+              "src": "https://www.jacobs.com/sites/default/files/2022-03/Informing-the-information-requirements-of-a-digital-twin.pdf",
+              "title": "Informing the information requirements of a digital twin: a rail industry case study"
+            },
+            {
+              "src": "https://www.researchgate.net/publication/361724633_Digital_Twins_in_Railways",
+              "title": "Digital Twins in Railways"
+            },
+            {
+              "src": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+              "title": "digital-twin-institute-position-paper"
+            },
+            {
+              "src": "https://www.rics.org/news-insights/research-and-insights/digital-twins-from-design-to-handover-of-constructed-assets",
+              "title": "Digital twins from design to handover of constructed assets"
+            }
+          ]
+        }
       ]
     }
   ]
