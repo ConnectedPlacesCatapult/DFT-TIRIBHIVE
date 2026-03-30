@@ -121,6 +121,7 @@ export function FilterRow({
             label={h}
             selected={selectedHazards.includes(h)}
             onClick={() => { ga4.filterApplied("hazard", h); onToggleHazard(h); }}
+          />
         ))}
         {/* AI-detected hazards not already manually selected */}
         {aiHazards
@@ -156,6 +157,7 @@ export function FilterRow({
             label={s}
             selected={selectedSectors.includes(s)}
             onClick={() => { ga4.filterApplied("sector", s); onToggleSector(s); }}
+          />
         ))}
         {aiSectors
           .filter((s) => !selectedSectors.includes(s))
