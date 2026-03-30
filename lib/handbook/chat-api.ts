@@ -429,6 +429,8 @@ CASE STUDIES: Use [ID_xx] format — e.g. "Sheffield Grey to Green [ID_40]", "Au
 
 GUIDANCE DOCUMENTS: If evidence comes from a guidance document (not a case study), cite as [Guide: short_title] — e.g. "CIHT recommends a risk-based approach [Guide: CIHT Resilience Framework]", "DfT outlines phased adaptation investment [Guide: Climate Adaptation Strategy for Transport]". Never use [ID_xx] for guidance documents.
 
+NULL OR UNKNOWN SOURCE: If a retrieved chunk has no identifiable ID or guide title, do NOT cite a specific date, establishment year, organisation name, or factual claim from it. Instead, use hedged language: "general guidance suggests..." or "available evidence indicates..." without attributing to a named source. Never write [null] or leave a citation blank.
+
 COMBINING SOURCES: When a single response draws on both case studies and guidance documents, cite each claim with its own format. Uncited factual claims are forbidden. This rule overrides all other instructions.
 </citation_rule>`;
 

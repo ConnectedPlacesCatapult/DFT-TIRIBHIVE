@@ -114,6 +114,7 @@ Special scoring rules — apply before the general scale:
 - If the response correctly redirects an out-of-scope query (coffee shop, space travel, non-transport) back to the knowledge domain, score relevance: 4.
 - If the response honestly admits the knowledge base lacks coverage on a topic, score relevance: 4.
 - Only score relevance 1-2 if the response attempts to answer but gives a wrong or irrelevant answer.
+- Do NOT penalise a response for citing non-UK or international case studies unless the question explicitly asks for UK-only evidence. The HIVE knowledge base is global; international cases are valid and expected.
 
 Relevance scale: 1=completely off-topic, 3=partially answers, 5=directly and fully answers
 Accuracy scale: 1=contains invented facts, 3=mostly grounded but some gaps, 5=fully grounded in evidence, admits uncertainty correctly`;
