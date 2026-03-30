@@ -1,0 +1,1317 @@
+/* ===== TRIB CSS Variables & Base (from index.css) ===== */
+:root {
+  --TRIB-Green-Primary: #21808b;
+  --TRIB-Blue-Primary: #15335e;
+  --TRIB-Green-Variation-1: #bff7ea;
+  --TRIB-Green-Variation-2: #77dccc;
+  --TRIB-Green-Variation-3: #32a4a0;
+  --TRIB-Green-Variation-4: #14586b;
+  --TRIB-Green-Variation-5: #0d3d59;
+  --TRIB-Blue-Variation-1: #dbf2ff;
+  --TRIB-Blue-Variation-2: #96dcfd;
+  --TRIB-Blue-Variation-3: #43b3ea;
+  --TRIB-Blue-Variation-4: #197cbe;
+  --TRIB-Blue-Variation-5: #16477f;
+  --relative_font_size: 1;
+  --relative_line_height: 1;
+  --hue_rotation: 0deg;
+  --contrast_value: 1;
+}
+
+/* ===== Typography classes (from index.css) ===== */
+.h1 {
+  font-family: "Roboto";
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 40px);
+  line-height: calc(100% * var(--relative_line_height));
+  margin: 0 !important;
+}
+.h2 {
+  font-family: "Roboto";
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 40px);
+  line-height: calc(100% * var(--relative_line_height));
+  text-transform: capitalize;
+  margin: 0 !important;
+}
+.h3 {
+  font-family: "Roboto";
+  font-weight: 500;
+  font-size: calc(var(--relative_font_size) * 36px);
+  line-height: calc(100% * var(--relative_line_height));
+  margin: 0 !important;
+}
+.h4 {
+  font-family: "Roboto";
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 24px);
+  line-height: calc(100% * var(--relative_line_height));
+  margin: 0 !important;
+}
+.h5 {
+  font-family: "Roboto";
+  font-weight: 600;
+  font-size: calc(var(--relative_font_size) * 20px);
+  line-height: calc(100% * var(--relative_line_height));
+  margin: 0 !important;
+}
+.p1 {
+  font-family: "Roboto";
+  font-weight: 400;
+  font-size: calc(var(--relative_font_size) * 16px);
+  line-height: calc(100% * var(--relative_line_height));
+}
+.p2 {
+  font-family: "Roboto";
+  font-weight: 400;
+  font-size: calc(var(--relative_font_size) * 14px);
+  line-height: calc(100% * var(--relative_line_height));
+}
+
+/* ===== App layout (from App.css) ===== */
+.Trib_App {
+  position: relative;
+  font-family: "Roboto";
+  width: 100%;
+  overflow: hidden;
+}
+.Trib_Content {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+  /* Clears fixed bottom Roadmap tab so pages aren’t clipped above “View Roadmap” */
+  padding-bottom: 120px;
+  box-sizing: border-box;
+}
+.Bordered_Content {
+  padding: 0 20px;
+  max-width: 1560px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 20px;
+}
+.Intro {
+  margin-bottom: 60px !important;
+}
+
+/* ===== Nav Bar (from Nav_Bar.css) ===== */
+.Nav_Bar {
+  position: relative;
+  height: 80px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.Top_Bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.Logo {
+  cursor: default;
+  position: relative;
+  height: 38px;
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 32px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.2em;
+  color: var(--TRIB-Green-Primary);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.Logo:hover {
+  color: var(--TRIB-Green-Primary);
+}
+.Not_At_Home {
+  color: var(--TRIB-Green-Primary);
+  cursor: pointer;
+}
+.Not_At_Home:hover {
+  text-decoration: underline;
+}
+.Navigation {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  height: 80px;
+  row-gap: 5px;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 30px;
+}
+.Navigation_Item {
+  margin: 0;
+  cursor: pointer;
+  color: #1c1c1c;
+  font-style: normal;
+  font-weight: 400;
+  font-size: calc(var(--relative_font_size) * 16px);
+  line-height: calc(100% * var(--relative_line_height));
+  text-align: right;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.Navigation_Item:hover {
+  text-decoration: underline;
+  color: #1c1c1c;
+}
+.Window_Overlay {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  z-index: 1;
+}
+.Hamburger_Sidebar {
+  position: fixed;
+  width: 500px;
+  height: calc(100% - 160px);
+  max-width: 100%;
+  transition: width 0.5s ease-in-out;
+  background-color: white;
+  z-index: 5;
+  right: 0;
+  box-shadow: 0px 0px 5px rgba(118, 118, 118, 0.6);
+}
+.Hamburger {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.Hamburger_Navigation {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow-y: auto;
+  gap: 20px;
+  flex-direction: column;
+  padding: 100px;
+}
+.Hamburger_Navigation > a {
+  cursor: pointer;
+  color: #1c1c1c;
+  font-style: normal;
+  font-weight: 400;
+  font-size: calc(var(--relative_font_size) * 16px);
+  line-height: calc(100% * var(--relative_line_height));
+  text-align: left;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.Hamburger_Item {
+  cursor: pointer;
+  color: #1c1c1c;
+  font-style: normal;
+  font-weight: 400;
+  font-size: calc(var(--relative_font_size) * 16px);
+  line-height: calc(100% * var(--relative_line_height));
+  text-align: left;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.Hamburger_Item:hover {
+  text-decoration: underline;
+}
+.Hamburger_Close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  transition: opacity 1s ease-in-out;
+  background: none;
+  border: none;
+}
+.Hamburger_Navigation br {
+  border: solid 1px grey;
+  content: " ";
+  margin: 20px 0;
+  opacity: 0.2;
+}
+.Hamburger_Navigation .End {
+  margin-top: auto;
+}
+.accessibility_switch {
+  display: flex;
+  align-items: center;
+}
+.accessibility_switch > p {
+  margin: 0;
+}
+.accessibility_switch > select {
+  flex-grow: 1;
+}
+
+/* ===== Roadmap Tab (from Roadmap.css) ===== */
+.Roadmap_Tab {
+  position: fixed;
+  width: 100%;
+  height: calc(100% - 80px);
+  top: 0;
+  border-radius: 10px 10px 0 0;
+  background-color: var(--TRIB-Blue-Primary);
+  transition: transform 1s;
+  z-index: 99;
+}
+.Roadmap_Tab > .Bordered_Content {
+  height: 100%;
+  position: relative;
+}
+.Roadmap_Topbar {
+  position: relative;
+  height: 100px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.Roadmap_Title {
+  position: relative;
+  width: 250px;
+  height: 50px;
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 40px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+.Roadmap_State_Button {
+  position: relative;
+  width: 240px;
+  height: 56px;
+  border: 2px solid #ffffff;
+  border-radius: 10px;
+  background: none;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  font-style: normal;
+  font-weight: 600;
+  font-size: calc(var(--relative_font_size) * 20px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.02em;
+}
+.arrow {
+  padding-left: 0px;
+}
+.Roadmap_Container {
+  width: 100%;
+  height: calc(100% - 100px);
+  overflow-y: scroll;
+  position: absolute;
+  transition: transform 1s ease-in-out;
+}
+.Roadmap_Details {
+  overflow-y: auto !important;
+}
+.Roadmap_Intro {
+  padding-top: 30px;
+  width: 70%;
+}
+.Roadmap_Intro p {
+  color: white;
+}
+.Roadmap_Learn_More {
+  background: transparent;
+  border: none;
+  color: white;
+  padding-top: 20px;
+  font-family: "Roboto";
+  cursor: pointer;
+  display: block;
+  text-decoration: none;
+}
+.Roadmap_Learn_More:hover {
+  text-decoration: underline;
+}
+.icon {
+  text-decoration: none !important;
+}
+.Roadmap {
+  width: 100%;
+  color: white;
+  text-align: left;
+  --TRIB_Table_Spacing: 15px;
+  border-spacing: var(--TRIB_Table_Spacing);
+  padding-top: 30px;
+  overflow: hidden;
+}
+.Roadmap tr {
+  transition: all 1s ease-in-out;
+  position: relative;
+}
+.Roadmap th {
+  border-bottom: solid 1px white;
+  padding: 10px;
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 24px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.02em;
+}
+.Roadmap thead {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background-color: var(--TRIB-Blue-Primary);
+}
+.Roadmap thead tr {
+  background-color: var(--TRIB-Blue-Primary);
+}
+.Roadmap thead > tr:last-child::after {
+  content: " ";
+  position: absolute;
+  top: calc(-1 * var(--TRIB_Table_Spacing));
+  height: var(--TRIB_Table_Spacing);
+  left: 0;
+  width: 100%;
+  background-color: var(--TRIB-Blue-Primary);
+}
+.Roadmap_Header_1 {
+  width: 22.5%;
+}
+.Roadmap_Header_2 {
+  width: 40%;
+}
+.Roadmap_Header_3 {
+  width: 32.5%;
+}
+.Empty {
+  border: none !important;
+  width: 5%;
+}
+.Target:after {
+  content: " ";
+  position: absolute;
+  opacity: 0;
+  transition: all 0.5s;
+  width: 20px;
+  height: 20px;
+  left: 0;
+  top: calc(50% - 10px);
+  left: calc(50% - 10px);
+  transform: rotate(45deg);
+  background-color: white;
+  box-shadow: 0 0 20px white;
+  z-index: 1;
+}
+.Roadmap .Hovered:after {
+  opacity: 1;
+}
+.Roadmap .Point {
+  position: absolute;
+  top: calc(50% - 8px);
+  left: calc(50% - 8px);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  z-index: 999;
+  transition: all 0.2s ease-in-out;
+}
+.Roadmap .Diamond {
+  position: absolute;
+  top: calc(50% - 8px);
+  left: calc(50% - 8px);
+  transform: rotate(45deg);
+  width: 16px;
+  height: 16px;
+  z-index: 999;
+  transition: all 0.2s ease-in-out;
+}
+.Roadmap .Target {
+  position: relative;
+}
+.Roadmap .Line_Before {
+  position: absolute;
+  height: 0px;
+  width: calc(50% + var(--TRIB_Table_Spacing));
+  left: calc(-1 * var(--TRIB_Table_Spacing));
+  top: calc(50% - 1px);
+}
+.Roadmap .Line_After {
+  position: absolute;
+  height: 0px;
+  width: calc(50% + 1px);
+  left: 50%;
+  top: calc(50% - 1px);
+}
+.Line_Down {
+  position: relative;
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(var(--relative_font_size) * 24px);
+  line-height: calc(100% * var(--relative_line_height));
+  text-align: center;
+  letter-spacing: 0.02em;
+  color: var(--TRIB-Blue-Primary);
+  background-color: white;
+  padding: 10px;
+}
+.Line_Down:before {
+  content: " ";
+  position: absolute;
+  height: 10000px;
+  width: 0px;
+  border: dashed 1px white;
+  left: calc(50% - 0.5px);
+  top: 100%;
+}
+.Roadmap .Workstream {
+  position: relative;
+  background-color: var(--TRIB-Green-Primary);
+  padding: 5px 2%;
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 500;
+  font-size: calc(var(--relative_font_size) * 20px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.02em;
+  color: var(--TRIB-Blue-Primary);
+}
+@media (max-width: 1000px) {
+  .Roadmap .Workstream_Content {
+    flex-wrap: wrap;
+  }
+}
+.Roadmap .Workstream_Content {
+  display: flex;
+  gap: 5px;
+}
+.Workstream_Content > img {
+  height: fit-content;
+}
+.Roadmap .Component {
+  position: relative;
+  color: var(--TRIB-Blue-Primary);
+  cursor: pointer;
+}
+.Roadmap .Component > button {
+  position: relative;
+  padding: 5px 20px;
+  width: 100%;
+  height: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 600;
+  font-size: calc(var(--relative_font_size) * 20px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.02em;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.Roadmap .Component_Icon {
+  position: absolute;
+  right: 10px;
+}
+.Roadmap .Component_Icon_Descriptor {
+  width: 24px;
+  height: 24px;
+}
+.Roadmap .Output {
+  background-color: white;
+  position: relative;
+  color: black;
+}
+.Roadmap .Output > div {
+  position: relative;
+  z-index: 2;
+  margin: 0 20px;
+  padding: 10px;
+  box-shadow: 2px 2px 1px lightgrey;
+  cursor: pointer;
+}
+.Roadmap .Caption:after {
+  content: " ";
+  position: absolute;
+  height: calc(100% + var(--TRIB_Table_Spacing));
+  width: 100%;
+  top: -15px;
+  background-color: white;
+  left: 0;
+}
+.Roadmap .Caption {
+  position: relative;
+  background-color: white;
+}
+.Roadmap .Caption .Explore_Component {
+  position: relative;
+  color: var(--TRIB-Blue-Primary);
+}
+.Roadmap .Caption > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0px;
+  border-left: none;
+  box-shadow: none;
+  position: relative;
+  color: black;
+  font-weight: 600;
+  z-index: 2;
+  margin: 0 0 0 20px;
+}
+.Roadmap .Output:after {
+  content: " ";
+  position: absolute;
+  height: calc(100% + var(--TRIB_Table_Spacing));
+  width: 100%;
+  top: -15px;
+  background-color: white;
+  left: 0;
+}
+.Roadmap .Last_Output:before {
+  content: " ";
+  position: absolute;
+  height: 15px;
+  width: 100%;
+  left: 0;
+  top: 100%;
+  background-color: white;
+}
+.Roadmap_Back_Button:hover {
+  text-decoration: underline;
+}
+.Roadmap_Back_Button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  height: 100px;
+  width: 150px;
+  text-align: left;
+}
+.Roadmap_Legend {
+  position: fixed;
+  left: 0;
+  top: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.Workstream_Title {
+  background-color: #9dedda;
+  width: 240px;
+  height: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 40px;
+  align-items: left;
+  gap: 10px;
+  justify-content: center;
+}
+.Workstream_Title > img {
+  height: 48px;
+  width: 48px;
+}
+.Roadmap_Legend > .Legend {
+  width: 240px;
+  padding: 10px 35px;
+  height: fit-content;
+  background-color: white;
+}
+.Roadmap_Legend > .Legend > .Icons {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.Roadmap_Legend > .Legend > .Icons .Legend_Icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #767676;
+  flex-shrink: 0;
+}
+.Roadmap_Legend > .Legend > .Icons .Legend_Icon > img {
+  width: 60%;
+  height: 60%;
+}
+.Icons .Lead_Colour {
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+  background-color: var(--TRIB-Blue-Primary);
+}
+.Icons .Contributor_Colour {
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+  border: 2px solid var(--TRIB-Blue-Primary);
+}
+.Roadmap_Legend > .Legend > .Icons > div {
+  padding: 5px;
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  gap: 10px;
+}
+.Roadmap_Legend > .Legend > .Icons > .Break {
+  height: 2px;
+  width: 100%;
+  padding: 0;
+  background-color: grey;
+  opacity: 0.5;
+}
+.Roadmap_Components {
+  position: absolute;
+  min-width: 400px;
+  width: calc(100% - 260px);
+  left: 250px;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding-right: 10px;
+  gap: 10px;
+  height: calc(100%);
+  min-height: 550px;
+  overflow-y: scroll;
+  padding-bottom: 20px;
+}
+.Roadmap_Components .Component_Spacer {
+  width: 100%;
+  height: 110px;
+}
+.Roadmap_Components .Component {
+  position: relative;
+  width: 100%;
+}
+.Roadmap_Components .Component_Tab {
+  position: relative;
+  height: 70px;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 50px;
+  border: none;
+  cursor: pointer;
+}
+.Roadmap_Components .Component .Component_Content {
+  width: 100%;
+  background-color: white;
+  transition: height 0.5s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.Roadmap_Components .Component_Tab .Component_Icon {
+  position: absolute;
+  right: 10px;
+}
+.Component_Content .Outcomes ul {
+  margin: 0;
+}
+.Component_Content .Outcomes {
+  width: 100%;
+  padding: 20px 20px 20px 70px;
+  background-color: #fafafa;
+  display: flex;
+  gap: 50px;
+}
+.Component_Content .Outputs_and_Activities {
+  position: relative;
+  width: 100%;
+  padding: 10px 50px;
+}
+.Component_Content .Publications > div > a {
+  width: 500px;
+  min-width: 200px;
+}
+.Component_Content .Publications > div > a > img {
+  margin-right: 10px;
+}
+.Component_Content .Publications > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+.Component_Content .Publications > h2 {
+  margin-bottom: 20px !important;
+}
+.Component_Content .Publications {
+  padding: 25px 70px;
+}
+.Outputs_and_Activities .Lead_Icon img {
+  height: 60%;
+  width: 60%;
+}
+.Outputs_and_Activities .Support_Icon img {
+  height: 60%;
+  width: 60%;
+}
+.Outputs_and_Activities .Support_Icon {
+  position: relative;
+  border-radius: 50%;
+  border: solid 2px var(--TRIB-Blue-Primary);
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.Outputs_and_Activities .Lead_Icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--TRIB-Blue-Primary);
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+}
+.Outputs_and_Activities table {
+  position: relative;
+  width: 100%;
+  border-spacing: 20px;
+}
+.Outputs_and_Activities th {
+  text-align: left;
+}
+.Outputs_and_Activities tbody td:first-child {
+  padding-left: 10px;
+}
+.Outputs_and_Activities tbody td ul {
+  padding-right: 10px;
+}
+.Outputs_and_Activities tbody tr {
+  box-shadow: 2px 2px 2px lightgrey;
+  padding: 5px;
+}
+.Outputs_and_Activities .Output_Cell {
+  padding: 10px;
+}
+.Outputs_and_Activities .Output_Cell > div {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.Outputs_and_Activities .Years {
+  border-radius: 10px;
+  padding: 2px 10px;
+  color: var(--TRIB-Blue-Primary);
+  font-size: calc(var(--relative_font_size) * 19px);
+  line-height: calc(100% * var(--relative_line_height));
+  width: fit-content;
+  height: fit-content;
+}
+.white {
+  filter: brightness(0) invert(1);
+}
+@media only screen and (max-width: 700px) {
+  .Component_Content > div {
+    padding: 5px !important;
+  }
+}
+
+/* ===== Home page (from Home.css) ===== */
+.Home {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.Hero_Image_Container {
+  display: flex;
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
+.Hero_Image {
+  position: relative;
+  width: calc(100% + max(calc(calc(100vw - 1560px) / 2), 0px) + 120px);
+  margin: auto 0;
+  left: -100px;
+  object-fit: contain;
+  background-position: center;
+}
+.Vision_Container {
+  position: relative;
+  display: flex;
+  align-items: left;
+  justify-content: left;
+  height: 100%;
+}
+.Vision {
+  max-height: 100%;
+  margin: auto 0;
+  max-width: 600px;
+  z-index: 2;
+}
+.Vision_Title {
+  margin-top: 0 !important;
+}
+.Vision_Body {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 500;
+  font-size: calc(var(--relative_font_size) * 20px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.02em;
+  color: #15335e;
+  padding-bottom: 10px;
+}
+.Vision_Body p {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 500;
+  font-size: calc(var(--relative_font_size) * 20px);
+  line-height: calc(100% * var(--relative_line_height));
+  letter-spacing: 0.02em;
+  color: #15335e;
+  max-width: 75%;
+}
+
+/* ===== About page (from About.css) ===== */
+.About {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 600px) {
+  .about_elements_container {
+    flex-direction: column;
+  }
+  .about_placeholder_image {
+    max-width: 50% !important;
+  }
+  .about_text_container {
+    width: 95% !important;
+  }
+}
+.about_elements_container {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  gap: 5%;
+}
+.about_placeholder_image {
+  position: relative;
+  max-width: 35%;
+  max-height: 565px;
+  flex-shrink: 2;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 3px 5px;
+  align-items: center;
+  align-content: center;
+}
+.about_placeholder_image img {
+  width: 100%;
+  height: 100%;
+}
+.about_text_container {
+  position: relative;
+  width: 60%;
+  max-height: 100%;
+  padding-bottom: 10px;
+}
+.about_text_container b {
+  font-size: calc(var(--relative_font_size) * 18px);
+  line-height: calc(100% * var(--relative_line_height));
+}
+
+/* ===== Partners page (from Partners.css) ===== */
+.Partners {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.Logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  align-items: center;
+  padding-bottom: 20px;
+}
+.Partner_Image {
+  max-height: 100px;
+  max-width: 200px;
+  object-fit: contain;
+}
+.Placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 100px;
+  border: dashed 2px grey;
+  color: grey;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px;
+}
+
+/* ===== Stakeholders page (from Stakeholders.css) ===== */
+.Stakeholders {
+  position: relative;
+  width: 100%;
+}
+.Stakeholders_Title {
+  margin-bottom: 20px;
+}
+.Stakeholders_Intro {
+  margin-bottom: 30px;
+}
+.Stakeholders_Collection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+.Stakeholder {
+  background-color: #f0f0f0;
+  padding: 8px 16px;
+  border-radius: 20px;
+}
+
+/* ===== Use Cases page (from Use_Cases.css) ===== */
+.Use_Cases {
+  position: relative;
+  width: 100%;
+}
+.Use_Case_Container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.Use_Case {
+  background-color: #fafafa;
+  border: solid 1px #e0e0e0;
+  padding: 20px;
+  max-width: 500px;
+  border-radius: 8px;
+}
+
+/* ===== Case Studies page (from Case_Studies.css) ===== */
+.Case_Studies {
+  position: relative;
+  width: 100%;
+}
+.Case_Studies_Intro {
+  padding-bottom: 50px;
+  max-width: 1000px;
+}
+.Case_Studies_Container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  row-gap: 50px;
+}
+.Case_Study_Card {
+  width: 450px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: #fafafa;
+  padding: 40px;
+  border: solid 1px #e0e0e0;
+  border-radius: 0;
+}
+.Case_Studies_Container .Case_Study_Card h1.h4 {
+  margin-bottom: 40px !important;
+}
+.Case_Study_Hero {
+  margin: -40px -40px 24px -40px;
+  overflow: hidden;
+  border-bottom: solid 1px #e0e0e0;
+  background: #e8eef5;
+}
+.Case_Study_Hero img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 320px;
+  object-fit: cover;
+  object-position: center top;
+}
+.Case_Study_Illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -40px -40px 28px -40px;
+  padding: 28px 24px;
+  background: linear-gradient(135deg, var(--TRIB-Blue-Variation-1) 0%, var(--TRIB-Green-Variation-1) 100%);
+  border-bottom: solid 1px #e0e0e0;
+}
+.Case_Study_Illustration img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+.Case_Study_ReadMore {
+  margin-top: 24px !important;
+  margin-bottom: 0 !important;
+}
+.Case_Study_ReadMore a {
+  font-weight: 600;
+  color: #15335e;
+  text-decoration: underline;
+}
+.Case_Study_ReadMore a:hover {
+  color: var(--TRIB-Green-Primary);
+}
+
+/* ===== Literature Review page (from Literature_Review.css) ===== */
+.Literature_Review {
+  position: relative;
+  width: 100%;
+}
+.Lit_Table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+.Lit_Table th {
+  text-align: left;
+  padding: 10px;
+  background-color: var(--TRIB-Blue-Primary);
+  color: white;
+  cursor: pointer;
+  user-select: none;
+}
+.Lit_Table th:hover {
+  background-color: var(--TRIB-Blue-Variation-5);
+}
+.Lit_Table td {
+  padding: 10px;
+  border-bottom: solid 1px #e0e0e0;
+  vertical-align: top;
+}
+.Lit_Table tr:hover td {
+  background-color: #f5f5f5;
+}
+
+/* ===== Future scenarios page (matrix + two-column intro) ===== */
+.Future_Scenarios {
+  position: relative;
+  width: 100%;
+}
+.Future_Scenarios > h1 {
+  margin-bottom: 24px;
+}
+.General_Scenario_Content {
+  width: 100%;
+}
+.General_Scenario_Top_Group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px 40px;
+  margin-bottom: 8px;
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .General_Scenario_Top_Group {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.General_Scenario_Intro_Title,
+.Key_Insights_Title {
+  margin-bottom: 16px !important;
+}
+.Key_Insights .Insight {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: solid 1px #e0e0e0;
+}
+.Key_Insights .Insight:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.Key_Insights .Insight h3 {
+  font-family: "Roboto", sans-serif;
+  font-weight: 600;
+  font-size: calc(var(--relative_font_size) * 17px);
+  margin: 0 0 8px 0;
+  color: var(--TRIB-Blue-Primary);
+}
+.Scenario_Selector_Container {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: solid 2px #e0e0e0;
+  scroll-margin-bottom: 24px;
+}
+.Scenario_Matrix_Intro {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 20px auto;
+  color: #505a5f;
+}
+.ScenarioMatrix {
+  display: grid;
+  grid-template-columns: minmax(100px, 150px) minmax(0, 1fr) minmax(0, 1fr);
+  /* auto rows only — 1fr rows were stretching to fill the scroll pane and cropping the bottom row */
+  grid-template-rows: auto minmax(128px, auto) minmax(128px, auto);
+  gap: 14px 14px;
+  max-width: 860px;
+  margin: 0 auto 24px auto;
+  align-items: stretch;
+  align-content: start;
+}
+.ScenarioMatrix_corner {
+  min-height: 8px;
+}
+.ScenarioMatrix_colLabel {
+  font-family: "Roboto", sans-serif;
+  font-size: calc(var(--relative_font_size) * 14px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--TRIB-Blue-Primary);
+  padding: 10px 8px;
+  background: var(--TRIB-Blue-Variation-1);
+  border-radius: 4px;
+}
+.ScenarioMatrix_rowLabel {
+  font-family: "Roboto", sans-serif;
+  font-size: calc(var(--relative_font_size) * 13px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--TRIB-Blue-Primary);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+  padding: 8px 10px 8px 4px;
+  background: linear-gradient(90deg, transparent, var(--TRIB-Green-Variation-1));
+  border-radius: 4px;
+}
+.ScenarioMatrix_cell {
+  background: var(--TRIB-Blue-Primary);
+  color: #fff;
+  border: 3px solid transparent;
+  border-radius: 6px;
+  padding: 18px 14px;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 130px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 4px 14px rgba(21, 51, 94, 0.22);
+}
+.ScenarioMatrix_cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(21, 51, 94, 0.32);
+}
+.ScenarioMatrix_cell:focus-visible {
+  outline: 3px solid var(--TRIB-Green-Variation-2);
+  outline-offset: 2px;
+}
+.ScenarioMatrix_cell.is-selected {
+  border-color: var(--TRIB-Green-Variation-2);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--TRIB-Green-Primary);
+}
+.ScenarioMatrix_cellLetter {
+  font-size: calc(var(--relative_font_size) * 32px);
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.95;
+}
+.ScenarioMatrix_cellKicker {
+  font-size: calc(var(--relative_font_size) * 12px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.88;
+}
+.ScenarioMatrix_cellName {
+  font-size: calc(var(--relative_font_size) * 16px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.ScenarioMatrix_cellSubtitle {
+  font-size: calc(var(--relative_font_size) * 12px);
+  font-weight: 400;
+  line-height: 1.35;
+  opacity: 0.9;
+  margin-top: 4px;
+  max-width: 28ch;
+}
+@media (max-width: 640px) {
+  .ScenarioMatrix {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 100%;
+  }
+  .ScenarioMatrix_corner,
+  .ScenarioMatrix_colLabel,
+  .ScenarioMatrix_rowLabel {
+    display: none;
+  }
+  .ScenarioMatrix_cell {
+    min-height: 100px;
+  }
+}
+.Scenario_Selector_Borders {
+  margin-top: 40px;
+  padding-top: 8px;
+  border-top: solid 2px #e0e0e0;
+}
+.Scenario_Selector_Content {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.Scenario_Title {
+  background: var(--TRIB-Blue-Primary);
+  color: #fff;
+  padding: 18px 24px;
+  margin: 0 -20px 24px -20px;
+  border-radius: 0;
+}
+.Scenario_Title h2,
+.Scenario_Title h3 {
+  color: #fff !important;
+  margin: 0 !important;
+}
+.Scenario_Title h2 {
+  margin-bottom: 8px !important;
+}
+.Scenario_Body {
+  padding-bottom: 40px;
+}
+.Intermediate_Scenarios_Title {
+  margin-top: 32px !important;
+  margin-bottom: 16px !important;
+}
+
+/* ===== Accessibility Statement ===== */
+.Accessiblilty_Statement {
+  position: relative;
+  width: 100%;
+}
+.Statement {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+.Statement > div {
+  flex: 1;
+  min-width: 300px;
+}
