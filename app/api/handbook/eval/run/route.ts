@@ -62,7 +62,7 @@ type EvalRunInsert = {
   word_count: number;
   mentions_brief: boolean;
   expected_signals: unknown;
-  score_citations: number | null;
+  score_citations: boolean | null;
   score_relevant: boolean | null;
   reviewer_notes: string | null;
   reviewer_relevance: number | null;
@@ -431,7 +431,8 @@ export async function POST(req: NextRequest) {
             reviewer_accuracy: null,
             reviewer_reasoning: null,
           };
-          await sb.from("eval_runs").insert(run);
+          const { error: insertErr } = await sb.from("eval_runs").insert(run);
+          if (insertErr) errors.push(`${row.test_id} [insert]: ${insertErr.message}`);
         } catch (err) {
           errors.push(`${row.test_id}: ${err instanceof Error ? err.message : String(err)}`);
         }
@@ -518,7 +519,7 @@ export async function POST(req: NextRequest) {
         word_count: wordCount,
         mentions_brief: mentionsBrief,
         expected_signals: row.expected_signals ?? null,
-        score_citations: citationCount,
+        score_citations: citationCount > 0,
         score_relevant: null,
         reviewer_notes: null,
         reviewer_relevance: null,
@@ -542,7 +543,12 @@ export async function POST(req: NextRequest) {
         }
         await new Promise((r) => setTimeout(r, 200));
       }
-      await sb.from("eval_runs").insert(run);
+      const { error: insertErr } = await sb.from("eval_runs").insert(run);
+      if (insertErr) {
+        errors.push(`${row.test_id} [insert]: ${insertErr.message}`);
+        await new Promise((r) => setTimeout(r, 300));
+        continue; // don't update freeze state if the run never persisted
+      }
       // Update freeze state on eval_cases for chat runs with reviewer scores
       const rel = run.reviewer_relevance ?? null;
       const acc = run.reviewer_accuracy ?? null;
