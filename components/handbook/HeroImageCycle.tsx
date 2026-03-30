@@ -104,7 +104,7 @@ export function HeroImageCycle() {
           position: "absolute",
           inset: 0,
           opacity: loaded[index] === true ? currentOpacity : 0,
-          transition: reducedMotion ? "none" : "opacity 2s ease-in-out",
+          willChange: "opacity",
         }}
       >
         {loaded[index] !== false && (
@@ -129,7 +129,7 @@ export function HeroImageCycle() {
             position: "absolute",
             inset: 0,
             opacity: loaded[nextIndex] === true ? nextOpacity : 0,
-            transition: "opacity 2s ease-in-out",
+            willChange: "opacity",
           }}
         >
           {loaded[nextIndex] !== false && (

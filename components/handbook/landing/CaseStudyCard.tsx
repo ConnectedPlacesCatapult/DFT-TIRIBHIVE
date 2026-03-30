@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { CaseStudy } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
+import { ga4 } from "@/lib/analytics/ga4";
 
 interface HazardBadgeProps {
   hazard: string;
@@ -302,7 +303,7 @@ export function CaseStudyCard({
           </button>
           <Link
             href={`/handbook/${cs.id}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); ga4.caseStudyOpened(cs.id, cs.sector, "card"); }}
             aria-label={`Full case study: ${cs.title}`}
             style={{
               fontSize: 12,

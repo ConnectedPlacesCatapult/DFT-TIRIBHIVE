@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, type ReactNode } from "react"
 import Link from "next/link";
 import { CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
+import { ga4 } from "@/lib/analytics/ga4";
 import { ChatPanel } from "@/components/handbook/shared/ChatPanel";
 import { HandbookNav } from "@/components/handbook/shared/HandbookNav";
 import { BriefOptionsCoverage } from "@/components/handbook/brief/BriefOptionsCoverage";
@@ -450,6 +451,7 @@ export default function HIVEBriefWithChat() {
     setLoading(true);
     setError(null);
     setSections(null);
+    ga4.briefGenerated(ids, "brief_page");
     try {
       const res = await fetch("/api/handbook/brief-generate", {
         method: "POST",

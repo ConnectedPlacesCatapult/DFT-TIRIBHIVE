@@ -1,5 +1,7 @@
 "use client";
 
+import { ga4 } from "@/lib/analytics/ga4";
+
 interface FilterPillProps {
   label: string;
   selected: boolean;
@@ -118,8 +120,7 @@ export function FilterRow({
             key={h}
             label={h}
             selected={selectedHazards.includes(h)}
-            onClick={() => onToggleHazard(h)}
-          />
+            onClick={() => { ga4.filterApplied("hazard", h); onToggleHazard(h); }}
         ))}
         {/* AI-detected hazards not already manually selected */}
         {aiHazards
@@ -154,8 +155,7 @@ export function FilterRow({
             key={s}
             label={s}
             selected={selectedSectors.includes(s)}
-            onClick={() => onToggleSector(s)}
-          />
+            onClick={() => { ga4.filterApplied("sector", s); onToggleSector(s); }}
         ))}
         {aiSectors
           .filter((s) => !selectedSectors.includes(s))

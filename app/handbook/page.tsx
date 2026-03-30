@@ -10,6 +10,7 @@ import { useUnifiedSearch } from "@/lib/handbook/useUnifiedSearch";
 import { BackgroundEffect } from "@/components/handbook/BackgroundEffect";
 import { HeroImageCycle } from "@/components/handbook/HeroImageCycle";
 import { CaseStudyDetail as CaseStudyDetailShared } from "@/components/hive/CaseStudyDetail";
+import { ga4 } from "@/lib/analytics/ga4";
 
 /** Stable wrapper so hero content doesn’t remount on every keystroke (avoids flicker). */
 function HeroBackplateWrapper({
@@ -1165,6 +1166,7 @@ function HandbookLandingPageContent() {
     merged.forEach(cs => { reasons[cs.id] = getMatchReasons(cs, query, allActiveHazards, allActiveSectors); });
     setActiveMatchReasons(reasons);
     setSynthesis(hasActiveFilters && merged.length > 0 ? generateSynthesis(merged, query) : null);
+    if (query.trim()) ga4.searchPerformed(query.trim(), merged.length, "keyword");
   }, [query, selectedHazards, selectedSectors, aiDetectedHazards, aiDetectedSectors, selectedRegions, selectedCosts, semanticResults, setResultSet, searchMode]);
 
   // In unified mode: sync one-brain results into the same state slots the grid reads from
@@ -1174,6 +1176,7 @@ function HandbookLandingPageContent() {
     setResults(unified.cases.length > 0 ? unified.cases : CASE_STUDIES);
     const rs = unified.cases.slice(0, 12).map((r) => ({ id: r.id, title: r.title, sector: r.sector }));
     setResultSet(rs);
+    ga4.searchPerformed(query.trim(), unified.cases.length, "ai");
     if (unified.synthesis) setSynthesis({ text: unified.synthesis, unified: true, count: unified.cases.length });
     // Pre-populate chat panel so "Ask a follow-up" opens an already-answered panel (no second API call)
     if (unified.synthesis) {

@@ -2,6 +2,7 @@
 
 import type { CaseStudy } from "@/lib/hive/seed-data";
 import { getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
+import { trackEvent } from "@/lib/analytics";
 
 interface CaseBodyProps {
   cs: CaseStudy;
@@ -132,6 +133,7 @@ export function CaseBody({ cs }: CaseBodyProps) {
         href={getCaseStudyPdfUrl(cs)}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackEvent("pdf_viewed", { case_id: cs.id })}
         style={{
           display: "inline-flex",
           alignItems: "center",

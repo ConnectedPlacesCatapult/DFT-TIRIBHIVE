@@ -3,16 +3,9 @@
  * All events are no-ops when window.gtag is not available (server-side, no key).
  */
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-    dataLayer?: unknown[];
-  }
-}
-
 function track(eventName: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined" || !window.gtag) return;
-  window.gtag("event", eventName, params);
+  window.gtag("event", eventName, params as Record<string, string | number>);
 }
 
 export const ga4 = {
