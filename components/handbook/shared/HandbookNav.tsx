@@ -49,10 +49,6 @@ export function HandbookNav() {
     demoMeasureCount,
     backgroundEffect,
     setBackgroundEffect,
-    heroTextTreatment,
-    setHeroTextTreatment,
-    heroTextTreatmentExtent,
-    setHeroTextTreatmentExtent,
     includeGuidance,
     setIncludeGuidance,
     reviewMode,
@@ -295,7 +291,7 @@ export function HandbookNav() {
                 onClick={handleDemoButton}
                 aria-expanded={demoUnlocked ? demoOpen : demoUnlockOpen}
                 aria-haspopup="true"
-                aria-label="Demo options"
+                aria-label="Beta options"
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
@@ -313,7 +309,7 @@ export function HandbookNav() {
                 <span aria-hidden style={{ fontSize: 14 }}>
                   {!demoUnlocked ? "🔒" : "⚙"}
                 </span>
-                <span className="hive-show-md">Demo</span>
+                <span className="hive-show-md">Beta</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ transform: demoOpen ? "rotate(180deg)" : "none" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -321,7 +317,7 @@ export function HandbookNav() {
               {demoUnlockOpen && !demoUnlocked && (
                 <div
                   role="dialog"
-                  aria-label="Unlock demo options"
+                  aria-label="Unlock beta options"
                   style={{
                     position: "absolute",
                     top: "100%",
@@ -340,7 +336,7 @@ export function HandbookNav() {
                   }}
                 >
                   <div style={{ fontSize: 11, fontWeight: 700, color: T.textSecondary, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                    Demo options locked
+                    Beta options locked
                   </div>
                   <input
                     type="password"
@@ -387,7 +383,7 @@ export function HandbookNav() {
               {demoOpen && (
                 <div
                   role="menu"
-                  aria-label="Demo options"
+                  aria-label="Beta options"
                   style={{
                     position: "absolute",
                     top: "100%",
@@ -625,54 +621,6 @@ export function HandbookNav() {
                     </a>
                   </div>
 
-                  {backgroundEffect === "hero" && (
-                    <>
-                      <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Hero text</div>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {[
-                            { id: "gradient" as const, label: "Gradient" },
-                            { id: "scrim" as const, label: "Scrim" },
-                            { id: "backplate" as const, label: "Backplate" },
-                          ].map((v) => (
-                            <button
-                              key={v.id}
-                              type="button"
-                              role="menuitemradio"
-                              aria-checked={heroTextTreatment === v.id}
-                              onClick={() => setHeroTextTreatment(v.id)}
-                              style={{
-                                fontSize: 11,
-                                fontWeight: 600,
-                                padding: "4px 10px",
-                                borderRadius: 6,
-                                border: "none",
-                                cursor: "pointer",
-                                background: heroTextTreatment === v.id ? T.accent : T.surfaceAlt,
-                                color: heroTextTreatment === v.id ? "#fff" : T.textSecondary,
-                              }}
-                            >
-                              {v.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Extent</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <input
-                            type="range"
-                            min={0}
-                            max={120}
-                            value={heroTextTreatmentExtent}
-                            onChange={(e) => setHeroTextTreatmentExtent(Number(e.target.value))}
-                            style={{ width: 100, accentColor: T.accent }}
-                          />
-                          <span style={{ fontSize: 11, color: T.textSecondary, minWidth: 28 }}>{heroTextTreatmentExtent}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
             </div>
