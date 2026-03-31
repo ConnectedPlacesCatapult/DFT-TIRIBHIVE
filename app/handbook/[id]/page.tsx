@@ -59,12 +59,12 @@ export default function CasePage({ params }: CasePageProps) {
       {/* Body */}
       <div
         style={{
-          maxWidth: 900,
+          maxWidth: 1060,
           margin: "0 auto",
           padding: "28px 24px 64px",
           display: "grid",
-          gridTemplateColumns: "1fr 320px",
-          gap: 32,
+          gridTemplateColumns: "1fr 280px",
+          gap: 40,
           alignItems: "start",
         }}
       >

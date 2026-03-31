@@ -31,7 +31,7 @@ export function CaseHeader({ cs, inBrief, onAddToBrief, onAskAboutCase }: CaseHe
         padding: "24px 24px 20px",
       }}
     >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1060, margin: "0 auto" }}>
         {/* Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
           <Link

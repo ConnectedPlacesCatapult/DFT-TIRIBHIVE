@@ -111,7 +111,7 @@ export function RelatedCases({
                   color: cs.transferability === "High" ? "#065f46" : "#92400e",
                 }}
               >
-                {cs.transferability} transferability
+                {cs.transferability === "High" ? "High UK fit" : cs.transferability === "Medium" ? "Medium UK fit" : "Low UK fit"}
               </span>
             </div>
           </Link>
