@@ -79,12 +79,6 @@ type HandbookContextType = {
   /** Background effect for landing hero (demo only); persisted in localStorage 'hiveBackgroundEffect' */
   backgroundEffect: "none" | "hero";
   setBackgroundEffect: (v: "none" | "hero") => void;
-  /** Hero text readability when background is Hero: gradient (steep) | scrim | backplate; persisted */
-  heroTextTreatment: "gradient" | "scrim" | "backplate";
-  setHeroTextTreatment: (v: "gradient" | "scrim" | "backplate") => void;
-  /** Extent: gradient = steepness (%), scrim = blur px, backplate = radius px; 0–120; persisted; lower = more fade coverage */
-  heroTextTreatmentExtent: number;
-  setHeroTextTreatmentExtent: (v: number) => void;
   /** Current grid result set (handbook landing) — passed to chat so AI knows what user is looking at; one list, one number */
   resultSet: Array<{ id: string; title: string; sector: string }>;
   setResultSet: (set: Array<{ id: string; title: string; sector: string }>) => void;
@@ -124,8 +118,6 @@ const HandbookContext = createContext<HandbookContextType | null>(null);
 const SESSION_INTENT_KEY = "hiveSessionIntent";
 const BRIEF_IDS_KEY = "hiveBriefIds";
 const BACKGROUND_EFFECT_KEY = "hiveBackgroundEffect";
-const HERO_TEXT_TREATMENT_KEY = "hiveHeroTextTreatment";
-const HERO_TEXT_EXTENT_KEY = "hiveHeroTextExtent";
 const STATS_PLACEMENT_KEY = "hiveStatsPlacement";
 const HIDE_BRIEF_KEY = "hiveHideBrief";
 const CHIP_CARD_VIEW_KEY = "hiveChipCardView";
@@ -186,8 +178,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   const [chipCardView, setChipCardViewState] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(CHIP_CARD_VIEW_KEY) === "true";
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(CHIP_CARD_VIEW_KEY);
+    return stored === null ? true : stored === "true"; // default true (mini-cards on)
   });
   const setChipCardView = useCallback((v: boolean) => {
     setChipCardViewState(v);
@@ -219,34 +212,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setBackgroundEffectState(v);
     if (typeof window !== "undefined") {
       localStorage.setItem(BACKGROUND_EFFECT_KEY, v);
-    }
-  }, []);
-
-  const [heroTextTreatment, setHeroTextTreatmentState] = useState<
-    "gradient" | "scrim" | "backplate"
-  >(() => {
-    if (typeof window === "undefined") return "gradient";
-    const stored = localStorage.getItem(HERO_TEXT_TREATMENT_KEY);
-    return stored === "scrim" || stored === "backplate" ? stored : "gradient";
-  });
-  const setHeroTextTreatment = useCallback((v: "gradient" | "scrim" | "backplate") => {
-    setHeroTextTreatmentState(v);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(HERO_TEXT_TREATMENT_KEY, v);
-    }
-  }, []);
-
-  const [heroTextTreatmentExtent, setHeroTextTreatmentExtentState] = useState<number>(() => {
-    if (typeof window === "undefined") return 120;
-    const stored = localStorage.getItem(HERO_TEXT_EXTENT_KEY);
-    const n = stored ? parseInt(stored, 10) : 120;
-    return Number.isFinite(n) && n >= 0 && n <= 120 ? n : 120;
-  });
-  const setHeroTextTreatmentExtent = useCallback((v: number) => {
-    const clamped = Math.round(Math.max(0, Math.min(120, v)));
-    setHeroTextTreatmentExtentState(clamped);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(HERO_TEXT_EXTENT_KEY, String(clamped));
     }
   }, []);
 
@@ -362,10 +327,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setDemoCounts,
         backgroundEffect,
         setBackgroundEffect,
-        heroTextTreatment,
-        setHeroTextTreatment,
-        heroTextTreatmentExtent,
-        setHeroTextTreatmentExtent,
         resultSet,
         setResultSet,
         semanticChunks,
