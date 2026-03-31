@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { CaseStudy } from "@/lib/hive/seed-data";
 import { getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import type { ArticleCardRow } from "@/lib/handbook/article-cards";
+import { useChatContext } from "@/components/handbook/shared/ChatContext";
 
 type CaseStudyDetailProps = {
   cs: CaseStudy;
@@ -34,12 +35,13 @@ const EVIDENCE_STYLES: Record<string, { bg: string; color: string }> = {
 // Rich card body — rendered when article_card data is available
 // ---------------------------------------------------------------------------
 
-function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
+function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief, hideBrief }: {
   card: ArticleCardRow;
   cs: CaseStudy;
   onClose: () => void;
   onAddToBrief: (cs: CaseStudy) => void;
   inBrief: boolean;
+  hideBrief: boolean;
 }) {
   const ts = TRANSFER_STYLES[card.uk_transferability ?? "medium"];
   const ev = EVIDENCE_STYLES[card.evidence_quality ?? "limited"];
@@ -95,12 +97,14 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
           >
             ↗ View full case study
           </a>
+          {!hideBrief && (
           <button
             onClick={() => { onAddToBrief(cs); onClose(); }}
             style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#1D9E75" : "#1a1a1a", border: inBrief ? "1.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
           >
             {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
           </button>
+          )}
         </div>
         {/* Secondary row */}
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
@@ -246,11 +250,12 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
 // Fallback body — when no card is available, render from CaseStudy seed data
 // ---------------------------------------------------------------------------
 
-function FallbackBody({ cs, onClose, onAddToBrief, inBrief }: {
+function FallbackBody({ cs, onClose, onAddToBrief, inBrief, hideBrief }: {
   cs: CaseStudy;
   onClose: () => void;
   onAddToBrief: (cs: CaseStudy) => void;
   inBrief: boolean;
+  hideBrief: boolean;
 }) {
   return (
     <>
@@ -269,12 +274,14 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief }: {
           >
             ↗ View full case study
           </a>
+          {!hideBrief && (
           <button
             onClick={() => { onAddToBrief(cs); onClose(); }}
             style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#1D9E75" : "#1a1a1a", border: inBrief ? "1.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
           >
             {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
           </button>
+          )}
         </div>
         {/* Secondary row */}
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
@@ -402,6 +409,7 @@ function LinkButton({ href, label }: { href: string; label: string }) {
 // ---------------------------------------------------------------------------
 
 export function CaseStudyDetail({ cs, onClose, onAddToBrief, inBrief, prefetchedCard }: CaseStudyDetailProps) {
+  const { hideBrief } = useChatContext();
   // If a pre-fetched card was passed in, use it immediately — no loading state
   const [card, setCard] = useState<ArticleCardRow | null>(prefetchedCard ?? null);
   const [loading, setLoading] = useState(prefetchedCard === undefined);
@@ -468,9 +476,9 @@ export function CaseStudyDetail({ cs, onClose, onAddToBrief, inBrief, prefetched
             <div style={{ fontSize: 13, color: "#888" }}>Loading case study...</div>
           </div>
         ) : card ? (
-          <RichCardBody card={card} cs={cs} onClose={onClose} onAddToBrief={onAddToBrief} inBrief={inBrief} />
+          <RichCardBody card={card} cs={cs} onClose={onClose} onAddToBrief={onAddToBrief} inBrief={inBrief} hideBrief={hideBrief} />
         ) : (
-          <FallbackBody cs={cs} onClose={onClose} onAddToBrief={onAddToBrief} inBrief={inBrief} />
+          <FallbackBody cs={cs} onClose={onClose} onAddToBrief={onAddToBrief} inBrief={inBrief} hideBrief={hideBrief} />
         )}
       </div>
     </div>

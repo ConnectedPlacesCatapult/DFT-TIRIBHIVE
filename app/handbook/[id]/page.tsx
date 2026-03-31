@@ -2,7 +2,7 @@
 
 import { use, useEffect } from "react";
 import { notFound } from "next/navigation";
-import { CASE_STUDIES } from "@/lib/hive/seed-data";
+import { CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { CaseHeader } from "@/components/handbook/case/CaseHeader";
 import { CaseBody } from "@/components/handbook/case/CaseBody";
@@ -19,7 +19,7 @@ export default function CasePage({ params }: CasePageProps) {
   const { id } = use(params);
   const cs = CASE_STUDIES.find((c) => c.id === id);
 
-  const { setChatContext, openChat, briefIds, addToBrief, removeFromBrief, theme } =
+  const { setChatContext, openChat, briefIds, addToBrief, removeFromBrief, theme, hideBrief } =
     useChatContext();
 
   useEffect(() => {
@@ -34,6 +34,7 @@ export default function CasePage({ params }: CasePageProps) {
   if (!cs) return notFound();
 
   const inBrief = briefIds.includes(cs.id);
+  const pdfUrl = getCaseStudyPdfUrl(cs);
 
   const handleAddToBrief = () => {
     if (inBrief) removeFromBrief(cs.id);
@@ -52,8 +53,10 @@ export default function CasePage({ params }: CasePageProps) {
       <CaseHeader
         cs={cs}
         inBrief={inBrief}
+        pdfUrl={pdfUrl}
         onAddToBrief={handleAddToBrief}
         onAskAboutCase={handleAskAboutCase}
+        hideBrief={hideBrief}
       />
 
       {/* Body */}

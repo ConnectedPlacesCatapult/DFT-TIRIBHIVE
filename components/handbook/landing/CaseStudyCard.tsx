@@ -91,7 +91,7 @@ export function CaseStudyCard({
   index = 0,
 }: CaseStudyCardProps) {
   const [hovered, setHovered] = useState(false);
-  const { theme: T } = useChatContext();
+  const { theme: T, hideBrief } = useChatContext();
 
   return (
     <div
@@ -280,6 +280,7 @@ export function CaseStudyCard({
           <span style={{ fontSize: 11, color: T.textMuted }}>{cs.costBand}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {!hideBrief && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -301,6 +302,7 @@ export function CaseStudyCard({
           >
             {inBrief ? "✓ In brief" : "+ Add to brief"}
           </button>
+          )}
           <Link
             href={`/handbook/${cs.id}`}
             onClick={(e) => { e.stopPropagation(); ga4.caseStudyOpened(cs.id, cs.sector, "card"); }}

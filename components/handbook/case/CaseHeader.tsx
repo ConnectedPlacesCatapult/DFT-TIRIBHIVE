@@ -6,8 +6,10 @@ import type { CaseStudy } from "@/lib/hive/seed-data";
 interface CaseHeaderProps {
   cs: CaseStudy;
   inBrief: boolean;
+  pdfUrl?: string | null;
   onAddToBrief: () => void;
   onAskAboutCase: () => void;
+  hideBrief?: boolean;
 }
 
 const SECTOR_STYLE: Record<string, { color: string }> = {
@@ -20,8 +22,22 @@ const SECTOR_STYLE: Record<string, { color: string }> = {
   Multiple:             { color: "#374151" },
 };
 
-export function CaseHeader({ cs, inBrief, onAddToBrief, onAskAboutCase }: CaseHeaderProps) {
+export function CaseHeader({ cs, inBrief, pdfUrl, onAddToBrief, onAskAboutCase, hideBrief = false }: CaseHeaderProps) {
   const accentColor = SECTOR_STYLE[cs.sector]?.color ?? "#1d70b8";
+  const transferabilityLabel =
+    cs.transferability === "High"
+      ? "High"
+      : cs.transferability === "Medium"
+        ? "Medium"
+        : cs.transferability === "Low"
+          ? "Low"
+          : cs.transferability || "—";
+  const transferabilityNoteShort = (cs.transferabilityNote || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[•\-\u2022]+\s*/, "")
+    .split(/(?<=[.!?])\s+/)[0]
+    ?.slice(0, 160);
 
   return (
     <div
@@ -120,8 +136,9 @@ export function CaseHeader({ cs, inBrief, onAddToBrief, onAskAboutCase }: CaseHe
           {cs.hook}
         </p>
 
-        {/* Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        {/* Hero: primary actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+          {!hideBrief && (
           <button
             onClick={onAddToBrief}
             style={{
@@ -142,6 +159,7 @@ export function CaseHeader({ cs, inBrief, onAddToBrief, onAskAboutCase }: CaseHe
           >
             {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
           </button>
+          )}
           <button
             onClick={onAskAboutCase}
             style={{
@@ -175,6 +193,95 @@ export function CaseHeader({ cs, inBrief, onAddToBrief, onAskAboutCase }: CaseHe
             </svg>
             Ask about this case
           </button>
+
+          {pdfUrl && (
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                padding: "8px 14px",
+                borderRadius: 8,
+                border: "1.5px solid #d1d5db",
+                background: "#fff",
+                color: "#374151",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                textDecoration: "none",
+                transition: "border-color 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1d70b8")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View original PDF
+            </a>
+          )}
+        </div>
+
+        {/* Hero: key insight */}
+        <div
+          style={{
+            background: "#e8f1fb",
+            border: "1px solid #b3d4ef",
+            borderRadius: 12,
+            padding: "14px 16px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+            <div style={{ width: 18, height: 18, borderRadius: 5, background: "#1d70b8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.07em", color: "#1d70b8" }}>
+              Key insight
+            </span>
+          </div>
+          <p style={{ fontSize: 14, color: "#0b0c0c", lineHeight: 1.65, fontWeight: 500, margin: 0 }}>
+            {cs.insight}
+          </p>
+
+          <div
+            style={{
+              marginTop: 10,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#0b0c0c",
+                padding: "4px 10px",
+                borderRadius: 9999,
+                background: "#fff",
+                border: "1px solid #b3d4ef",
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: cs.transferability === "High" ? "#10b981" : cs.transferability === "Medium" ? "#f59e0b" : "#ef4444" }} />
+              Transferability to UK: {transferabilityLabel}
+            </span>
+
+            {transferabilityNoteShort && transferabilityNoteShort !== "—" && (
+              <span style={{ fontSize: 12, color: "#374151", lineHeight: 1.5 }}>
+                {transferabilityNoteShort}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

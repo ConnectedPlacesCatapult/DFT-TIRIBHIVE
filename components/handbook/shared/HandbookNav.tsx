@@ -59,6 +59,8 @@ export function HandbookNav() {
     setReviewMode,
     statsPlacement,
     setStatsPlacement,
+    hideBrief,
+    setHideBrief,
   } = useChatContext();
 
   const [demoOpen, setDemoOpen] = useState(false);
@@ -220,7 +222,7 @@ export function HandbookNav() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }} role="list">
-              {NAV_LINKS.map((link) => {
+              {NAV_LINKS.filter((link) => !(hideBrief && link.href === "/handbook/brief")).map((link) => {
                 const isActive =
                   link.href === "/handbook/cases"
                     ? pathname === "/handbook/cases" || pathname?.startsWith("/handbook/cases/")
@@ -548,6 +550,25 @@ export function HandbookNav() {
                       }}
                     >
                       {includeGuidance ? "✓ Guidance in answers" : "Include guidance in AI →"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHideBrief(!hideBrief)}
+                      style={{
+                        width: "100%",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        background: hideBrief ? T.surfaceAlt : "#fce7f3",
+                        color: hideBrief ? T.textSecondary : "#9d174d",
+                        textAlign: "left",
+                        marginTop: 4,
+                      }}
+                    >
+                      {hideBrief ? "Brief features hidden → show" : "✓ Brief features visible → hide"}
                     </button>
                   </div>
 

@@ -111,6 +111,9 @@ type HandbookContextType = {
   /** Demo: where to show library stats on the handbook landing page */
   statsPlacement: "quickstart" | "marquee";
   setStatsPlacement: (v: "quickstart" | "marquee") => void;
+  /** Hide all Build Brief UI — default true for client delivery; toggled via Demo options */
+  hideBrief: boolean;
+  setHideBrief: (v: boolean) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -121,6 +124,7 @@ const BACKGROUND_EFFECT_KEY = "hiveBackgroundEffect";
 const HERO_TEXT_TREATMENT_KEY = "hiveHeroTextTreatment";
 const HERO_TEXT_EXTENT_KEY = "hiveHeroTextExtent";
 const STATS_PLACEMENT_KEY = "hiveStatsPlacement";
+const HIDE_BRIEF_KEY = "hiveHideBrief";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
@@ -166,6 +170,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const [includeGuidance, setIncludeGuidance] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [hideBrief, setHideBriefState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(HIDE_BRIEF_KEY);
+    return stored === "false" ? false : true; // default true (hidden)
+  });
+  const setHideBrief = useCallback((v: boolean) => {
+    setHideBriefState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HIDE_BRIEF_KEY, String(v));
+    }
+  }, []);
   const [statsPlacement, setStatsPlacementState] = useState<"quickstart" | "marquee">(() => {
     if (typeof window === "undefined") return "quickstart";
     const stored = localStorage.getItem(STATS_PLACEMENT_KEY);
@@ -355,6 +370,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setReviewOverride,
         statsPlacement,
         setStatsPlacement,
+        hideBrief,
+        setHideBrief,
       }}
     >
       {children}
