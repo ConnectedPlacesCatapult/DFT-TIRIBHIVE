@@ -69,6 +69,8 @@ export function HandbookNav() {
   const [demoPassword, setDemoPassword] = useState("");
   const [demoError, setDemoError] = useState("");
   const demoRef = useRef<HTMLDivElement>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!demoOpen && !demoUnlockOpen) return;
@@ -81,6 +83,17 @@ export function HandbookNav() {
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [demoOpen, demoUnlockOpen]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [moreOpen]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -154,7 +167,7 @@ export function HandbookNav() {
         style={{
           position: "sticky",
           top: 0,
-          zIndex: 40,
+          zIndex: 500,
           background: T.navBg,
           borderBottom: `1px solid ${T.border}`,
           backdropFilter: "blur(10px)",
@@ -170,8 +183,8 @@ export function HandbookNav() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 16,
-            flexWrap: "wrap",
-            rowGap: 10,
+            flexWrap: "nowrap",
+            overflow: "hidden",
           }}
         >
           {/* Brand + primary nav grouped (strapline last so links sit beside HIVE) */}
@@ -179,7 +192,7 @@ export function HandbookNav() {
             style={{
               display: "flex",
               alignItems: "center",
-              flexWrap: "wrap",
+              flexWrap: "nowrap",
               gap: "10px 14px",
               flex: "1 1 auto",
               minWidth: 0,
@@ -221,8 +234,27 @@ export function HandbookNav() {
               </Link>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }} role="list">
-              {NAV_LINKS.filter((link) => !(hideBrief && link.href === "/handbook/brief")).map((link) => {
+            <div
+              className="hive-scroll"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                flexWrap: "nowrap",
+                overflowX: "auto",
+                overflowY: "hidden",
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: 2,
+                marginBottom: -2,
+              }}
+              role="list"
+              aria-label="Primary"
+            >
+              {NAV_LINKS.filter(
+                (link) =>
+                  link.href !== "/handbook/guidance" &&
+                  !(hideBrief && link.href === "/handbook/brief")
+              ).map((link) => {
                 const isActive =
                   link.href === "/handbook/cases"
                     ? pathname === "/handbook/cases" || pathname?.startsWith("/handbook/cases/")
@@ -268,21 +300,100 @@ export function HandbookNav() {
                 );
               })}
             </div>
-
-            <span
-              className="hive-show-sm hive-nav-strapline"
-              style={{
-                color: T.textSecondary,
-                fontFamily: "var(--font-dm-sans), Arial, sans-serif",
-              }}
-              title="Climate adaptation evidence and case intelligence for transport"
-            >
-              Climate adaptation evidence for transport
-            </span>
           </div>
 
-          {/* Right: Demo options menu, DfT Partner, Ask HIVE */}
+          {/* Right: overflow + demo options + Ask HIVE */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div ref={moreRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setMoreOpen((o) => !o)}
+                aria-expanded={moreOpen}
+                aria-haspopup="true"
+                aria-label="More"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: `1px solid ${T.border}`,
+                  background: T.surfaceAlt,
+                  color: T.textSecondary,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flexShrink: 0,
+                }}
+                title="More"
+              >
+                <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>
+                  ⋯
+                </span>
+              </button>
+              {moreOpen && (
+                <div
+                  role="menu"
+                  aria-label="More"
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: 4,
+                    minWidth: 220,
+                    padding: 10,
+                    borderRadius: 12,
+                    border: `1px solid ${T.border}`,
+                    background: T.surface,
+                    boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
+                    zIndex: 600,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <Link
+                    href="/handbook/guidance"
+                    role="menuitem"
+                    onClick={() => setMoreOpen(false)}
+                    style={{
+                      width: "100%",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      color: T.textSecondary,
+                      textDecoration: "none",
+                      background: T.surfaceAlt,
+                      border: `1px solid ${T.border}`,
+                    }}
+                    title="External guidance and reference links"
+                  >
+                    Additional resources →
+                  </Link>
+                  <Link
+                    href="/"
+                    role="menuitem"
+                    onClick={() => setMoreOpen(false)}
+                    style={{
+                      width: "100%",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      color: T.textSecondary,
+                      textDecoration: "none",
+                      background: "transparent",
+                      border: `1px solid transparent`,
+                    }}
+                    title="Main TRIB site — programme home"
+                  >
+                    TRIB programme home →
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <div ref={demoRef} style={{ position: "relative" }}>
               <button
                 type="button"
@@ -293,7 +404,7 @@ export function HandbookNav() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  padding: "6px 12px",
+                  padding: "6px 10px",
                   borderRadius: 8,
                   border: `1px solid ${T.border}`,
                   background: T.surfaceAlt,
@@ -304,7 +415,10 @@ export function HandbookNav() {
                   gap: 6,
                 }}
               >
-                {!demoUnlocked ? "🔒 " : ""}Demo options
+                <span aria-hidden style={{ fontSize: 14 }}>
+                  {!demoUnlocked ? "🔒" : "⚙"}
+                </span>
+                <span className="hive-show-md">Demo</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ transform: demoOpen ? "rotate(180deg)" : "none" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -324,7 +438,7 @@ export function HandbookNav() {
                     border: `1px solid ${T.border}`,
                     background: T.surface,
                     boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
-                    zIndex: 50,
+                    zIndex: 600,
                     display: "flex",
                     flexDirection: "column",
                     gap: 8,
@@ -392,7 +506,7 @@ export function HandbookNav() {
                     border: `1px solid ${T.border}`,
                     background: T.surface,
                     boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
-                    zIndex: 50,
+                    zIndex: 600,
                     display: "flex",
                     flexDirection: "column",
                     gap: 16,

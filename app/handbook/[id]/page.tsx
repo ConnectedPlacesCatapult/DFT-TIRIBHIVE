@@ -1,100 +1,27 @@
-"use client";
-
-import { use, useEffect } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
-import { useChatContext } from "@/components/handbook/shared/ChatContext";
-import { CaseHeader } from "@/components/handbook/case/CaseHeader";
-import { CaseBody } from "@/components/handbook/case/CaseBody";
-import { ApplicabilityPanel } from "@/components/handbook/case/ApplicabilityPanel";
-import { RelatedCases } from "@/components/handbook/case/RelatedCases";
-import { recordCaseStudyView } from "@/components/handbook/shared/FeedbackSurvey";
-import { ga4 } from "@/lib/analytics/ga4";
+import { CASE_STUDIES } from "@/lib/hive/seed-data";
+import { CasePageClient } from "@/components/handbook/case/CasePageClient";
 
 interface CasePageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function CasePage({ params }: CasePageProps) {
-  const { id } = use(params);
+export async function generateMetadata({ params }: CasePageProps): Promise<Metadata> {
+  const { id } = await params;
   const cs = CASE_STUDIES.find((c) => c.id === id);
+  if (!cs) {
+    return { title: "Case study — HIVE" };
+  }
+  return {
+    title: `${cs.title} — HIVE`,
+    description: cs.summary ?? "Case study from the HIVE Climate Adaptation Handbook.",
+  };
+}
 
-  const { setChatContext, openChat, briefIds, addToBrief, removeFromBrief, theme, hideBrief } =
-    useChatContext();
-
-  useEffect(() => {
-    if (id) {
-      setChatContext(`case:${id}`);
-      recordCaseStudyView();
-      if (cs) ga4.caseStudyOpened(id, cs.sector, "card");
-    }
-  }, [id, setChatContext]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!id) return <div style={{ padding: 40 }}>Loading...</div>;
+export default async function CasePage({ params }: CasePageProps) {
+  const { id } = await params;
+  const cs = CASE_STUDIES.find((c) => c.id === id);
   if (!cs) return notFound();
-
-  const inBrief = briefIds.includes(cs.id);
-  const pdfUrl = getCaseStudyPdfUrl(cs);
-
-  const handleAddToBrief = () => {
-    if (inBrief) removeFromBrief(cs.id);
-    else addToBrief(cs.id);
-  };
-
-  const handleAskAboutCase = () => {
-    openChat(`case:${cs.id}`);
-  };
-
-  const T = theme;
-
-  return (
-    <div style={{ background: T.bg, minHeight: "100vh" }}>
-      {/* Case header */}
-      <CaseHeader
-        cs={cs}
-        inBrief={inBrief}
-        pdfUrl={pdfUrl}
-        onAddToBrief={handleAddToBrief}
-        onAskAboutCase={handleAskAboutCase}
-        hideBrief={hideBrief}
-      />
-
-      {/* Body */}
-      <div
-        style={{
-          maxWidth: 1060,
-          margin: "0 auto",
-          padding: "28px 24px 64px",
-          display: "grid",
-          gridTemplateColumns: "1fr 280px",
-          gap: 40,
-          alignItems: "start",
-        }}
-      >
-        {/* Main content */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <CaseBody cs={cs} />
-        </div>
-
-        {/* Sidebar */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-            position: "sticky",
-            top: 80,
-          }}
-        >
-          <ApplicabilityPanel cs={cs} />
-          <RelatedCases
-            currentId={cs.id}
-            currentSector={cs.sector}
-            currentHazards={cs.hazards.cause}
-            allCases={CASE_STUDIES}
-          />
-        </div>
-      </div>
-    </div>
-  );
+  return <CasePageClient id={id} />;
 }

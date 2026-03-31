@@ -49,7 +49,7 @@ export function CaseHeader({ cs, inBrief, pdfUrl, onAddToBrief, onAskAboutCase, 
     >
       <div style={{ maxWidth: 1060, margin: "0 auto" }}>
         {/* Breadcrumb */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+        <nav aria-label="Breadcrumb" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
           <Link
             href="/handbook"
             style={{
@@ -79,7 +79,7 @@ export function CaseHeader({ cs, inBrief, pdfUrl, onAddToBrief, onAskAboutCase, 
           </Link>
           <span style={{ fontSize: 11, color: "#d1d5db" }}>›</span>
           <span style={{ fontSize: 12, color: "#9ca3af" }}>{cs.id}</span>
-        </div>
+        </nav>
 
         {/* Meta */}
         <div

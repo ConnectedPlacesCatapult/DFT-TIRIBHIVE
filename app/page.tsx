@@ -81,9 +81,9 @@ export default function HomePage() {
         {/* ── Hero ───────────────────────────────────────────────────────── */}
         <section className="bg-white pt-14 pb-10 px-6">
           <div className="max-w-[680px] mx-auto text-center">
-            <h2 className="text-[28px] font-bold text-[#21808B] mb-3 leading-tight">
+            <h1 className="text-[28px] font-bold text-[#21808B] mb-3 leading-tight">
               Transport Research and Innovation Board
-            </h2>
+            </h1>
             <p className="text-base text-gray-500 leading-relaxed">
               Connecting the organisations that fund, shape, and deliver
               transport innovation in the UK.

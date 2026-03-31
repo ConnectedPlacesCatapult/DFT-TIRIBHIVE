@@ -244,3 +244,34 @@ a:hover {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* Skip link — hidden until keyboard focus */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 10px 12px;
+  clip: auto;
+  overflow: visible;
+  z-index: 9999;
+  background: #ffffff;
+  color: #0b0c0c;
+  border: 2px solid #21808b;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}

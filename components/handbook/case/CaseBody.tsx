@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { CaseStudy } from "@/lib/hive/seed-data";
-import { getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
-import { trackEvent } from "@/lib/analytics";
 
 interface CaseBodyProps {
   cs: CaseStudy;
@@ -216,7 +214,6 @@ function RevealCard({ children, delay = 0 }: { children: React.ReactNode; delay?
 }
 
 export function CaseBody({ cs }: CaseBodyProps) {
-  const pdfUrl = getCaseStudyPdfUrl(cs);
   const sectionsToShow = SECTION_ORDER.filter(([key]) => cs.sections?.[key]);
 
   return (
@@ -260,69 +257,10 @@ export function CaseBody({ cs }: CaseBodyProps) {
         </RevealCard>
       )}
 
-      {/* Key insight */}
-      <RevealCard delay={50}>
-        <div
-          style={{
-            background: "#e8f1fb",
-            border: "1px solid #b3d4ef",
-            borderRadius: 12,
-            padding: "16px 18px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
-            <div style={{ width: 20, height: 20, borderRadius: 5, background: "#1d70b8", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#1d70b8" }}>
-              Key insight
-            </span>
-          </div>
-          <p style={{ fontSize: 14, color: "#0b0c0c", lineHeight: 1.65, fontWeight: 500, margin: 0 }}>
-            {cs.insight}
-          </p>
-        </div>
-      </RevealCard>
-
-      {/* View original PDF — prominent button */}
-      {pdfUrl && (
-        <RevealCard delay={80}>
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackEvent("pdf_viewed", { case_id: cs.id })}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#374151",
-              textDecoration: "none",
-              padding: "9px 16px",
-              borderRadius: 8,
-              background: "#fff",
-              border: "1px solid #d1d5db",
-              width: "fit-content",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-              transition: "border-color 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1d70b8")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-            View original PDF
-          </a>
-        </RevealCard>
-      )}
+      {/* View original PDF is in CaseHeader (primary actions) */}
 
       {/* Summary */}
-      <RevealCard delay={100}>
+      <RevealCard delay={50}>
         <div style={{ background: "#f9fafb", borderRadius: 12, padding: "16px 18px" }}>
           <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.7, margin: 0 }}>{cs.summary}</p>
         </div>

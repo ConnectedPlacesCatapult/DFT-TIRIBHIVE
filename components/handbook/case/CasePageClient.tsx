@@ -1,0 +1,92 @@
+"use client";
+
+import { useEffect } from "react";
+import { notFound } from "next/navigation";
+import { CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
+import { useChatContext } from "@/components/handbook/shared/ChatContext";
+import { CaseHeader } from "@/components/handbook/case/CaseHeader";
+import { CaseBody } from "@/components/handbook/case/CaseBody";
+import { ApplicabilityPanel } from "@/components/handbook/case/ApplicabilityPanel";
+import { RelatedCases } from "@/components/handbook/case/RelatedCases";
+import { recordCaseStudyView } from "@/components/handbook/shared/FeedbackSurvey";
+import { ga4 } from "@/lib/analytics/ga4";
+
+export function CasePageClient({ id }: { id: string }) {
+  const cs = CASE_STUDIES.find((c) => c.id === id);
+
+  const { setChatContext, openChat, briefIds, addToBrief, removeFromBrief, theme, hideBrief } =
+    useChatContext();
+
+  useEffect(() => {
+    if (id) {
+      setChatContext(`case:${id}`);
+      recordCaseStudyView();
+      if (cs) ga4.caseStudyOpened(id, cs.sector, "card");
+    }
+  }, [id, setChatContext]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!id) return <div style={{ padding: 40 }}>Loading...</div>;
+  if (!cs) return notFound();
+
+  const inBrief = briefIds.includes(cs.id);
+  const pdfUrl = getCaseStudyPdfUrl(cs);
+
+  const handleAddToBrief = () => {
+    if (inBrief) removeFromBrief(cs.id);
+    else addToBrief(cs.id);
+  };
+
+  const handleAskAboutCase = () => {
+    openChat(`case:${cs.id}`);
+  };
+
+  const T = theme;
+
+  return (
+    <div style={{ background: T.bg, minHeight: "100vh" }}>
+      <CaseHeader
+        cs={cs}
+        inBrief={inBrief}
+        pdfUrl={pdfUrl}
+        onAddToBrief={handleAddToBrief}
+        onAskAboutCase={handleAskAboutCase}
+        hideBrief={hideBrief}
+      />
+
+      <div
+        style={{
+          maxWidth: 1060,
+          margin: "0 auto",
+          padding: "28px 24px 64px",
+          display: "grid",
+          gridTemplateColumns: "1fr 280px",
+          gap: 40,
+          alignItems: "start",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <CaseBody cs={cs} />
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 20,
+            position: "sticky",
+            top: 80,
+          }}
+        >
+          <ApplicabilityPanel cs={cs} />
+          <RelatedCases
+            currentId={cs.id}
+            currentSector={cs.sector}
+            currentHazards={cs.hazards.cause}
+            allCases={CASE_STUDIES}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -86,7 +86,14 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
               display: "inline-block",
             }}
           />
-          {cs.transferability === "High" ? "Strong UK applicability" : cs.transferability === "Medium" ? "Moderate UK applicability" : "Limited UK applicability"}
+          Transferability to UK:{" "}
+          {cs.transferability === "High"
+            ? "High"
+            : cs.transferability === "Medium"
+              ? "Medium"
+              : cs.transferability === "Low"
+                ? "Low"
+                : cs.transferability || "—"}
         </span>
       </div>
 
@@ -113,7 +120,7 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
               marginBottom: 8,
             }}
           >
-            Where it applies
+            UK contexts
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {cs.ukApplicability.map((a) => (
@@ -183,7 +190,7 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
             marginBottom: 8,
           }}
         >
-          How does this apply to other sectors?
+          Transfer to other sectors (AI)
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {SECTORS.filter((s) => s !== cs.sector).map((sector) => (

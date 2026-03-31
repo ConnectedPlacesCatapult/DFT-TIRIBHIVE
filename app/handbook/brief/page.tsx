@@ -679,7 +679,11 @@ export default function HIVEBriefWithChat() {
               <ConfidenceBadge level={section.confidence} />
             </div>
           </div>
+          <label className="sr-only" htmlFor={`brief-section-${section.section_key}`}>
+            Edit section: {section.section_title}
+          </label>
           <textarea
+            id={`brief-section-${section.section_key}`}
             value={editingContent}
             onChange={e => setEditingContent(e.target.value)}
             style={{
@@ -855,7 +859,11 @@ export default function HIVEBriefWithChat() {
             Search for case studies to add, or browse the handbook to find relevant cases.
           </p>
           <div style={{ position: "relative", maxWidth: 400, marginBottom: 16 }}>
+            <label className="sr-only" htmlFor="brief-empty-search">
+              Search case studies to add to your brief
+            </label>
             <input
+              id="brief-empty-search"
               value={emptySearchQuery} onChange={e => setEmptySearchQuery(e.target.value)}
               placeholder="Search cases..."
               style={{ width: "100%", padding: "12px 14px", fontSize: 14, border: `1.5px solid ${T.border}`, borderRadius: 8, outline: "none", fontFamily: "'DM Sans', sans-serif", color: T.text }}

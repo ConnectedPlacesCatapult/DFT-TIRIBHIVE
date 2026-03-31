@@ -817,6 +817,14 @@ function CasesPageContent() {
           {/* Result count + empty state */}
           {hasFilters && (
             <div style={{ marginBottom:16, fontSize:13, color:"var(--text-secondary)" }}>
+              <span className="sr-only" aria-live="polite" aria-atomic="true">
+                {results.length === 0
+                  ? "No cases match your filters."
+                  : viewMode === "cases"
+                    ? `${results.length} case ${results.length === 1 ? "study" : "studies"} match your filters.`
+                    : `${displayItems.length} ${displayItems.length === 1 ? "measure" : "measures"} across ${results.length} case ${results.length === 1 ? "study" : "studies"}.`
+                }
+              </span>
               {results.length === 0
                 ? <span>No cases match your filters. <button onClick={clearAll} style={{ background:"none", border:"none", color:"var(--accent)", cursor:"pointer", fontWeight:600, fontSize:13 }}>Clear filters</button></span>
                 : viewMode === 'cases'

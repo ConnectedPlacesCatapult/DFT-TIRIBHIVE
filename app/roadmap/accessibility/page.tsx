@@ -34,8 +34,8 @@ export default function AccessibilityPage() {
           <div>
             <h2>Compliance status</h2>
             <p>
-              This website is fully compliant with the Web Content Accessibility Guidelines version
-              2.1 AA standard.
+              This website is partially compliant with the Web Content Accessibility Guidelines (WCAG)
+              version 2.2 AA standard.
             </p>
           </div>
           <div>
