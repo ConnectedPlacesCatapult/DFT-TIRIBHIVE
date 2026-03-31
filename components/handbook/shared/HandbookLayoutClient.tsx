@@ -8,6 +8,7 @@ import { ChatPanel } from "./ChatPanel";
 import { OnboardingTooltips } from "./OnboardingTooltips";
 import { FeedbackSurvey } from "./FeedbackSurvey";
 import { FeedbackReviewPanel } from "./FeedbackReviewPanel";
+import { BriefTray } from "./BriefTray";
 
 export function HandbookLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -36,6 +37,8 @@ export function HandbookLayoutClient({ children }: { children: ReactNode }) {
       </main>
 
       <ChatPanel context={chatContext} open={chatOpen} onClose={closeChat} />
+
+      <BriefTray />
 
       {reviewMode && <FeedbackReviewPanel />}
 

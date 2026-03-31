@@ -1056,10 +1056,10 @@ function HandbookLandingPageContent() {
   const uxTypographyScaleEnhanced = true;
   const uxSpacingEnhanced = true;
   const uxCardHierarchyEnhanced = true;
-  const heroTitle = reviewMode && reviewOverrides.titleCopy === "proposed"
+  const heroTitle = reviewOverrides.titleCopy === "proposed"
     ? "What climate hazards are you managing?"
     : "What risk are you managing?";
-  const heroCopy = reviewMode && reviewOverrides.subtitleCopy === "proposed"
+  const heroCopy = reviewOverrides.subtitleCopy === "proposed"
     ? "Describe your transport infrastructure weather challenges to find proven adaptations, comparable cases, and evidence."
     : "Search by infrastructure challenge to find proven adaptations, comparable cases, and evidence.";
 
@@ -1952,25 +1952,39 @@ function HandbookLandingPageContent() {
         {selectedCase && <CaseStudyDetail cs={selectedCase} onClose={() => setSelectedCase(null)} onAddToBrief={toggleBrief} inBrief={briefIds.includes(selectedCase.id)} />}
 
         {/* ── MARQUEE — browse all cases; below results so search cards appear first ── */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16, position: "relative" }}>
           {statsPlacement === "marquee" && (
-            <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginBottom: 14 }}>
+            <div
+              className="fade-in"
+              style={{
+                position: "absolute",
+                top: 10,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 5,
+                width: "min(1152px, calc(100% - 48px))",
+                pointerEvents: "none",
+              }}
+            >
               <div
-                className="fade-in"
                 style={{
-                  display: "flex",
+                  display: "inline-flex",
                   alignItems: "center",
-                  justifyContent: "flex-start",
-                  gap: 12,
-                  padding: "6px 0",
-                  borderBottom: "1px solid var(--border)",
+                  gap: 10,
                   flexWrap: "wrap",
+                  padding: "8px 12px",
+                  borderRadius: 9999,
+                  background: "color-mix(in srgb, var(--surface) 88%, transparent)",
+                  border: "1px solid var(--border)",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0 6px 22px rgba(0,0,0,0.08)",
                 }}
               >
                 <StatsInline />
               </div>
             </div>
           )}
+
           {marqueeView === "marquee"
             ? <Marquee2D cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
             : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />

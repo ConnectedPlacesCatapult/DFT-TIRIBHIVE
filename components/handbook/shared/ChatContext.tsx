@@ -108,14 +108,19 @@ type HandbookContextType = {
   setReviewMode: (v: boolean) => void;
   reviewOverrides: { titleCopy: "current" | "proposed"; subtitleCopy: "current" | "proposed" };
   setReviewOverride: (key: "titleCopy" | "subtitleCopy", value: "current" | "proposed") => void;
+  /** Demo: where to show library stats on the handbook landing page */
+  statsPlacement: "quickstart" | "marquee";
+  setStatsPlacement: (v: "quickstart" | "marquee") => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
 
 const SESSION_INTENT_KEY = "hiveSessionIntent";
+const BRIEF_IDS_KEY = "hiveBriefIds";
 const BACKGROUND_EFFECT_KEY = "hiveBackgroundEffect";
 const HERO_TEXT_TREATMENT_KEY = "hiveHeroTextTreatment";
 const HERO_TEXT_EXTENT_KEY = "hiveHeroTextExtent";
+const STATS_PLACEMENT_KEY = "hiveStatsPlacement";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
@@ -161,10 +166,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const [includeGuidance, setIncludeGuidance] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [statsPlacement, setStatsPlacementState] = useState<"quickstart" | "marquee">(() => {
+    if (typeof window === "undefined") return "quickstart";
+    const stored = localStorage.getItem(STATS_PLACEMENT_KEY);
+    return stored === "marquee" ? "marquee" : "quickstart";
+  });
+  const setStatsPlacement = useCallback((v: "quickstart" | "marquee") => {
+    setStatsPlacementState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STATS_PLACEMENT_KEY, v);
+    }
+  }, []);
   const [reviewOverrides, setReviewOverridesState] = useState<{
     titleCopy: "current" | "proposed";
     subtitleCopy: "current" | "proposed";
-  }>({ titleCopy: "current", subtitleCopy: "current" });
+  }>({ titleCopy: "proposed", subtitleCopy: "proposed" });
   const setReviewOverride = useCallback(
     (key: "titleCopy" | "subtitleCopy", value: "current" | "proposed") =>
       setReviewOverridesState((prev) => ({ ...prev, [key]: value })),
@@ -218,6 +234,30 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const stored = sessionStorage.getItem(SESSION_INTENT_KEY);
     if (stored) setSessionIntentState(stored);
   }, []);
+
+  // Persist brief basket across handbook pages within the session.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = sessionStorage.getItem(BRIEF_IDS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) {
+        setBriefIds(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(BRIEF_IDS_KEY, JSON.stringify(briefIds));
+    } catch {
+      // ignore
+    }
+  }, [briefIds]);
 
   useEffect(() => {
     setSuggestionsShown([]);
@@ -313,6 +353,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setReviewMode,
         reviewOverrides,
         setReviewOverride,
+        statsPlacement,
+        setStatsPlacement,
       }}
     >
       {children}

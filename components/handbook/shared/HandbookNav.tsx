@@ -57,6 +57,8 @@ export function HandbookNav() {
     setIncludeGuidance,
     reviewMode,
     setReviewMode,
+    statsPlacement,
+    setStatsPlacement,
   } = useChatContext();
 
   const [demoOpen, setDemoOpen] = useState(false);
@@ -471,6 +473,36 @@ export function HandbookNav() {
                             cursor: "pointer",
                             background: backgroundEffect === v.id ? T.accent : T.surfaceAlt,
                             color: backgroundEffect === v.id ? "#fff" : T.textSecondary,
+                          }}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>Stats placement (demo)</div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {[
+                        { id: "quickstart" as const, label: "Quick start" },
+                        { id: "marquee" as const, label: "Marquee" },
+                      ].map((v) => (
+                        <button
+                          key={v.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={statsPlacement === v.id}
+                          onClick={() => setStatsPlacement(v.id)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            background: statsPlacement === v.id ? T.accent : T.surfaceAlt,
+                            color: statsPlacement === v.id ? "#fff" : T.textSecondary,
                           }}
                         >
                           {v.label}
