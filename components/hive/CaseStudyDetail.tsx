@@ -10,6 +10,8 @@ type CaseStudyDetailProps = {
   onClose: () => void;
   onAddToBrief: (cs: CaseStudy) => void;
   inBrief: boolean;
+  /** Pre-fetched card data — when provided the overlay skips the internal fetch and opens instantly */
+  prefetchedCard?: ArticleCardRow | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -399,11 +401,15 @@ function LinkButton({ href, label }: { href: string; label: string }) {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function CaseStudyDetail({ cs, onClose, onAddToBrief, inBrief }: CaseStudyDetailProps) {
-  const [card, setCard] = useState<ArticleCardRow | null>(null);
-  const [loading, setLoading] = useState(true);
+export function CaseStudyDetail({ cs, onClose, onAddToBrief, inBrief, prefetchedCard }: CaseStudyDetailProps) {
+  // If a pre-fetched card was passed in, use it immediately — no loading state
+  const [card, setCard] = useState<ArticleCardRow | null>(prefetchedCard ?? null);
+  const [loading, setLoading] = useState(prefetchedCard === undefined);
 
   useEffect(() => {
+    // Skip fetch entirely if caller already provided card data
+    if (prefetchedCard !== undefined) return;
+
     let cancelled = false;
 
     async function fetchCard() {
@@ -430,7 +436,7 @@ export function CaseStudyDetail({ cs, onClose, onAddToBrief, inBrief }: CaseStud
 
     fetchCard();
     return () => { cancelled = true; };
-  }, [cs.id]);
+  }, [cs.id, prefetchedCard]);
 
   return (
     <div

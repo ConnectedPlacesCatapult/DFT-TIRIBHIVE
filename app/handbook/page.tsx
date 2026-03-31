@@ -1033,6 +1033,7 @@ function HandbookLandingPageContent() {
   const [aiDetectedSectors, setAiDetectedSectors] = useState([]);
   const [results, setResults] = useState(CASE_STUDIES);
   const [selectedCase, setSelectedCase] = useState(null);
+  const [cardCache, setCardCache] = useState<Map<string, import("@/lib/handbook/article-cards").ArticleCardRow | null>>(new Map());
   const [synthesis, setSynthesis] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeMatchReasons, setActiveMatchReasons] = useState({});
@@ -1192,6 +1193,24 @@ function HandbookLandingPageContent() {
       ]);
     }
   }, [unified.cases, unified.synthesis, unified.loading, unified.chips, unified.chunks, unified.retrieval_mode, query, searchMode, setResultSet, setMessages, setSemanticChunks, setRetrievalMode]);
+
+  // Prefetch card data for chip cases as soon as chips appear — so overlay opens instantly on click
+  useEffect(() => {
+    if (!unified.chips || unified.chips.length === 0) return;
+    unified.chips.forEach((id) => {
+      if (cardCache.has(id)) return; // already fetched or in-flight
+      // Mark as in-flight immediately to prevent duplicate requests
+      setCardCache((prev) => new Map(prev).set(id, null));
+      fetch(`/api/handbook/cards/${encodeURIComponent(id)}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          const card = data?.card && !data.card.is_stale ? data.card : null;
+          setCardCache((prev) => new Map(prev).set(id, card));
+        })
+        .catch(() => {}); // silent — overlay will fall back to its own fetch
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unified.chips]);
 
   // Reset collapse state when query changes
   useEffect(() => { setShowAllUnified(false); }, [query]);
@@ -1949,7 +1968,7 @@ function HandbookLandingPageContent() {
           </div>
         </div>
 
-        {selectedCase && <CaseStudyDetail cs={selectedCase} onClose={() => setSelectedCase(null)} onAddToBrief={toggleBrief} inBrief={briefIds.includes(selectedCase.id)} />}
+        {selectedCase && <CaseStudyDetail cs={selectedCase} onClose={() => setSelectedCase(null)} onAddToBrief={toggleBrief} inBrief={briefIds.includes(selectedCase.id)} prefetchedCard={cardCache.has(selectedCase.id) ? cardCache.get(selectedCase.id) : undefined} />}
 
         {/* ── MARQUEE — browse all cases; below results so search cards appear first ── */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16, position: "relative" }}>
