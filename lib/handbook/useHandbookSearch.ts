@@ -34,6 +34,7 @@ export function useHandbookSearch(query: string) {
     resultSet,
     semanticChunks,
     setSemanticChunks,
+    includeGuidance,
   } = useChatContext();
 
   const [semanticResults, setSemanticResults] = useState<SemanticResult[]>([]);
@@ -127,6 +128,7 @@ export function useHandbookSearch(query: string) {
           session_intent: q,
           result_set: resultSet.length > 0 ? resultSet : undefined,
           result_chunks: semanticChunks.length > 0 ? semanticChunks : undefined,
+          include_guidance: includeGuidance || undefined,
         }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);

@@ -55,6 +55,10 @@ function buildContext(body: Record<string, unknown>): ChatContext {
     context.suggestions_shown = body.suggestions_shown as string[];
   }
 
+  if (body.include_guidance === true) {
+    context.include_guidance = true;
+  }
+
   return context;
 }
 

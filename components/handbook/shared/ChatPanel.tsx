@@ -387,6 +387,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     suggestionsShown,
     setSuggestionsShown,
     setExclusiveFilter,
+    includeGuidance,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -491,6 +492,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           result_chunks: semanticChunks.length > 0 ? semanticChunks : undefined,
           brief_sections: context.startsWith("brief:") && briefSections ? briefSections : undefined,
           suggestions_shown: suggestionsShown,
+          include_guidance: includeGuidance || undefined,
         }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);

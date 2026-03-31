@@ -1495,7 +1495,7 @@ function HandbookLandingPageContent() {
                         {unified.chips.map((id) => {
                           const cs = results.find((r: { id: string }) => r.id === id);
                           return cs ? (
-                            <a key={id} href={`/handbook/cases/${id}`} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", textDecoration: "none", fontWeight: 500 }}>
+                            <a key={id} href={`/handbook/cases?highlight=${id}`} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", textDecoration: "none", fontWeight: 500 }}>
                               {cs.title ?? id} ↗
                             </a>
                           ) : null;

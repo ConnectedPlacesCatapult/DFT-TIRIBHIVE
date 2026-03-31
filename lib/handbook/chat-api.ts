@@ -37,6 +37,8 @@ export type ChatContext = {
   suggestions_shown?: string[];
   /** Pre-loaded chunks from the grid's semantic search — when present, skip a second pgvector call */
   result_chunks?: { article_id: string; section_key: string; chunk_text: string }[];
+  /** When true, append guidance document chunks to the retrieval context alongside case study chunks */
+  include_guidance?: boolean;
 };
 
 export type ChatAction = {
@@ -976,6 +978,38 @@ type PreparedAICall = {
   maxTokens: number;
 };
 
+async function fetchGuidanceChunks(query: string): Promise<RetrievedChunk[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return [];
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const sb = createClient(supabaseUrl, supabaseKey, { db: { schema: "hive" } });
+    const keywords = query
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+      .slice(0, 4);
+    if (keywords.length === 0) return [];
+    const filter = keywords.map((k) => `chunk_text.ilike.%${k}%`).join(",");
+    const { data } = await sb
+      .from("document_chunks")
+      .select("chunk_text, section_key, metadata")
+      .or(filter)
+      .limit(4);
+    return (data ?? [])
+      .filter((r) => r.metadata?.source_type === "guidance" || !r.metadata?.article_id)
+      .map((r) => ({
+        article_id: r.metadata?.guide_title ? `Guide: ${r.metadata.guide_title}` : "Guide",
+        section_key: r.section_key ?? "general",
+        chunk_text: r.chunk_text ?? "",
+      }));
+  } catch {
+    return [];
+  }
+}
+
 async function prepareAICall(
   messages: ChatMessageIn[],
   context: ChatContext,
@@ -1024,6 +1058,20 @@ async function prepareAICall(
   } else {
     const threshold = context.mode === "deep_dive" ? 0.4 : getDynamicThreshold(lastUserMessage);
     retrieval = await retrieveContext(lastUserMessage, { limit: 12, threshold });
+  }
+
+  // Optionally append guidance document chunks when the user has enabled guidance
+  if (context.include_guidance && lastUserMessage) {
+    const guidanceChunks = await fetchGuidanceChunks(lastUserMessage);
+    if (guidanceChunks.length > 0) {
+      retrieval.chunks = [...retrieval.chunks, ...guidanceChunks];
+      const guidanceFormatted = guidanceChunks
+        .map((c) => `[${c.article_id}] (${c.section_key}):\n${c.chunk_text}`)
+        .join("\n\n---\n\n");
+      retrieval.formatted = retrieval.formatted
+        ? `${retrieval.formatted}\n\n---\n\n${guidanceFormatted}`
+        : guidanceFormatted;
+    }
   }
 
   const retrievedCaseIds = [...new Set(retrieval.chunks.map((c) => c.article_id))];
