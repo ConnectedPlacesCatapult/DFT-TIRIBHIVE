@@ -1046,7 +1046,7 @@ function HandbookLandingPageContent() {
     "motorway slope instability",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief } = useChatContext();
   const T = THEMES[themeKey];
   const heroTitleSize = "2.5rem";
   const heroSubtextSize = 16;
@@ -1580,7 +1580,7 @@ function HandbookLandingPageContent() {
                       >
                         Ask a follow-up →
                       </button>
-                      {unified.chips && unified.chips.length > 0 && (
+                      {!hideBrief && unified.chips && unified.chips.length > 0 && (
                         <a
                           href={`/handbook/brief?ids=${unified.chips.join(",")}`}
                           style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 6, background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", cursor: "pointer", textDecoration: "none" }}
@@ -1851,8 +1851,16 @@ function HandbookLandingPageContent() {
                 )}
 
                 {/* Link 4 — between synthesis and cards: filtered all-cases view → case study page with filter params */}
-                {results.length > 0 && (
+                {hasActiveFilters && (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                    <span className="sr-only" aria-live="polite" aria-atomic="true">
+                      {results.length === 0
+                        ? "No cases match your filters."
+                        : viewMode === "measures"
+                          ? `${measureDisplayItems.length} ${measureDisplayItems.length === 1 ? "measure" : "measures"} below.`
+                          : `${results.length} case ${results.length === 1 ? "study" : "studies"} below.`
+                      }
+                    </span>
                     <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
                       {viewMode === 'measures'
                         ? `${measureDisplayItems.length} ${measureDisplayItems.length === 1 ? "measure" : "measures"} below`

@@ -388,6 +388,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     setSuggestionsShown,
     setExclusiveFilter,
     includeGuidance,
+    hideBrief,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -580,6 +581,49 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   }, [open, pendingBriefMessage]);
 
   const showStarters = messages.length <= 1 && !typing && !isThinking;
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  const trapTabKey = (e: React.KeyboardEvent) => {
+    if (!open || e.key !== "Tab") return;
+    const root = panelRef.current;
+    if (!root) return;
+    const focusables = Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => el.offsetParent !== null);
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && (active === first || !root.contains(active))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!root.contains(active)) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <>
@@ -602,6 +646,9 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         role="dialog"
         aria-modal="true"
         aria-label={config.title}
+        aria-hidden={!open}
+        ref={panelRef}
+        onKeyDown={trapTabKey}
         style={{
           position: "fixed",
           top: 0,
@@ -615,6 +662,8 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           flexDirection: "column",
           transform: open ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
+          pointerEvents: open ? "auto" : "none",
+          visibility: open ? "visible" : "hidden",
         }}
       >
         {/* DfT green stripe */}
@@ -671,6 +720,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           <button
             onClick={onClose}
             aria-label="Close chat"
+            ref={closeButtonRef}
             style={{
               width: 28,
               height: 28,
@@ -841,6 +891,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     >
                       View {(m.chips?.length ?? 0) >= 2 ? m.chips!.length : resultSet.length} cases ↗
                     </Link>
+                    {!hideBrief && (
                     <Link
                       href={`/handbook/brief?ids=${(m.chips ?? []).join(",")}`}
                       style={{
@@ -860,6 +911,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     >
                       Build brief from these ↗
                     </Link>
+                    )}
                   </div>
                 )}
                 {/* Action card: Apply/Dismiss only — nothing auto-applies */}
