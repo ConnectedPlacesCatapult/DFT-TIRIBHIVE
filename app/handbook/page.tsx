@@ -1039,13 +1039,13 @@ function HandbookLandingPageContent() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
   const SEARCH_PLACEHOLDERS = [
-    "flooding on a rail corridor",
-    "heatwave on road bridges",
-    "coastal port storm surge",
-    "slope instability near a motorway",
+    "rail corridor flooding",
+    "bridge heat stress",
+    "coastal storm surge",
+    "motorway slope instability",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement } = useChatContext();
   const T = THEMES[themeKey];
   const heroTitleSize = "2.5rem";
   const heroSubtextSize = 16;
@@ -1235,6 +1235,49 @@ function HandbookLandingPageContent() {
     if (briefIds.includes(cs.id)) removeFromBrief(cs.id);
     else addToBrief(cs.id);
   };
+
+  const StatsGrid = ({ compact = false }: { compact?: boolean }) => (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: compact ? 10 : 12 }}>
+      {[
+        { value: String(SEED_CASE_STUDIES.length), label: "case studies" },
+        { value: String(TOTAL_MEASURE_COUNT), label: "measures" },
+        { value: "5", label: "sectors" },
+        { value: "12+", label: "hazards" },
+      ].map((s) => (
+        <div key={s.label}>
+          <div style={{ fontSize: compact ? 16 : 18, fontWeight: 700, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>
+            {s.value}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const StatsInline = () => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+        Library
+      </span>
+      <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Curated &amp; verified</span>
+      <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
+      <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+        <strong style={{ color: "var(--text-primary)" }}>{SEED_CASE_STUDIES.length}</strong> cases
+      </span>
+      <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
+      <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+        <strong style={{ color: "var(--text-primary)" }}>{TOTAL_MEASURE_COUNT}</strong> measures
+      </span>
+      <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
+      <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+        <strong style={{ color: "var(--text-primary)" }}>5</strong> sectors
+      </span>
+      <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
+      <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+        <strong style={{ color: "var(--text-primary)" }}>12+</strong> hazards
+      </span>
+    </div>
+  );
   const removeAiHazard = h => setAiDetectedHazards(prev => prev.filter(x => x !== h));
   const removeAiSector = s => setAiDetectedSectors(prev => prev.filter(x => x !== s));
   const clearAll = () => { setQuery(""); setSelectedHazards([]); setSelectedSectors([]); setSelectedRegions([]); setSelectedCosts([]); setAiDetectedHazards([]); setAiDetectedSectors([]); setMarqueeSelectedId(null); };
@@ -1379,6 +1422,14 @@ function HandbookLandingPageContent() {
         .hive-root .bg-emerald-50, .hive-root .bg-emerald-100 { background: var(--accent-bg) !important; }
         .hive-root .border-emerald-100 { border-color: color-mix(in srgb, var(--accent) 40%, transparent) !important; }
         .hive-root .border-emerald-200 { border-color: color-mix(in srgb, var(--accent) 50%, transparent) !important; }
+
+        /* Quick start module */
+        .hive-quickstart-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; }
+        .hive-quickstart-grid--single { grid-template-columns: 1fr; }
+        @media (max-width: 820px) {
+          .hive-quickstart-grid { grid-template-columns: 1fr; }
+          .hive-quickstart-aside { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--border); padding-top: 12px; }
+        }
       `}</style>
 
       <div className="hive-root" style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
@@ -1496,9 +1547,9 @@ function HandbookLandingPageContent() {
                         {unified.chips.map((id) => {
                           const cs = results.find((r: { id: string }) => r.id === id);
                           return cs ? (
-                            <a key={id} href={`/handbook/cases?open=${id}`} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", textDecoration: "none", fontWeight: 500 }}>
+                            <button key={id} onClick={() => setSelectedCase(cs)} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>
                               {cs.title ?? id} ↗
-                            </a>
+                            </button>
                           ) : null;
                         })}
                       </div>
@@ -1551,15 +1602,13 @@ function HandbookLandingPageContent() {
             <div className="fade-up" style={{ maxWidth: 768, marginTop: 14, animationDelay: "0.12s" }}>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.2fr 0.8fr",
-                  gap: 12,
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
                   borderRadius: 14,
                   padding: "12px 14px",
                   boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                 }}
+                className={`hive-quickstart-grid ${statsPlacement === "marquee" ? "hive-quickstart-grid--single" : ""}`}
               >
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
@@ -1597,48 +1646,19 @@ function HandbookLandingPageContent() {
                       </button>
                     ))}
                   </div>
-                  <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                    <a
-                      href="/handbook/cases"
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: "var(--accent)",
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
-                    >
-                      Browse all case studies →
-                    </a>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>or start with a query above.</span>
+                  <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-muted)" }}>
+                    Click a chip to run a full query.
                   </div>
                 </div>
 
-                <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
-                    Library coverage
+                {statsPlacement === "quickstart" && (
+                  <div className="hive-quickstart-aside" style={{ borderLeft: "1px solid var(--border)", paddingLeft: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
+                      Library coverage
+                    </div>
+                    <StatsGrid />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>{SEED_CASE_STUDIES.length}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>case studies</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>{TOTAL_MEASURE_COUNT}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>measures</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>5</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>sectors</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>12+</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>hazards</div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -1933,6 +1953,24 @@ function HandbookLandingPageContent() {
 
         {/* ── MARQUEE — browse all cases; below results so search cards appear first ── */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
+          {statsPlacement === "marquee" && (
+            <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginBottom: 14 }}>
+              <div
+                className="fade-in"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 12,
+                  padding: "6px 0",
+                  borderBottom: "1px solid var(--border)",
+                  flexWrap: "wrap",
+                }}
+              >
+                <StatsInline />
+              </div>
+            </div>
+          )}
           {marqueeView === "marquee"
             ? <Marquee2D cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
             : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
