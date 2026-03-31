@@ -208,7 +208,9 @@ function getActionDescription(action: ChatActionPayload): string {
 }
 
 function MessageText({ text }: { text: string }) {
-  const parts = text.split(/(\bID_[\w]+\b|\[Guide:[^\]]+\])/);
+  // Strip raw UUID citations before splitting — they are internal chunk IDs with no user-facing value
+  const cleaned = text.replace(/\s*\[[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\]/gi, "");
+  const parts = cleaned.split(/(\bID_[\w]+\b|\[Guide:[^\]]+\])/);
   return (
     <>
       {parts.map((part, i) =>

@@ -32,7 +32,14 @@ function sanitizeInlineMarkdown(text: string): string {
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    // Strip inline AI citation markers: [ID_xx], [ID_UKPN_01], [Guide: ...], [8e5ea424-...] etc.
+    .replace(/\s*\[ID_[A-Z0-9_]+\]/g, "")
+    .replace(/\s*\[[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\]/gi, "")
+    .replace(/\s*\[Guide:[^\]]*\]/g, "")
+    // Clean up any double spaces left behind
+    .replace(/  +/g, " ")
+    .trim();
 }
 
 const TRIB_MEASURES: Array<{
@@ -1046,7 +1053,7 @@ function HandbookLandingPageContent() {
     "motorway slope instability",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView } = useChatContext();
   const T = THEMES[themeKey];
 
   const SECTOR_CHIP_COLOURS: Record<string, string> = {
