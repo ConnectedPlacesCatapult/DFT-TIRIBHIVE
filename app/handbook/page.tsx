@@ -1259,8 +1259,8 @@ function HandbookLandingPageContent() {
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: compact ? 10 : 12 }}>
       {[
         { value: String(SEED_CASE_STUDIES.length), label: "case studies" },
-        { value: String(TOTAL_MEASURE_COUNT), label: "measures" },
-        { value: "5", label: "sectors" },
+        { value: String(TOTAL_MEASURE_COUNT), label: "adaptation measures" },
+        { value: "5", label: "transport sectors" },
         { value: "12+", label: "hazards" },
       ].map((s) => (
         <div key={s.label}>
@@ -1285,11 +1285,11 @@ function HandbookLandingPageContent() {
       </span>
       <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
       <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-        <strong style={{ color: "var(--text-primary)" }}>{TOTAL_MEASURE_COUNT}</strong> measures
+        <strong style={{ color: "var(--text-primary)" }}>{TOTAL_MEASURE_COUNT}</strong> adaptation measures
       </span>
       <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
       <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-        <strong style={{ color: "var(--text-primary)" }}>5</strong> sectors
+        <strong style={{ color: "var(--text-primary)" }}>5</strong> transport sectors
       </span>
       <span aria-hidden style={{ color: "var(--text-muted)" }}>·</span>
       <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>

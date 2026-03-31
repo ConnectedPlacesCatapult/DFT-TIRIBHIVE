@@ -184,7 +184,7 @@ export function HandbookNav() {
             justifyContent: "space-between",
             gap: 16,
             flexWrap: "nowrap",
-            overflow: "hidden",
+            overflow: "visible",
           }}
         >
           {/* Brand + primary nav grouped (strapline last so links sit beside HIVE) */}
