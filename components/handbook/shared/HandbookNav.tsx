@@ -61,6 +61,8 @@ export function HandbookNav() {
     setStatsPlacement,
     hideBrief,
     setHideBrief,
+    chipCardView,
+    setChipCardView,
   } = useChatContext();
 
   const [demoOpen, setDemoOpen] = useState(false);
@@ -69,8 +71,6 @@ export function HandbookNav() {
   const [demoPassword, setDemoPassword] = useState("");
   const [demoError, setDemoError] = useState("");
   const demoRef = useRef<HTMLDivElement>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!demoOpen && !demoUnlockOpen) return;
@@ -83,17 +83,6 @@ export function HandbookNav() {
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [demoOpen, demoUnlockOpen]);
-
-  useEffect(() => {
-    if (!moreOpen) return;
-    const close = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    };
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [moreOpen]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -250,11 +239,7 @@ export function HandbookNav() {
               role="list"
               aria-label="Primary"
             >
-              {NAV_LINKS.filter(
-                (link) =>
-                  link.href !== "/handbook/guidance" &&
-                  !(hideBrief && link.href === "/handbook/brief")
-              ).map((link) => {
+              {NAV_LINKS.filter((link) => !(hideBrief && link.href === "/handbook/brief")).map((link) => {
                 const isActive =
                   link.href === "/handbook/cases"
                     ? pathname === "/handbook/cases" || pathname?.startsWith("/handbook/cases/")
@@ -302,98 +287,8 @@ export function HandbookNav() {
             </div>
           </div>
 
-          {/* Right: overflow + demo options + Ask HIVE */}
+          {/* Right: demo options + Ask HIVE */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div ref={moreRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                onClick={() => setMoreOpen((o) => !o)}
-                aria-expanded={moreOpen}
-                aria-haspopup="true"
-                aria-label="More"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: `1px solid ${T.border}`,
-                  background: T.surfaceAlt,
-                  color: T.textSecondary,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  flexShrink: 0,
-                }}
-                title="More"
-              >
-                <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>
-                  ⋯
-                </span>
-              </button>
-              {moreOpen && (
-                <div
-                  role="menu"
-                  aria-label="More"
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    right: 0,
-                    marginTop: 4,
-                    minWidth: 220,
-                    padding: 10,
-                    borderRadius: 12,
-                    border: `1px solid ${T.border}`,
-                    background: T.surface,
-                    boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
-                    zIndex: 600,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}
-                >
-                  <Link
-                    href="/handbook/guidance"
-                    role="menuitem"
-                    onClick={() => setMoreOpen(false)}
-                    style={{
-                      width: "100%",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      color: T.textSecondary,
-                      textDecoration: "none",
-                      background: T.surfaceAlt,
-                      border: `1px solid ${T.border}`,
-                    }}
-                    title="External guidance and reference links"
-                  >
-                    Additional resources →
-                  </Link>
-                  <Link
-                    href="/"
-                    role="menuitem"
-                    onClick={() => setMoreOpen(false)}
-                    style={{
-                      width: "100%",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      color: T.textSecondary,
-                      textDecoration: "none",
-                      background: "transparent",
-                      border: `1px solid transparent`,
-                    }}
-                    title="Main TRIB site — programme home"
-                  >
-                    TRIB programme home →
-                  </Link>
-                </div>
-              )}
-            </div>
-
             <div ref={demoRef} style={{ position: "relative" }}>
               <button
                 type="button"
@@ -683,6 +578,25 @@ export function HandbookNav() {
                       }}
                     >
                       {hideBrief ? "Brief features hidden → show" : "✓ Brief features visible → hide"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChipCardView(!chipCardView)}
+                      style={{
+                        width: "100%",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        background: chipCardView ? "#ede9fe" : T.surfaceAlt,
+                        color: chipCardView ? "#5b21b6" : T.textSecondary,
+                        textAlign: "left",
+                        marginTop: 4,
+                      }}
+                    >
+                      {chipCardView ? "✓ Chip cards active → hide" : "Chip cards hidden → show"}
                     </button>
                   </div>
 

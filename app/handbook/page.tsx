@@ -1046,8 +1046,20 @@ function HandbookLandingPageContent() {
     "motorway slope instability",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView } = useChatContext();
   const T = THEMES[themeKey];
+
+  const SECTOR_CHIP_COLOURS: Record<string, string> = {
+    Rail: "#1d4ed8",
+    Aviation: "#0369a1",
+    Maritime: "#0f766e",
+    Highways: "#b45309",
+    "Critical Infrastructure": "#7e22ce",
+    Energy: "#7e22ce",
+    Multiple: "#374151",
+  };
+  const sectorChipColor = (sector: string) => SECTOR_CHIP_COLOURS[sector] ?? "#374151";
+
   const heroTitleSize = "2.5rem";
   const heroSubtextSize = 16;
   const heroSubtextLineHeight = 1.6;
@@ -1562,16 +1574,52 @@ function HandbookLandingPageContent() {
                       {sanitizeInlineMarkdown(unified.synthesis)}
                     </p>
                     {unified.chips && unified.chips.length > 0 && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                        {unified.chips.map((id) => {
-                          const cs = results.find((r: { id: string }) => r.id === id);
-                          return cs ? (
-                            <button key={id} onClick={() => setSelectedCase(cs)} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>
-                              {cs.title ?? id} ↗
-                            </button>
-                          ) : null;
-                        })}
-                      </div>
+                      chipCardView ? (
+                        /* Option C — mini-card strip */
+                        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 10 }}>
+                          {unified.chips.map((id) => {
+                            const cs = results.find((r: { id: string }) => r.id === id) ?? SEED_CASE_STUDIES.find((c) => c.id === id);
+                            if (!cs) return null;
+                            return (
+                              <button
+                                key={id}
+                                onClick={() => setSelectedCase(cs)}
+                                style={{
+                                  minWidth: 180,
+                                  maxWidth: 210,
+                                  padding: "10px 12px",
+                                  borderRadius: 8,
+                                  background: "var(--surface)",
+                                  border: "1px solid var(--border)",
+                                  cursor: "pointer",
+                                  textAlign: "left",
+                                  flexShrink: 0,
+                                  fontFamily: "inherit",
+                                  transition: "box-shadow 0.15s",
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)")}
+                                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
+                              >
+                                <div style={{ fontSize: 9, fontWeight: 700, color: sectorChipColor(cs.sector), textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{cs.sector}</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4, marginBottom: 4 }}>{cs.title}</div>
+                                <div style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{cs.hook}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* Option A — pill chips */
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                          {unified.chips.map((id) => {
+                            const cs = results.find((r: { id: string }) => r.id === id) ?? SEED_CASE_STUDIES.find((c) => c.id === id);
+                            return cs ? (
+                              <button key={id} onClick={() => setSelectedCase(cs)} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>
+                                {cs.title} ↗
+                              </button>
+                            ) : null;
+                          })}
+                        </div>
+                      )
                     )}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button

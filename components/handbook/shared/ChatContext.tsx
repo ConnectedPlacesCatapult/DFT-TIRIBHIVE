@@ -114,6 +114,9 @@ type HandbookContextType = {
   /** Hide all Build Brief UI — default true for client delivery; toggled via Demo options */
   hideBrief: boolean;
   setHideBrief: (v: boolean) => void;
+  /** Show synthesis chips as mini-cards instead of pills — demo toggle */
+  chipCardView: boolean;
+  setChipCardView: (v: boolean) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -125,6 +128,7 @@ const HERO_TEXT_TREATMENT_KEY = "hiveHeroTextTreatment";
 const HERO_TEXT_EXTENT_KEY = "hiveHeroTextExtent";
 const STATS_PLACEMENT_KEY = "hiveStatsPlacement";
 const HIDE_BRIEF_KEY = "hiveHideBrief";
+const CHIP_CARD_VIEW_KEY = "hiveChipCardView";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
@@ -171,14 +175,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [includeGuidance, setIncludeGuidance] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
   const [hideBrief, setHideBriefState] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     const stored = localStorage.getItem(HIDE_BRIEF_KEY);
-    return stored === "false" ? false : true; // default true (hidden)
+    return stored === "true" ? true : false; // default false (visible)
   });
   const setHideBrief = useCallback((v: boolean) => {
     setHideBriefState(v);
     if (typeof window !== "undefined") {
       localStorage.setItem(HIDE_BRIEF_KEY, String(v));
+    }
+  }, []);
+  const [chipCardView, setChipCardViewState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(CHIP_CARD_VIEW_KEY) === "true";
+  });
+  const setChipCardView = useCallback((v: boolean) => {
+    setChipCardViewState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CHIP_CARD_VIEW_KEY, String(v));
     }
   }, []);
   const [statsPlacement, setStatsPlacementState] = useState<"quickstart" | "marquee">(() => {
@@ -372,6 +386,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setStatsPlacement,
         hideBrief,
         setHideBrief,
+        chipCardView,
+        setChipCardView,
       }}
     >
       {children}
