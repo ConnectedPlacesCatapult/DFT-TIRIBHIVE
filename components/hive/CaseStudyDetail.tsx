@@ -83,18 +83,34 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
         </div>
       )}
 
-      {pdfUrl && (
-        <a
-          href={pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#1D9E75", textDecoration: "none", fontWeight: 500, marginBottom: 16 }}
-        >
-          ↗ View full case study
-        </a>
-      )}
+      {/* Navigation strip — primary + secondary actions */}
       <div style={{ marginBottom: 16 }}>
-        <LinkButton href="/handbook/guidance" label="Browse additional guidance →" />
+        {/* Primary row */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+          <a
+            href={`/handbook/${cs.id}`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: "#1D9E75", color: "#fff", textDecoration: "none" }}
+          >
+            ↗ View full case study
+          </a>
+          <button
+            onClick={() => { onAddToBrief(cs); onClose(); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#1D9E75" : "#1a1a1a", border: inBrief ? "1.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
+          >
+            {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
+          </button>
+        </div>
+        {/* Secondary row */}
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <a href="/handbook/guidance" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+            Browse additional guidance →
+          </a>
+          {pdfUrl && (
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+              ↗ View original PDF
+            </a>
+          )}
+        </div>
       </div>
 
       <hr style={{ border: "none", borderTop: "0.5px solid rgba(0,0,0,0.1)", margin: "16px 0" }} />
@@ -216,19 +232,9 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief }: {
         </>
       )}
 
-      {/* Action row */}
-      <div style={{ display: "flex", gap: 8, marginTop: 16, paddingTop: 16, borderTop: "0.5px solid rgba(0,0,0,0.1)", flexWrap: "wrap" }}>
-        <button
-          onClick={() => { onAddToBrief(cs); onClose(); }}
-          style={{ background: inBrief ? "transparent" : "#1D9E75", color: inBrief ? "#1a1a1a" : "white", border: inBrief ? "0.5px solid rgba(0,0,0,0.25)" : "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
-        >
-          {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
-        </button>
-      </div>
-
       {/* Footer */}
-      <p style={{ fontSize: 11, color: "#aaa", marginTop: 12 }}>
-        Ref: {card.trib_article_id} · {card.project_title ?? cs.title} · Curated & verified by HIVE · Evidence quality: {card.evidence_quality ?? "—"} · Generated from document_chunks
+      <p style={{ fontSize: 11, color: "#aaa", marginTop: 20, paddingTop: 12, borderTop: "0.5px solid rgba(0,0,0,0.08)" }}>
+        Ref: {card.trib_article_id} · {card.project_title ?? cs.title} · Curated & verified by HIVE · Evidence quality: {card.evidence_quality ?? "—"}
       </p>
     </>
   );
@@ -251,18 +257,34 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief }: {
         <p style={{ fontSize: 14, color: "#085041", lineHeight: 1.6, margin: 0 }}>{cs.insight}</p>
       </div>
 
-      {getCaseStudyPdfUrl(cs) && (
-        <a
-          href={getCaseStudyPdfUrl(cs)}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#1D9E75", textDecoration: "none", fontWeight: 500, marginBottom: 16 }}
-        >
-          ↗ View full case study
-        </a>
-      )}
+      {/* Navigation strip — primary + secondary actions */}
       <div style={{ marginBottom: 16 }}>
-        <LinkButton href="/handbook/guidance" label="Browse additional guidance →" />
+        {/* Primary row */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+          <a
+            href={`/handbook/${cs.id}`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: "#1D9E75", color: "#fff", textDecoration: "none" }}
+          >
+            ↗ View full case study
+          </a>
+          <button
+            onClick={() => { onAddToBrief(cs); onClose(); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#1D9E75" : "#1a1a1a", border: inBrief ? "1.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
+          >
+            {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
+          </button>
+        </div>
+        {/* Secondary row */}
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <a href="/handbook/guidance" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+            Browse additional guidance →
+          </a>
+          {getCaseStudyPdfUrl(cs) && (
+            <a href={getCaseStudyPdfUrl(cs)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+              ↗ View original PDF
+            </a>
+          )}
+        </div>
       </div>
 
       <div style={{ background: "#f7f5f0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
@@ -321,17 +343,7 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief }: {
         </div>
       </div>
 
-      {/* Actions */}
-      <div style={{ display: "flex", gap: 8, marginTop: 16, paddingTop: 16, borderTop: "0.5px solid rgba(0,0,0,0.1)", flexWrap: "wrap" }}>
-        <button
-          onClick={() => { onAddToBrief(cs); onClose(); }}
-          style={{ background: inBrief ? "transparent" : "#1D9E75", color: inBrief ? "#1a1a1a" : "white", border: inBrief ? "0.5px solid rgba(0,0,0,0.25)" : "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
-        >
-          {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
-        </button>
-      </div>
-
-      <p style={{ fontSize: 11, color: "#aaa", marginTop: 12 }}>
+      <p style={{ fontSize: 11, color: "#aaa", marginTop: 20, paddingTop: 12, borderTop: "0.5px solid rgba(0,0,0,0.08)" }}>
         Ref: {cs.id} · {cs.organisation} · Curated & verified by HIVE
       </p>
     </>

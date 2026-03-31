@@ -472,6 +472,7 @@ function CasesPageContent() {
     setResultSet, resultSet,
     openChat, setChatContext,
     exclusiveFilter, setExclusiveFilter,
+    briefIds, addToBrief, removeFromBrief,
   } = useChatContext();
   const [highlighted, setHighlighted] = useState([]);
 
@@ -503,12 +504,17 @@ function CasesPageContent() {
     const region = searchParams.get("region");
     const cost = searchParams.get("cost");
     const highlightParam = searchParams.get("highlight");
+    const openParam = searchParams.get("open");
     if (q) setQuery(q);
     if (sector) setSectors(sector.split(",").map((s) => s.trim()).filter(Boolean));
     if (hazard) setHazards(hazard.split(",").map((h) => h.trim()).filter(Boolean));
     if (region) setTransferability([]); // region not in filter bar; leave transferability empty
     if (cost) setCostBands(cost.split(",").map((c) => c.trim()).filter(Boolean));
     if (highlightParam) setHighlighted(highlightParam.split(",").map((id) => id.trim()).filter(Boolean));
+    if (openParam) {
+      const cs = CASE_STUDIES_NORMALISED.find((c) => c.id === openParam.trim());
+      if (cs) setSelectedCase(cs);
+    }
   }, [searchParams]);
 
   // View mode toggle: case studies (default) vs individual measures
@@ -516,7 +522,6 @@ function CasesPageContent() {
 
   // UI state (highlighted declared above for effectiveHighlighted)
   const [selectedCase, setSelectedCase] = useState(null);
-  const [brief, setBrief] = useState([]);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [briefConfirm, setBriefConfirm] = useState(false);
 
@@ -524,7 +529,10 @@ function CasesPageContent() {
   const { semanticResults, semanticScenario, semanticPrompt, routeQueryToChat } = useHandbookSearch(query);
 
   const toggle = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
-  const toggleBrief = (cs) => setBrief(prev => prev.some(x => x.id === cs.id) ? prev.filter(x => x.id !== cs.id) : [...prev, cs]);
+  const toggleBrief = (cs) => {
+    if (briefIds.includes(cs.id)) removeFromBrief(cs.id);
+    else addToBrief(cs.id);
+  };
   const hasFilters = query.trim() || sectors.length || hazards.length || transferability.length || costBands.length;
 
   // Keyword+filter base (always respects pills) — memoized so its reference is stable
@@ -605,9 +613,10 @@ function CasesPageContent() {
   const clearAll = () => { setQuery(""); setSectors([]); setHazards([]); setTransferability([]); setCostBands([]); setSort("relevance"); };
 
   const handleGenerate = () => {
-    sessionStorage?.setItem('hiveBriefCases', JSON.stringify(brief.map(c => c.id)));
+    sessionStorage?.setItem('hiveBriefCases', JSON.stringify(briefIds));
     sessionStorage?.setItem('hiveBriefTheme', themeKey);
-    window.location.href = '/handbook/brief?tutorial=false';
+    const ids = briefIds.join(",");
+    window.location.href = ids ? `/handbook/brief?ids=${encodeURIComponent(ids)}&tutorial=false` : '/handbook/brief?tutorial=false';
   };
 
   return (
@@ -651,7 +660,7 @@ function CasesPageContent() {
         .hive-modal { background: var(--surface) !important; color: var(--text-primary) !important; }
       `}</style>
 
-      <div className="hive-root" style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'DM Sans',sans-serif", paddingBottom: brief.length > 0 ? 70 : 0 }}>
+      <div className="hive-root" style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'DM Sans',sans-serif", paddingBottom: briefIds.length > 0 ? 70 : 0 }}>
         {/* Main content — layout provides single HandbookNav (HIVE → /handbook, Case Studies → /handbook/cases) */}
         <div style={{ maxWidth:1152, margin:"0 auto", padding:"28px 24px 40px",
           transition:"padding-right 0.25s" }}>
@@ -869,7 +878,7 @@ function CasesPageContent() {
                       cs={item.article}
                       onClick={setSelectedCase}
                       onAddToBrief={toggleBrief}
-                      inBrief={brief.some(b => b.id === item.article.id)}
+                      inBrief={briefIds.includes(item.article.id)}
                       highlighted={effectiveHighlighted.includes(item.article.id)}
                     />
                   ) : (
@@ -879,7 +888,7 @@ function CasesPageContent() {
                       cs={item.article}
                       onClick={setSelectedCase}
                       onAddToBrief={toggleBrief}
-                      inBrief={brief.some(b => b.id === item.article.id)}
+                      inBrief={briefIds.includes(item.article.id)}
                       highlighted={effectiveHighlighted.includes(item.article.id)}
                     />
                   )}
@@ -907,12 +916,9 @@ function CasesPageContent() {
             cs={selectedCase}
             onClose={() => setSelectedCase(null)}
             onAddToBrief={toggleBrief}
-            inBrief={brief.some(b => b.id === selectedCase.id)}
+            inBrief={briefIds.includes(selectedCase.id)}
           />
         )}
-
-        {/* BRIEF TRAY */}
-        <BriefTray brief={brief} onRemove={toggleBrief} onGenerate={handleGenerate}/>
 
         {/* SUGGEST SOURCE DRAWER */}
         <SuggestSourceDrawer open={suggestOpen} onClose={() => setSuggestOpen(false)}/>

@@ -1045,7 +1045,7 @@ function HandbookLandingPageContent() {
     "slope instability near a motorway",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, heroTextTreatment, heroTextTreatmentExtent, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief } = useChatContext();
   const T = THEMES[themeKey];
   const heroTitleSize = "2.5rem";
   const heroSubtextSize = 16;
@@ -1086,8 +1086,6 @@ function HandbookLandingPageContent() {
   }, []);
 
   const [marqueeSelectedId, setMarqueeSelectedId] = useState(null); // caseStudyId or 'PH_SECTOR'
-  const [brief, setBrief] = useState([]);
-  const [briefOpen, setBriefOpen] = useState(false);
   const inputRef = useRef(null);
   const resultsRef = useRef(null);
   const router = useRouter();
@@ -1233,7 +1231,10 @@ function HandbookLandingPageContent() {
   const activeMarqueeCases = viewMode === 'measures' ? MARQUEE_CASES : MARQUEE_CASE_STUDIES;
 
   const toggle = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
-  const toggleBrief = (cs) => setBrief(prev => prev.some(x => x.id === cs.id) ? prev.filter(x => x.id !== cs.id) : [...prev, cs]);
+  const toggleBrief = (cs) => {
+    if (briefIds.includes(cs.id)) removeFromBrief(cs.id);
+    else addToBrief(cs.id);
+  };
   const removeAiHazard = h => setAiDetectedHazards(prev => prev.filter(x => x !== h));
   const removeAiSector = s => setAiDetectedSectors(prev => prev.filter(x => x !== s));
   const clearAll = () => { setQuery(""); setSelectedHazards([]); setSelectedSectors([]); setSelectedRegions([]); setSelectedCosts([]); setAiDetectedHazards([]); setAiDetectedSectors([]); setMarqueeSelectedId(null); };
@@ -1495,7 +1496,7 @@ function HandbookLandingPageContent() {
                         {unified.chips.map((id) => {
                           const cs = results.find((r: { id: string }) => r.id === id);
                           return cs ? (
-                            <a key={id} href={`/handbook/cases?highlight=${id}`} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", textDecoration: "none", fontWeight: 500 }}>
+                            <a key={id} href={`/handbook/cases?open=${id}`} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--accent-muted, #e8f1fb)", color: "var(--accent)", border: "1px solid var(--accent-border, #b3d4ef)", textDecoration: "none", fontWeight: 500 }}>
                               {cs.title ?? id} ↗
                             </a>
                           ) : null;
@@ -1544,6 +1545,103 @@ function HandbookLandingPageContent() {
               </div>
             )}
           </div>
+
+          {/* Quick start (fills empty hero space when no results yet) */}
+          {!hasActiveFilters && (
+            <div className="fade-up" style={{ maxWidth: 768, marginTop: 14, animationDelay: "0.12s" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.2fr 0.8fr",
+                  gap: 12,
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 14,
+                  padding: "12px 14px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
+                    Quick start
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {[
+                      "flooding on a rail corridor",
+                      "heatwave on road bridges",
+                      "coastal port storm surge",
+                      "slope instability near a motorway",
+                    ].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => {
+                          setQuery(q);
+                          setFiltersOpen(false);
+                          setTimeout(() => scrollToResults(), 50);
+                        }}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "6px 10px",
+                          borderRadius: 9999,
+                          border: "1px solid var(--border)",
+                          background: "var(--surface-alt)",
+                          color: "var(--text-secondary)",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                    <a
+                      href="/handbook/cases"
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "var(--accent)",
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      Browse all case studies →
+                    </a>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>or start with a query above.</span>
+                  </div>
+                </div>
+
+                <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
+                    Library coverage
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>{SEED_CASE_STUDIES.length}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>case studies</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>{TOTAL_MEASURE_COUNT}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>measures</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>5</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>sectors</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)", lineHeight: 1.1 }}>12+</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>hazards</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Filters */}
           <div className="fade-up" style={{ marginTop: heroFilterMarginTop, maxWidth: 768, animationDelay: "0.15s", display: "flex", flexDirection: "column", gap: uxSpacingEnhanced ? 14 : 12 }}>
@@ -1644,7 +1742,7 @@ function HandbookLandingPageContent() {
                   </div>
                   {cs ? (
                     <div style={{ maxWidth: 512 }}>
-                      <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={[]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
+                      <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={[]} onAddToBrief={toggleBrief} inBrief={briefIds.includes(cs.id)} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                     </div>
                   ) : (
                     <div style={{ maxWidth: 512 }}>
@@ -1751,7 +1849,7 @@ function HandbookLandingPageContent() {
                             cs={item.article}
                             onClick={setSelectedCase}
                             onAddToBrief={toggleBrief}
-                            inBrief={brief.some(b => b.id === item.article.id)}
+                            inBrief={briefIds.includes(item.article.id)}
                             matchReasons={activeMatchReasons[item.article.id]}
                             uxTypographyScaleEnhanced={uxTypographyScaleEnhanced}
                             uxSpacingEnhanced={uxSpacingEnhanced}
@@ -1772,7 +1870,7 @@ function HandbookLandingPageContent() {
                           <>
                             {aiCited.map((cs, i) => (
                               <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
-                                <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={true} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
+                                <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={briefIds.includes(cs.id)} suggested={true} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                               </div>
                             ))}
                             {others.length > 0 && (
@@ -1786,7 +1884,7 @@ function HandbookLandingPageContent() {
                                 </button>
                                 {showAllUnified && others.map((cs, i) => (
                                   <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: 0.75 }}>
-                                    <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={false} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
+                                    <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={briefIds.includes(cs.id)} suggested={false} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                                   </div>
                                 ))}
                               </>
@@ -1796,7 +1894,7 @@ function HandbookLandingPageContent() {
                       }
                       return displayResults.map((cs, i) => (
                         <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
-                          <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} suggested={suggestedCaseIds.includes(cs.id)} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
+                          <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={briefIds.includes(cs.id)} suggested={suggestedCaseIds.includes(cs.id)} uxTypographyScaleEnhanced={uxTypographyScaleEnhanced} uxSpacingEnhanced={uxSpacingEnhanced} uxCardHierarchyEnhanced={uxCardHierarchyEnhanced} />
                         </div>
                       ));
                     })()}
@@ -1831,29 +1929,7 @@ function HandbookLandingPageContent() {
           </div>
         </div>
 
-        {/* Stats */}
-        {!hasActiveFilters && (
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingBottom: 80 }}>
-            <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-              {[
-                viewMode === 'measures'
-                  ? { label: "Adaptation Measures", value: String(TOTAL_MEASURE_COUNT), sub: `across ${SEED_CASE_STUDIES.length} case studies` }
-                  : { label: "Case Studies", value: String(SEED_CASE_STUDIES.length), sub: "fully loaded from TRIB database" },
-                { label: "Transport Sectors", value: "5", sub: "rail, aviation, maritime, highways, critical infrastructure" },
-                { label: "Climate Hazards", value: "12+", sub: "first and second order covered" },
-                { label: "UK Regions", value: "8", sub: "with geography-specific applicability" },
-              ].map(stat => (
-                <div key={stat.label}>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)" }}>{stat.value}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, marginTop: 2, color: "var(--text-secondary)" }}>{stat.label}</div>
-                  <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-muted)" }}>{stat.sub}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedCase && <CaseStudyDetail cs={selectedCase} onClose={() => setSelectedCase(null)} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === selectedCase.id)} />}
+        {selectedCase && <CaseStudyDetail cs={selectedCase} onClose={() => setSelectedCase(null)} onAddToBrief={toggleBrief} inBrief={briefIds.includes(selectedCase.id)} />}
 
         {/* ── MARQUEE — browse all cases; below results so search cards appear first ── */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
@@ -1866,84 +1942,6 @@ function HandbookLandingPageContent() {
           </div>
         </div>
 
-        {/* ── BRIEF PANEL ── */}
-        {briefOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "flex-end", padding: 16, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)" }} onClick={() => setBriefOpen(false)}>
-            <div className="hive-modal" style={{ borderRadius: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", width: "100%", maxWidth: 448, maxHeight: "88vh", overflowY: "auto", display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
-              <div className="hive-modal" style={{ position: "sticky", top: 0, borderBottom: "1px solid var(--border)", paddingLeft: 24, paddingRight: 24, paddingTop: 16, paddingBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent)" }}>
-                      <svg style={{ width: 12, height: 12, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </div>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>AI Brief</span>
-                    <span style={{ fontSize: 12, background: "var(--accent-bg)", color: "var(--accent-text)", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 600 }}>{brief.length} cases</span>
-                  </div>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Cases collected for synthesis</p>
-                </div>
-                <button onClick={() => setBriefOpen(false)} style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s, color 0.2s" }}>
-                  <svg style={{ width: 16, height: 16, color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-
-              <div style={{ padding: 24, flex: 1 }}>
-                {brief.length === 0 ? (
-                  <div style={{ textAlign: "center", paddingTop: 48, paddingBottom: 48 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 16, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                      <svg style={{ width: 20, height: 20, color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </div>
-                    <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 4 }}>No cases added yet</p>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Add cases from search results using "+ Add to brief"</p>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-                    {brief.map(cs => (
-                      <div key={cs.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", letterSpacing: "0.05em", textTransform: "uppercase" }}>{cs.sector}</span>
-                          </div>
-                          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.375 }}>{cs.title}</p>
-                          <p style={{ fontSize: 12, fontWeight: 500, color: "var(--accent)", marginTop: 2 }}>{cs.hook}</p>
-                        </div>
-                        <button onClick={() => toggleBrief(cs)} style={{ color: "var(--text-muted)", flexShrink: 0, marginTop: 2, transition: "color 0.2s" }}>
-                          <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {brief.length >= 2 && (
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-                    <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", borderRadius: 16, padding: 16, marginBottom: 16 }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>Pattern across {brief.length} cases</p>
-                      <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625 }}>
-                        {brief.length >= 2
-                          ? `${brief.filter(c => c.transferability === "High").length} of ${brief.length} cases have high UK transferability. Common sectors: ${[...new Set(brief.map(c => c.sector))].join(", ")}. These cases collectively demonstrate that proactive climate adaptation — integrated into planned maintenance — delivers better value than reactive repair.`
-                          : "Add more cases to see cross-case analysis."}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        sessionStorage.setItem("hiveBriefCases", JSON.stringify(brief.map((c: { id: string }) => c.id)));
-                        sessionStorage.setItem("hiveBriefTheme", themeKey);
-                        window.location.href = "/handbook/brief?tutorial=false";
-                      }}
-                      style={{ width: "100%", paddingTop: 12, paddingBottom: 12, borderRadius: 16, background: "var(--accent)", color: "#fff", fontSize: 14, fontWeight: 600, transition: "background 0.2s, color 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                      Generate full AI brief →
-                    </button>
-                  </div>
-                )}
-
-                {brief.length === 1 && (
-                  <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginTop: 8 }}>Add one more case to enable cross-case analysis</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
