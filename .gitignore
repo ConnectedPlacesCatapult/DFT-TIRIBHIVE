@@ -38,6 +38,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# atlas pipeline logs (offline ingest)
+/scripts/logs/
+/logs/ingest_progress.txt
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
