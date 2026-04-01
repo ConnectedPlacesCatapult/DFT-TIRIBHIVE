@@ -14,6 +14,7 @@ Env vars required (from .env):
                   Format: postgresql://postgres.[ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres
 """
 
+import argparse
 import os
 import json
 import time
@@ -271,22 +272,56 @@ def ingest_pass(
     return fetched, inserted
 
 
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        description="GtR Atlas ingestion into atlas.projects (dedupe by gtr_id)."
+    )
+    p.add_argument(
+        "--start-pass",
+        type=int,
+        default=1,
+        metavar="N",
+        help=(
+            "1-based index of the first search pass to run (skip earlier passes). "
+            f"Use 2 to skip pass 1 (transport). Valid range: 1..{len(SEARCH_PASSES)}."
+        ),
+    )
+    args = p.parse_args()
+    if args.start_pass < 1 or args.start_pass > len(SEARCH_PASSES):
+        raise SystemExit(
+            f"--start-pass must be between 1 and {len(SEARCH_PASSES)}; got {args.start_pass}"
+        )
+    return args
+
+
 def main():
+    args = parse_args()
+    start_idx = args.start_pass - 1
+    passes_to_run = SEARCH_PASSES[start_idx:]
+    total_passes = len(SEARCH_PASSES)
+
     print("Connecting to Supabase Postgres...", flush=True)
     conn = psycopg2.connect(DB_URL)
     conn.autocommit = False
     print("Connected.", flush=True)
 
+    if start_idx > 0:
+        print(
+            f"Skipping passes 1..{start_idx} (--start-pass {args.start_pass})",
+            flush=True,
+        )
+
     total_fetched = 0
     total_inserted = 0
     start_time = time.time()
 
-    for i, params in enumerate(SEARCH_PASSES):
+    for i, params in enumerate(passes_to_run):
+        pass_num = start_idx + i + 1
         label = params.get("q") or params.get("f_fc") or str(params)
-        print(f"\n[{i + 1}/{len(SEARCH_PASSES)}] Search: '{label}'", flush=True)
+        print(f"\n[{pass_num}/{total_passes}] Search: '{label}'", flush=True)
 
         fetched, inserted = ingest_pass(
-            conn, params, i + 1, len(SEARCH_PASSES), label
+            conn, params, pass_num, total_passes, label
         )
         total_fetched += fetched
         total_inserted += inserted

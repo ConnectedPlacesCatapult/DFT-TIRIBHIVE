@@ -5,6 +5,12 @@ name: GtR Atlas Ingestion
 
 on:
   workflow_dispatch:
+    inputs:
+      start_pass:
+        description: "First pass to run (1-35). Use 2 to skip transport dedup replay."
+        required: false
+        default: "1"
+        type: string
 
 jobs:
   ingest:
@@ -24,4 +30,4 @@ jobs:
       - name: Run GtR ingestion
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python scripts/ingest_gtr.py
+        run: python scripts/ingest_gtr.py --start-pass ${{ github.event.inputs.start_pass }}
