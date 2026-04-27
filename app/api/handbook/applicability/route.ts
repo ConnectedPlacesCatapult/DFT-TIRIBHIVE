@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import {
-  isAIForceDisabled,
+  isAIDisabled,
   isAIUnavailableError,
   withAITimeout,
 } from "@/lib/handbook/ai-availability";
@@ -50,8 +50,9 @@ export async function POST(req: NextRequest) {
       ai_unavailable: true,
     };
 
+    const forceEvidenceMode = body.forceEvidenceMode === true;
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey || isAIForceDisabled()) {
+    if (!apiKey || isAIDisabled(forceEvidenceMode)) {
       return NextResponse.json(fallbackResponse);
     }
 

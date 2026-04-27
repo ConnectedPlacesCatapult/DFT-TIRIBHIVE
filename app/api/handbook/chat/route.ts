@@ -58,6 +58,9 @@ function buildContext(body: Record<string, unknown>): ChatContext {
   if (body.include_guidance === true) {
     context.include_guidance = true;
   }
+  if (body.forceEvidenceMode === true) {
+    context.force_evidence_mode = true;
+  }
 
   return context;
 }

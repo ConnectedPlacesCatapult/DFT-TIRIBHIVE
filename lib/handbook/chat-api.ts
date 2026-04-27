@@ -39,6 +39,8 @@ export type ChatContext = {
   result_chunks?: { article_id: string; section_key: string; chunk_text: string }[];
   /** When true, append guidance document chunks to the retrieval context alongside case study chunks */
   include_guidance?: boolean;
+  /** Per-request local beta override: force evidence-only mode */
+  force_evidence_mode?: boolean;
 };
 
 export type ChatAction = {
@@ -62,7 +64,12 @@ export type ChatApiResponse = {
   ai_unavailable?: boolean;
 };
 
-import { isAIForceDisabled, isAIUnavailableError, withAITimeout } from "@/lib/handbook/ai-availability";
+import {
+  isAIDisabled,
+  isAIForceDisabled,
+  isAIUnavailableError,
+  withAITimeout,
+} from "@/lib/handbook/ai-availability";
 
 // ---------------------------------------------------------------------------
 // RAG retrieval
@@ -194,13 +201,17 @@ function keywordScore(
  */
 export async function hybridSearchChunks(
   query: string,
-  options?: { limit?: number; threshold?: number }
+  options?: { limit?: number; threshold?: number; forceFallback?: boolean }
 ): Promise<{ chunks: RetrievedChunk[]; mode: "rag" | "fallback" }> {
   const limit = options?.limit ?? 12;
   const threshold = options?.threshold ?? getDynamicThreshold(query);
 
   // ── Semantic retrieval ───────────────────────────────────────────────────
-  const semanticResult = await retrieveContext(query, { limit: limit * 2, threshold });
+  const semanticResult = await retrieveContext(query, {
+    limit: limit * 2,
+    threshold,
+    forceFallback: options?.forceFallback === true,
+  });
 
   // If DB is fully down, note it — but still run keyword search below so we return something useful
   const semanticFailed = semanticResult.mode === "fallback";
@@ -266,9 +277,12 @@ export async function hybridSearchChunks(
 
 async function retrieveContext(
   query: string,
-  options?: { section?: string; limit?: number; threshold?: number }
+  options?: { section?: string; limit?: number; threshold?: number; forceFallback?: boolean }
 ): Promise<{ chunks: RetrievedChunk[]; formatted: string; mode: "rag" | "fallback" }> {
   try {
+    if (options?.forceFallback === true) {
+      throw new Error("Forced evidence-only fallback for this request");
+    }
     const supabaseUrl =
       process.env.HIVE_SUPABASE_URL ??
       process.env.SUPABASE_URL ??
@@ -1139,7 +1153,7 @@ export async function getAIResponse(
   options?: GetAIResponseOptions
 ): Promise<ChatApiResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || isAIForceDisabled()) {
+  if (!apiKey || isAIDisabled(context.force_evidence_mode === true)) {
     return { ...getMockResponse(context.mode), ai_unavailable: true };
   }
 
@@ -1190,7 +1204,7 @@ export async function streamAIResponse(
   retrieval: { chunks: RetrievedChunk[]; mode: "rag" | "fallback" };
 } | null> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || isAIForceDisabled()) return null;
+  if (!apiKey || isAIDisabled(context.force_evidence_mode === true)) return null;
 
   const { systemPrompt, openaiMessages, retrieval, maxTokens } = await prepareAICall(messages, context, options);
 

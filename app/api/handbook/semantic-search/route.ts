@@ -65,6 +65,7 @@ function buildResponse(
 
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q")?.trim();
+  const forceEvidenceMode = req.nextUrl.searchParams.get("forceEvidenceMode") === "1";
 
   if (!query) {
     return NextResponse.json(
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
     const { chunks, mode } = await hybridSearchChunks(query, {
       limit: 12,
       threshold: getDynamicThreshold(query),
+      forceFallback: forceEvidenceMode,
     });
 
     // hybridSearchChunks already deduplicates (one chunk per article, RRF-ordered)

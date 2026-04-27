@@ -25,7 +25,7 @@ import {
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { HIVE_CORE_RULES } from "@/lib/handbook/chat-api";
 import {
-  isAIForceDisabled,
+  isAIDisabled,
   isAIUnavailableError,
   withAITimeout,
 } from "@/lib/handbook/ai-availability";
@@ -340,6 +340,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const ids: string[] = (body.ids ?? []).slice(0, 8);
     const queryContext: string = body.queryContext ?? "";
+    const forceEvidenceMode: boolean = body.forceEvidenceMode === true;
 
     if (ids.length === 0) {
       return NextResponse.json(
@@ -363,7 +364,7 @@ export async function POST(req: NextRequest) {
     let aiUnavailable = false;
     const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey || isAIForceDisabled()) {
+    if (!apiKey || isAIDisabled(forceEvidenceMode)) {
       sections = generateMockBrief(articles);
       aiUnavailable = true;
     } else {

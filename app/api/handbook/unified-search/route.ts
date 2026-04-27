@@ -106,7 +106,7 @@ async function fetchGuidanceChunks(query: string): Promise<{ article_id: string;
 }
 
 export async function POST(req: NextRequest) {
-  let body: { q?: string; skipCache?: boolean; includeGuidance?: boolean };
+  let body: { q?: string; skipCache?: boolean; includeGuidance?: boolean; forceEvidenceMode?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
   }
 
   const includeGuidance = body.includeGuidance === true;
+  const forceEvidenceMode = body.forceEvidenceMode === true;
   const hash = hashQuery(query);
 
   // ── Cache check (skip when explicitly requested or guidance mode changes the response) ──
@@ -137,6 +138,7 @@ export async function POST(req: NextRequest) {
     const { chunks, mode } = await hybridSearchChunks(query, {
       limit: 12,
       threshold: getDynamicThreshold(query),
+      forceFallback: forceEvidenceMode,
     });
 
     const cases = chunks.map((c) => ({
@@ -169,6 +171,7 @@ export async function POST(req: NextRequest) {
           ...guidanceChunks,
         ],
         session_intent: query,
+        force_evidence_mode: forceEvidenceMode,
       }
     );
 

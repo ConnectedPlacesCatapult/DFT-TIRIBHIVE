@@ -84,9 +84,10 @@ export default function HandbookV2Page() {
     setResultSet,
     setMessages,
     setRetrievalMode,
+    evidenceOnlyMode,
   } = useChatContext();
 
-  const { cases, synthesis, chips, chunks, loading, scenario, retrieval_mode, ai_unavailable, error } = useUnifiedSearch(query);
+  const { cases, synthesis, chips, chunks, loading, scenario, retrieval_mode, ai_unavailable, error } = useUnifiedSearch(query, false, evidenceOnlyMode);
 
   const hasSynthesis = synthesis.length > 0;
   const hasCases = cases.length > 0;

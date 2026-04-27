@@ -43,6 +43,10 @@ export function isAIForceDisabled(): boolean {
   return process.env.AI_FORCE_DISABLED === "true";
 }
 
+export function isAIDisabled(requestForced = false): boolean {
+  return requestForced || isAIForceDisabled();
+}
+
 export function isAIUnavailableError(err: unknown): boolean {
   if (isAIForceDisabled()) return true;
   if (!err || typeof err !== "object") return false;

@@ -391,6 +391,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     setExclusiveFilter,
     includeGuidance,
     hideBrief,
+    evidenceOnlyMode,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -499,6 +500,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           brief_sections: context.startsWith("brief:") && briefSections ? briefSections : undefined,
           suggestions_shown: suggestionsShown,
           include_guidance: includeGuidance || undefined,
+          forceEvidenceMode: evidenceOnlyMode || undefined,
         }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
