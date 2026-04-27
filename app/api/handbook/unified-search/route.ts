@@ -177,9 +177,13 @@ export async function POST(req: NextRequest) {
       scenario,
       top_similarity: topSimilarity,
       cases,
-      synthesis: aiResult.message ?? aiResult.text ?? "",
-      chips: aiResult.chips ?? [],
+      synthesis:
+        aiResult.ai_unavailable === true
+          ? "Evidence-only mode: showing curated case studies without AI synthesis."
+          : aiResult.message ?? aiResult.text ?? "",
+      chips: aiResult.ai_unavailable === true ? [] : aiResult.chips ?? [],
       retrieval_mode: mode,
+      ai_unavailable: aiResult.ai_unavailable === true,
     };
 
     // ── Write to cache (non-blocking, only for standard queries without guidance) ──
@@ -197,6 +201,7 @@ export async function POST(req: NextRequest) {
         synthesis: "",
         chips: [],
         retrieval_mode: "fallback",
+        ai_unavailable: false,
       },
       { status: 500 }
     );

@@ -1561,6 +1561,11 @@ function HandbookLandingPageContent() {
             {/* Unified mode: inline AI synthesis (auto-renders, no click required) */}
             {searchMode === "unified" && query.trim() && (
               <div style={{ marginTop: 8, padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, animation: "fadeUp 0.2s ease" }}>
+                {unified.ai_unavailable && (
+                  <div style={{ marginBottom: 10, padding: "8px 12px", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, color: "#92400e", fontSize: 12, fontWeight: 600 }}>
+                    Evidence-only mode: showing curated case studies without AI synthesis.
+                  </div>
+                )}
                 {unified.loading && !unified.synthesis ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 13 }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulse 1s infinite" }} />

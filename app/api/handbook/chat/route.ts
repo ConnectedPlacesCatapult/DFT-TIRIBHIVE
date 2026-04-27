@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   streamAIResponse,
-  getMockResponse,
   postProcessChatText,
   parseStringContext,
   type ChatMessageIn,
   type ChatContext,
 } from "@/lib/handbook/chat-api";
+import { isAIUnavailableError } from "@/lib/handbook/ai-availability";
 
 export const runtime = "nodejs";
 
@@ -75,16 +75,26 @@ export async function POST(req: NextRequest) {
 
   // ── Streaming path (SSE) ──────────────────────────────────────────────────
   const prepared = await streamAIResponse(messages, context).catch((err) => {
-    console.error("[HIVE] streamAIResponse setup failed:", err);
-    return null;
+    if (isAIUnavailableError(err)) return null;
+    throw err;
   });
 
   // No API key → send mock as a single SSE done event (instant)
   if (prepared === null) {
-    const mock = getMockResponse(context.mode);
     const enc = new TextEncoder();
     const mockBytes = enc.encode(
-      `data: ${JSON.stringify({ done: true, text: mock.text, message: mock.text, chips: mock.chips, gap: mock.gap, actions: mock.actions, action: mock.action, sources: undefined, retrieval_mode: "fallback" })}\n\n`
+      `data: ${JSON.stringify({
+        done: true,
+        text: "Evidence-only mode is active. AI chat is unavailable, but curated case evidence remains fully accessible.",
+        message: "Evidence-only mode is active. AI chat is unavailable, but curated case evidence remains fully accessible.",
+        chips: [],
+        gap: null,
+        actions: [],
+        action: undefined,
+        sources: undefined,
+        retrieval_mode: "fallback",
+        ai_unavailable: true,
+      })}\n\n`
     );
     return new Response(mockBytes, {
       headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
@@ -117,14 +127,27 @@ export async function POST(req: NextRequest) {
               sources: meta.sources,
               action: meta.action,
               retrieval_mode: meta.retrieval_mode,
+              ai_unavailable: false,
             })}\n\n`
           )
         );
       } catch (err) {
-        console.error("[HIVE] streaming error:", err);
+        if (!isAIUnavailableError(err)) {
+          console.error("[HIVE] streaming error:", err);
+        }
         controller.enqueue(
           encoder.encode(
-            `data: ${JSON.stringify({ done: true, text: "Something went wrong. Please try again.", message: "Something went wrong. Please try again.", retrieval_mode: "fallback" })}\n\n`
+            `data: ${JSON.stringify({
+              done: true,
+              text: isAIUnavailableError(err)
+                ? "Evidence-only mode is active. Use preset shortcuts to browse evidence."
+                : "Something went wrong. Please try again.",
+              message: isAIUnavailableError(err)
+                ? "Evidence-only mode is active. Use preset shortcuts to browse evidence."
+                : "Something went wrong. Please try again.",
+              retrieval_mode: "fallback",
+              ai_unavailable: isAIUnavailableError(err),
+            })}\n\n`
           )
         );
       } finally {

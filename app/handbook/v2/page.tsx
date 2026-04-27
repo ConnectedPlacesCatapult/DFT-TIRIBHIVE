@@ -86,7 +86,7 @@ export default function HandbookV2Page() {
     setRetrievalMode,
   } = useChatContext();
 
-  const { cases, synthesis, chips, chunks, loading, scenario, retrieval_mode } = useUnifiedSearch(query);
+  const { cases, synthesis, chips, chunks, loading, scenario, retrieval_mode, ai_unavailable, error } = useUnifiedSearch(query);
 
   const hasSynthesis = synthesis.length > 0;
   const hasCases = cases.length > 0;
@@ -271,6 +271,38 @@ export default function HandbookV2Page() {
             border: "1px solid #e2e8f0",
           }}
         >
+          {ai_unavailable && (
+            <div
+              style={{
+                marginBottom: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#92400e",
+                background: "#fef3c7",
+                border: "1px solid #fde68a",
+                borderRadius: 8,
+                padding: "8px 10px",
+              }}
+            >
+              Evidence-only mode: showing curated case studies without AI synthesis.
+            </div>
+          )}
+          {!ai_unavailable && error && (
+            <div
+              style={{
+                marginBottom: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#b91c1c",
+                background: "#fee2e2",
+                border: "1px solid #fecaca",
+                borderRadius: 8,
+                padding: "8px 10px",
+              }}
+            >
+              Search is temporarily unavailable. Please try again.
+            </div>
+          )}
           {loading && !hasSynthesis ? (
             <SynthesisSkeleton />
           ) : hasSynthesis ? (

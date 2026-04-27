@@ -97,10 +97,10 @@ const CASE_TITLE_MAP: Record<string, string> = Object.fromEntries(
 const GUIDANCE_URL_MAP: Record<string, string> = {
   "Climate Adaptation Strategy for Transport": "https://www.gov.uk/government/publications/climate-adaptation-strategy-for-transport",
   "Climate Adaptation Strategy 2025": "https://www.gov.uk/government/publications/climate-adaptation-strategy-for-transport",
-  "Climate Risk Assessment Guidance": "https://www.gov.uk/guidance/climate-change-risk-assessment-guidance",
-  "HS2 Learning Legacy": "https://learninglegacy.hs2.co.uk/categories/climate-change/",
+  "Climate Risk Assessment Guidance": "https://www.gov.uk/guidance/climate-change-risk-assessment-and-adaptation-planning-in-your-management-system",
+  "HS2 Learning Legacy": "https://learninglegacy.hs2.org.uk/document-themes/climate-change/",
   "Met Office Climate Data Portal": "https://climatedataportal.metoffice.gov.uk/",
-  "DARe Publications": "https://dare-uk.org/publications/",
+  "DARe Publications": "https://dare.ac.uk/publications/",
   "DARe Hub": "https://dare.ac.uk/",
   "CIHT Resilience Framework": "https://www.ciht.org.uk/resilience",
   "CIHT": "https://www.ciht.org.uk/resilience",
@@ -394,6 +394,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const config = getConfig(context);
@@ -462,6 +463,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   useEffect(() => {
     if (open && messages.length === 0) {
       setMessages([{ role: "ai", text: config.greeting }]);
+      setAiUnavailable(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -475,6 +477,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   }, [messages, typing, isThinking]);
 
   const send = async (text: string) => {
+    if (aiUnavailable) return;
     const q = (text || input).trim();
     if (!q) return;
     setInput("");
@@ -527,6 +530,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               });
             } else if (data.done) {
               if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+              setAiUnavailable(data.ai_unavailable === true);
               // Replace placeholder with fully-hydrated message
               setMessages((prev) => {
                 const updated = [...prev];
@@ -557,6 +561,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         }
       }
     } catch {
+      setAiUnavailable(false);
       setMessages((prev) => {
         const updated = [...prev];
         const last = updated[updated.length - 1];
@@ -957,6 +962,37 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               ))}
             </div>
           )}
+          {aiUnavailable && (
+            <div
+              style={{
+                marginTop: 10,
+                border: "1px solid #fde68a",
+                background: "#fffbeb",
+                borderRadius: 8,
+                padding: "10px 12px",
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontSize: 12, color: "#92400e", lineHeight: 1.5, fontWeight: 600 }}>
+                Evidence-only mode: AI interpretation is unavailable. Use quick actions to navigate evidence.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <Link href="/handbook/cases" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                  Open case filters
+                </Link>
+                <Link href="/handbook/cases?hazard=Flooding%20%E2%80%93%20fluvial,Flooding%20%E2%80%93%20surface%20water" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                  Browse flood evidence
+                </Link>
+                <Link href="/handbook/cases?transferability=High" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                  High transferability
+                </Link>
+                {!hideBrief && (
+                  <Link href="/handbook/brief" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                    Open brief workspace
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
 
           <div ref={bottomRef} />
         </div>
@@ -994,8 +1030,9 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send(input)}
-              placeholder={config.placeholder}
+              placeholder={aiUnavailable ? "Evidence-only mode: free-text AI is unavailable" : config.placeholder}
               aria-label={config.placeholder}
+              disabled={aiUnavailable}
               style={{
                 flex: 1,
                 fontSize: 13,
@@ -1010,7 +1047,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
             />
             <button
               onClick={() => send(input)}
-              disabled={!input.trim()}
+              disabled={!input.trim() || aiUnavailable}
               aria-label="Send message"
               style={{
                 width: 36,
@@ -1024,6 +1061,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                 justifyContent: "center",
                 flexShrink: 0,
                 transition: "background 0.15s",
+                opacity: aiUnavailable ? 0.65 : 1,
               }}
             >
               <svg
@@ -1060,7 +1098,11 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               </span>
             )}
             {retrievalMode === "fallback" && (
-              <span style={{ color: "#d97706" }}>Offline mode — example responses</span>
+              <span style={{ color: "#d97706" }}>
+                {aiUnavailable
+                  ? "Evidence-only mode — AI interpretation unavailable"
+                  : "Fallback retrieval mode active"}
+              </span>
             )}
             {!retrievalMode && "AI-generated · HIVE"}
             <span style={{ marginLeft: "auto" }}>Review sources before citing</span>
