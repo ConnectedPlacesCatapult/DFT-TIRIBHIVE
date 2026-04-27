@@ -1053,7 +1053,7 @@ function HandbookLandingPageContent() {
     "motorway slope instability",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView, evidenceOnlyMode, setEvidenceOnlyMode } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView, evidenceOnlyMode } = useChatContext();
   const T = THEMES[themeKey];
 
   const SECTOR_CHIP_COLOURS: Record<string, string> = {
@@ -1542,19 +1542,6 @@ function HandbookLandingPageContent() {
                   <svg aria-hidden="true" style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
-            </div>
-            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-muted)" }}>
-              <span style={{ fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", fontSize: 10, color: "var(--accent)" }}>
-                Beta
-              </span>
-              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={evidenceOnlyMode}
-                  onChange={(e) => setEvidenceOnlyMode(e.target.checked)}
-                />
-                Test evidence-only mode (AI off)
-              </label>
             </div>
             {/* Unified mode: typo correction banner */}
             {searchMode === "unified" && typoOriginal && (
