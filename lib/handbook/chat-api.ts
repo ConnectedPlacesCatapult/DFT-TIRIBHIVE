@@ -39,6 +39,8 @@ export type ChatContext = {
   result_chunks?: { article_id: string; section_key: string; chunk_text: string }[];
   /** When true, append guidance document chunks to the retrieval context alongside case study chunks */
   include_guidance?: boolean;
+  /** Per-request local beta override: force evidence-only mode */
+  force_evidence_mode?: boolean;
 };
 
 export type ChatAction = {
@@ -59,7 +61,15 @@ export type ChatApiResponse = {
   gap?: string | null;
   actions?: Array<{ label: string; primary?: boolean; demo?: boolean }>;
   retrieval_mode: "rag" | "fallback";
+  ai_unavailable?: boolean;
 };
+
+import {
+  isAIDisabled,
+  isAIForceDisabled,
+  isAIUnavailableError,
+  withAITimeout,
+} from "@/lib/handbook/ai-availability";
 
 // ---------------------------------------------------------------------------
 // RAG retrieval
@@ -191,13 +201,17 @@ function keywordScore(
  */
 export async function hybridSearchChunks(
   query: string,
-  options?: { limit?: number; threshold?: number }
+  options?: { limit?: number; threshold?: number; forceFallback?: boolean }
 ): Promise<{ chunks: RetrievedChunk[]; mode: "rag" | "fallback" }> {
   const limit = options?.limit ?? 12;
   const threshold = options?.threshold ?? getDynamicThreshold(query);
 
   // ── Semantic retrieval ───────────────────────────────────────────────────
-  const semanticResult = await retrieveContext(query, { limit: limit * 2, threshold });
+  const semanticResult = await retrieveContext(query, {
+    limit: limit * 2,
+    threshold,
+    forceFallback: options?.forceFallback === true,
+  });
 
   // If DB is fully down, note it — but still run keyword search below so we return something useful
   const semanticFailed = semanticResult.mode === "fallback";
@@ -263,9 +277,12 @@ export async function hybridSearchChunks(
 
 async function retrieveContext(
   query: string,
-  options?: { section?: string; limit?: number; threshold?: number }
+  options?: { section?: string; limit?: number; threshold?: number; forceFallback?: boolean }
 ): Promise<{ chunks: RetrievedChunk[]; formatted: string; mode: "rag" | "fallback" }> {
   try {
+    if (options?.forceFallback === true) {
+      throw new Error("Forced evidence-only fallback for this request");
+    }
     const supabaseUrl =
       process.env.HIVE_SUPABASE_URL ??
       process.env.SUPABASE_URL ??
@@ -275,12 +292,14 @@ async function retrieveContext(
       process.env.SUPABASE_ANON_KEY ??
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
+    const forceDisabled = isAIForceDisabled();
 
-    if (!supabaseUrl || !supabaseKey || !openaiKey) {
+    if (!supabaseUrl || !supabaseKey || !openaiKey || forceDisabled) {
       const missing = [
         !supabaseUrl && "Supabase URL",
         !supabaseKey && "Supabase anon key",
         !openaiKey && "OPENAI_API_KEY",
+        forceDisabled && "AI_FORCE_DISABLED=true",
       ]
         .filter(Boolean)
         .join(", ");
@@ -1134,31 +1153,41 @@ export async function getAIResponse(
   options?: GetAIResponseOptions
 ): Promise<ChatApiResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return getMockResponse(context.mode);
+  if (!apiKey || isAIDisabled(context.force_evidence_mode === true)) {
+    return { ...getMockResponse(context.mode), ai_unavailable: true };
+  }
 
   const { systemPrompt, openaiMessages, retrieval, maxTokens } = await prepareAICall(messages, context, options);
 
-  const { default: OpenAI } = await import("openai");
-  const openai = new OpenAI({ apiKey });
+  try {
+    const { default: OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey });
+    const completion = await withAITimeout(
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
+        temperature: 0.2,
+        max_tokens: maxTokens,
+      })
+    );
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
-    temperature: 0.2,
-    max_tokens: maxTokens,
-  });
+    const rawText = completion.choices[0]?.message?.content ?? "I couldn't generate a response.";
+    const processed = postProcessChatText(rawText, retrieval);
 
-  const rawText = completion.choices[0]?.message?.content ?? "I couldn't generate a response.";
-  const processed = postProcessChatText(rawText, retrieval);
-
-  return {
-    message: processed.text,
-    text: processed.text,
-    chips: processed.chips,
-    sources: processed.sources,
-    retrieval_mode: processed.retrieval_mode,
-    action: processed.action,
-  };
+    return {
+      message: processed.text,
+      text: processed.text,
+      chips: processed.chips,
+      sources: processed.sources,
+      retrieval_mode: processed.retrieval_mode,
+      action: processed.action,
+    };
+  } catch (err) {
+    if (isAIUnavailableError(err)) {
+      return { ...getMockResponse(context.mode), ai_unavailable: true };
+    }
+    throw err;
+  }
 }
 
 /**
@@ -1175,20 +1204,25 @@ export async function streamAIResponse(
   retrieval: { chunks: RetrievedChunk[]; mode: "rag" | "fallback" };
 } | null> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey || isAIDisabled(context.force_evidence_mode === true)) return null;
 
   const { systemPrompt, openaiMessages, retrieval, maxTokens } = await prepareAICall(messages, context, options);
 
-  const { default: OpenAI } = await import("openai");
-  const openai = new OpenAI({ apiKey });
-
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
-    temperature: 0.2,
-    max_tokens: maxTokens,
-    stream: true,
-  });
-
-  return { stream, retrieval };
+  try {
+    const { default: OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey });
+    const stream = await withAITimeout(
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
+        temperature: 0.2,
+        max_tokens: maxTokens,
+        stream: true,
+      })
+    );
+    return { stream, retrieval };
+  } catch (err) {
+    if (isAIUnavailableError(err)) return null;
+    throw err;
+  }
 }

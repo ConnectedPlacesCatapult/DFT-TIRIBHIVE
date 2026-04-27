@@ -97,21 +97,21 @@ const CASE_TITLE_MAP: Record<string, string> = Object.fromEntries(
 const GUIDANCE_URL_MAP: Record<string, string> = {
   "Climate Adaptation Strategy for Transport": "https://www.gov.uk/government/publications/climate-adaptation-strategy-for-transport",
   "Climate Adaptation Strategy 2025": "https://www.gov.uk/government/publications/climate-adaptation-strategy-for-transport",
-  "Climate Risk Assessment Guidance": "https://www.gov.uk/guidance/climate-change-risk-assessment-guidance",
-  "HS2 Learning Legacy": "https://learninglegacy.hs2.co.uk/categories/climate-change/",
+  "Climate Risk Assessment Guidance": "https://www.gov.uk/guidance/climate-change-risk-assessment-and-adaptation-planning-in-your-management-system",
+  "HS2 Learning Legacy": "https://learninglegacy.hs2.org.uk/document-themes/climate-change/",
   "Met Office Climate Data Portal": "https://climatedataportal.metoffice.gov.uk/",
-  "DARe Publications": "https://dare-uk.org/publications/",
+  "DARe Publications": "https://dare.ac.uk/publications/",
   "DARe Hub": "https://dare.ac.uk/",
   "CIHT Resilience Framework": "https://www.ciht.org.uk/resilience",
   "CIHT": "https://www.ciht.org.uk/resilience",
   "ADEPT RAPA Toolkit": "https://www.adeptnet.org.uk/rapa-toolkit",
-  "PIARC Climate Change Adaptation Framework 2023": "https://www.piarc.org/en/order-library/42628-en",
-  "PIARC Adaptation Framework 2023": "https://www.piarc.org/en/order-library/42628-en",
-  "PIARC Climate Change Resilience and Disaster Management": "https://www.piarc.org/en/order-library/42098-en",
-  "PIARC Case Studies Collection": "https://www.piarc.org/en/order-library/39873-en",
-  "PIARC Road Bridges Climate Change Adaptation": "https://www.piarc.org/en/order-library/38687-en",
-  "PIARC Earthworks and Rural Roads": "https://www.piarc.org/en/order-library/34433-en",
-  "PIARC Adaptation Methodologies and Strategies": "https://www.piarc.org/en/order-library/31335-en",
+  "PIARC Climate Change Adaptation Framework 2023": "https://www.piarc.org/en/order-library/42628-en-PIARC%20International%20Climate%20Change%20Adaptation%20Framework%202023%20%E2%80%93%20TechnicalReport?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
+  "PIARC Adaptation Framework 2023": "https://www.piarc.org/en/order-library/42628-en-PIARC%20International%20Climate%20Change%20Adaptation%20Framework%202023%20%E2%80%93%20TechnicalReport?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
+  "PIARC Climate Change Resilience and Disaster Management": "https://www.piarc.org/en/order-library/42098-en-Climate%20Change,%20Resilience%20and%20Disaster%20Management%20forRoads%20-%20Seminar?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
+  "PIARC Case Studies Collection": "https://www.piarc.org/en/order-library/39873-en-Climate%20Change,%20Other%20Hazards%20and%20Resilience%20of%20Road%20Networks%20-%20Collection%20of%20Case%20Studies?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
+  "PIARC Road Bridges Climate Change Adaptation": "https://www.piarc.org/en/order-library/38687-en-Measures%20for%20Increasing%20the%20Adaptability%20of%20Road%20Bridges%20to%20Climate%20Change%20-%20Literature%20Review?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
+  "PIARC Earthworks and Rural Roads": "https://www.piarc.org/en/order-library/34433-en-Preserve%20Earthworks%20and%20Rural%20Roads%20from%20the%20Impact%20ofClimate%20Changes%20-%20Technical%20Report?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
+  "PIARC Adaptation Methodologies and Strategies": "https://www.piarc.org/en/order-library/31335-en-Adaptation%20Methodologies%20and%20Strategies%20to%20Increase%20the%20Resilience%20of%20Roads%20to%20Climate%20Change%20-%20Technical%20Report?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
 };
 
 function SourceChip({ id }: { id: string }) {
@@ -391,12 +391,15 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
     setExclusiveFilter,
     includeGuidance,
     hideBrief,
+    evidenceOnlyMode,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const config = getConfig(context);
+  const hardEvidenceOnly = evidenceOnlyMode === true;
 
   const handleApplyAction = useCallback(
     (action: ChatActionPayload, messageIndex: number) => {
@@ -462,6 +465,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   useEffect(() => {
     if (open && messages.length === 0) {
       setMessages([{ role: "ai", text: config.greeting }]);
+      setAiUnavailable(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -475,9 +479,11 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   }, [messages, typing, isThinking]);
 
   const send = async (text: string) => {
+    if (hardEvidenceOnly) return;
     const q = (text || input).trim();
     if (!q) return;
     setInput("");
+    setAiUnavailable(false);
     const userMsg: ChatMessage = { role: "user", text: q };
     const updatedMessages = [...messages, userMsg];
     // Show user message + empty AI placeholder immediately (optimistic + streaming target)
@@ -496,6 +502,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
           brief_sections: context.startsWith("brief:") && briefSections ? briefSections : undefined,
           suggestions_shown: suggestionsShown,
           include_guidance: includeGuidance || undefined,
+          forceEvidenceMode: evidenceOnlyMode || undefined,
         }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -527,6 +534,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               });
             } else if (data.done) {
               if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+              setAiUnavailable(data.ai_unavailable === true);
               // Replace placeholder with fully-hydrated message
               setMessages((prev) => {
                 const updated = [...prev];
@@ -557,6 +565,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
         }
       }
     } catch {
+      setAiUnavailable(false);
       setMessages((prev) => {
         const updated = [...prev];
         const last = updated[updated.length - 1];
@@ -957,6 +966,61 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               ))}
             </div>
           )}
+          {aiUnavailable && (
+            <div
+              style={{
+                marginTop: 10,
+                border: "1px solid #fde68a",
+                background: "#fffbeb",
+                borderRadius: 8,
+                padding: "10px 12px",
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontSize: 12, color: "#92400e", lineHeight: 1.5, fontWeight: 600 }}>
+                {hardEvidenceOnly
+                  ? "Evidence-only mode: AI interpretation is unavailable. Use quick actions to navigate evidence."
+                  : "AI was temporarily unavailable for the last response. You can retry or use quick actions below."}
+              </p>
+              {!hardEvidenceOnly && (
+                <button
+                  onClick={() => {
+                    setAiUnavailable(false);
+                    inputRef.current?.focus();
+                  }}
+                  style={{
+                    marginBottom: 8,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "5px 8px",
+                    borderRadius: 6,
+                    background: "#fff",
+                    border: "1px solid #fcd34d",
+                    color: "#92400e",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Retry AI
+                </button>
+              )}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <Link href="/handbook/cases" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                  Open case filters
+                </Link>
+                <Link href="/handbook/cases?hazard=Flooding%20%E2%80%93%20fluvial,Flooding%20%E2%80%93%20surface%20water" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                  Browse flood evidence
+                </Link>
+                <Link href="/handbook/cases?transferability=High" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                  High transferability
+                </Link>
+                {!hideBrief && (
+                  <Link href="/handbook/brief" style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 6, background: "#fff", border: "1px solid #fcd34d", color: "#92400e", textDecoration: "none" }}>
+                    Open brief workspace
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
 
           <div ref={bottomRef} />
         </div>
@@ -994,8 +1058,9 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send(input)}
-              placeholder={config.placeholder}
+              placeholder={hardEvidenceOnly ? "Evidence-only mode: free-text AI is unavailable" : config.placeholder}
               aria-label={config.placeholder}
+              disabled={hardEvidenceOnly}
               style={{
                 flex: 1,
                 fontSize: 13,
@@ -1010,7 +1075,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
             />
             <button
               onClick={() => send(input)}
-              disabled={!input.trim()}
+              disabled={!input.trim() || hardEvidenceOnly}
               aria-label="Send message"
               style={{
                 width: 36,
@@ -1024,6 +1089,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                 justifyContent: "center",
                 flexShrink: 0,
                 transition: "background 0.15s",
+                opacity: hardEvidenceOnly ? 0.65 : 1,
               }}
             >
               <svg
@@ -1060,7 +1126,13 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               </span>
             )}
             {retrievalMode === "fallback" && (
-              <span style={{ color: "#d97706" }}>Offline mode — example responses</span>
+              <span style={{ color: "#d97706" }}>
+                {aiUnavailable
+                  ? hardEvidenceOnly
+                    ? "Evidence-only mode — AI interpretation unavailable"
+                    : "Last response used evidence-only fallback"
+                  : "Fallback retrieval mode active"}
+              </span>
             )}
             {!retrievalMode && "AI-generated · HIVE"}
             <span style={{ marginLeft: "auto" }}>Review sources before citing</span>

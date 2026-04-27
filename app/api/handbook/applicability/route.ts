@@ -7,6 +7,11 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
+import {
+  isAIDisabled,
+  isAIUnavailableError,
+  withAITimeout,
+} from "@/lib/handbook/ai-availability";
 
 const SYSTEM_PROMPT = `You are HIVE, a climate adaptation analyst for UK transport.
 
@@ -21,8 +26,9 @@ Rules:
 - If the case has no relevance to the target sector, say so honestly.`;
 
 export async function POST(req: NextRequest) {
+  let body: { article_id?: string; article_text?: string; target_sector?: string } = {};
   try {
-    const body = await req.json();
+    body = await req.json();
     const { article_id, article_text, target_sector } = body;
 
     if (!article_id || !article_text || !target_sector) {
@@ -32,24 +38,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const fallbackResponse = {
+      article_id,
+      target_sector,
+      considerations: [
+        `[${article_id}] The adaptation approach described here could be applied to ${target_sector} infrastructure in the UK, particularly where similar climate hazards are anticipated.`,
+        `[${article_id}] Cost and delivery mechanisms would need to be adapted for ${target_sector} procurement and maintenance cycles.`,
+        `[${article_id}] The lessons learned regarding stakeholder engagement and phased delivery are broadly transferable across sectors.`,
+      ],
+      mode: "fallback",
+      ai_unavailable: true,
+    };
+
+    const forceEvidenceMode = body.forceEvidenceMode === true;
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({
-        article_id,
-        target_sector,
-        considerations: [
-          `[${article_id}] The adaptation approach described here could be applied to ${target_sector} infrastructure in the UK, particularly where similar climate hazards are anticipated.`,
-          `[${article_id}] Cost and delivery mechanisms would need to be adapted for ${target_sector} procurement and maintenance cycles.`,
-          `[${article_id}] The lessons learned regarding stakeholder engagement and phased delivery are broadly transferable across sectors.`,
-        ],
-        mode: "fallback",
-      });
+    if (!apiKey || isAIDisabled(forceEvidenceMode)) {
+      return NextResponse.json(fallbackResponse);
     }
 
     const { default: OpenAI } = await import("openai");
     const openai = new OpenAI({ apiKey });
 
-    const completion = await openai.chat.completions.create({
+    const completion = await withAITimeout(openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -60,7 +70,7 @@ export async function POST(req: NextRequest) {
       ],
       temperature: 0.3,
       max_tokens: 400,
-    });
+    }));
 
     const text =
       completion.choices[0]?.message?.content ?? "Unable to generate considerations.";
@@ -77,12 +87,23 @@ export async function POST(req: NextRequest) {
       considerations:
         considerations.length > 0 ? considerations : [text],
       mode: "rag",
+      ai_unavailable: false,
     });
   } catch (err) {
+    if (isAIUnavailableError(err)) {
+      return NextResponse.json({
+        article_id: body?.article_id ?? "",
+        target_sector: body?.target_sector ?? "",
+        considerations: [
+          `[${body?.article_id ?? "Case"}] The adaptation approach described here could be applied to ${body?.target_sector ?? "the target"} infrastructure in the UK, particularly where similar climate hazards are anticipated.`,
+          `[${body?.article_id ?? "Case"}] Cost and delivery mechanisms would need to be adapted for ${body?.target_sector ?? "the target"} procurement and maintenance cycles.`,
+          `[${body?.article_id ?? "Case"}] The lessons learned regarding stakeholder engagement and phased delivery are broadly transferable across sectors.`,
+        ],
+        mode: "fallback",
+        ai_unavailable: true,
+      });
+    }
     console.error("Applicability API error:", err);
-    return NextResponse.json(
-      { error: "Failed to generate applicability analysis" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate applicability analysis" }, { status: 500 });
   }
 }

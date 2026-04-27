@@ -424,6 +424,7 @@ export default function HIVEBriefWithChat() {
     setOnBriefSectionUpdate: setCtxOnBriefSectionUpdate,
     setPendingBriefMessage,
     themeKey,
+    evidenceOnlyMode,
   } = useChatContext();
   const [focusLens, setFocusLens] = useState<"all" | "Rail" | "Highways" | "Aviation" | "Maritime" | "Costs" | "Policy context">("all");
 
@@ -456,7 +457,7 @@ export default function HIVEBriefWithChat() {
       const res = await fetch("/api/handbook/brief-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify({ ids, forceEvidenceMode: evidenceOnlyMode || undefined }),
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
@@ -473,7 +474,7 @@ export default function HIVEBriefWithChat() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [evidenceOnlyMode]);
 
   // ── Load case IDs on mount ────────────────────────────────────────────────
   useEffect(() => {

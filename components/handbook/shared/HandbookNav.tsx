@@ -59,6 +59,8 @@ export function HandbookNav() {
     setHideBrief,
     chipCardView,
     setChipCardView,
+    evidenceOnlyMode,
+    setEvidenceOnlyMode,
   } = useChatContext();
 
   const [demoOpen, setDemoOpen] = useState(false);
@@ -598,6 +600,27 @@ export function HandbookNav() {
 
                   <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: T.textMuted, marginBottom: 6 }}>System</div>
+                    <button
+                      type="button"
+                      onClick={() => setEvidenceOnlyMode(!evidenceOnlyMode)}
+                      style={{
+                        width: "100%",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        background: evidenceOnlyMode ? "#fef3c7" : "#dcfce7",
+                        color: evidenceOnlyMode ? "#92400e" : "#166534",
+                        textAlign: "left",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {evidenceOnlyMode
+                        ? "Evidence-only mode active (AI off) → switch AI on"
+                        : "AI mode active (default) → switch to evidence-only"}
+                    </button>
                     <a
                       href="/admin/status"
                       style={{

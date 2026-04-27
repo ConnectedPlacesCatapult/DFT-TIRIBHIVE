@@ -111,6 +111,9 @@ type HandbookContextType = {
   /** Show synthesis chips as mini-cards instead of pills — demo toggle */
   chipCardView: boolean;
   setChipCardView: (v: boolean) => void;
+  /** Local beta control: force evidence-only mode without changing server env vars */
+  evidenceOnlyMode: boolean;
+  setEvidenceOnlyMode: (v: boolean) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
@@ -187,6 +190,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") {
       localStorage.setItem(CHIP_CARD_VIEW_KEY, String(v));
     }
+  }, []);
+  const [evidenceOnlyMode, setEvidenceOnlyModeState] = useState<boolean>(false);
+  const setEvidenceOnlyMode = useCallback((v: boolean) => {
+    setEvidenceOnlyModeState(v);
   }, []);
   const [statsPlacement, setStatsPlacementState] = useState<"quickstart" | "marquee">(() => {
     if (typeof window === "undefined") return "quickstart";
@@ -349,6 +356,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setHideBrief,
         chipCardView,
         setChipCardView,
+        evidenceOnlyMode,
+        setEvidenceOnlyMode,
       }}
     >
       {children}

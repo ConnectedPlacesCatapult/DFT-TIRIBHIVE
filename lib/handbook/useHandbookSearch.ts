@@ -35,6 +35,7 @@ export function useHandbookSearch(query: string) {
     semanticChunks,
     setSemanticChunks,
     includeGuidance,
+    evidenceOnlyMode,
   } = useChatContext();
 
   const [semanticResults, setSemanticResults] = useState<SemanticResult[]>([]);
@@ -62,7 +63,7 @@ export function useHandbookSearch(query: string) {
       if (trimmed.length < 5) return;
       try {
         const res = await fetch(
-          `/api/handbook/semantic-search?q=${encodeURIComponent(trimmed)}`
+          `/api/handbook/semantic-search?q=${encodeURIComponent(trimmed)}${evidenceOnlyMode ? "&forceEvidenceMode=1" : ""}`
         );
         if (!res.ok) return;
         const data = await res.json();
@@ -93,7 +94,7 @@ export function useHandbookSearch(query: string) {
     return () => {
       if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current);
     };
-  }, [query]);
+  }, [query, evidenceOnlyMode, setSemanticChunks]);
 
   // ── Session intent debounce ───────────────────────────────────────────────
   const intentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,6 +130,7 @@ export function useHandbookSearch(query: string) {
           result_set: resultSet.length > 0 ? resultSet : undefined,
           result_chunks: semanticChunks.length > 0 ? semanticChunks : undefined,
           include_guidance: includeGuidance || undefined,
+          forceEvidenceMode: evidenceOnlyMode || undefined,
         }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);

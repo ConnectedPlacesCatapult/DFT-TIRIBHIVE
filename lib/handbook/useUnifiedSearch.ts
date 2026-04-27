@@ -22,6 +22,7 @@ export type UnifiedSearchResult = {
   chunks: { article_id: string; section_key: string; chunk_text: string }[];
   scenario: "A" | "B" | "C" | null;
   retrieval_mode: "rag" | "fallback" | null;
+  ai_unavailable: boolean;
   loading: boolean;
   error: string | null;
 };
@@ -34,6 +35,7 @@ const EMPTY: UnifiedSearchResult = {
   chunks: [],
   scenario: null,
   retrieval_mode: null,
+  ai_unavailable: false,
   loading: false,
   error: null,
 };
@@ -45,7 +47,11 @@ const EMPTY: UnifiedSearchResult = {
  * Returns both case card data and AI synthesis from the same response —
  * no coordination layer, no timing gap, no count mismatch.
  */
-export function useUnifiedSearch(query: string, includeGuidance = false): UnifiedSearchResult {
+export function useUnifiedSearch(
+  query: string,
+  includeGuidance = false,
+  forceEvidenceMode = false
+): UnifiedSearchResult {
   const [result, setResult] = useState<UnifiedSearchResult>(EMPTY);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -70,7 +76,7 @@ export function useUnifiedSearch(query: string, includeGuidance = false): Unifie
         const res = await fetch("/api/handbook/unified-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: trimmed, includeGuidance }),
+          body: JSON.stringify({ q: trimmed, includeGuidance, forceEvidenceMode }),
           signal: controller.signal,
         });
 
@@ -80,6 +86,7 @@ export function useUnifiedSearch(query: string, includeGuidance = false): Unifie
             ...prev,
             loading: false,
             error: err.error ?? "Search failed",
+            ai_unavailable: false,
           }));
           return;
         }
@@ -118,6 +125,7 @@ export function useUnifiedSearch(query: string, includeGuidance = false): Unifie
             : chips.map((id: string) => ({ article_id: id, section_key: "general", chunk_text: "" })),
           scenario: data.scenario ?? null,
           retrieval_mode: data.retrieval_mode ?? null,
+          ai_unavailable: data.ai_unavailable === true,
           loading: false,
           error: null,
         });
@@ -127,6 +135,7 @@ export function useUnifiedSearch(query: string, includeGuidance = false): Unifie
           ...prev,
           loading: false,
           error: "Search unavailable — please try again",
+          ai_unavailable: false,
         }));
       }
     }, 500);
@@ -135,7 +144,7 @@ export function useUnifiedSearch(query: string, includeGuidance = false): Unifie
       if (timerRef.current) clearTimeout(timerRef.current);
       if (abortRef.current) abortRef.current.abort();
     };
-  }, [query, includeGuidance]);
+  }, [query, includeGuidance, forceEvidenceMode]);
 
   return result;
 }

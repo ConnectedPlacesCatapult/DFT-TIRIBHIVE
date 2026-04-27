@@ -24,6 +24,11 @@ import {
 } from "@/lib/handbook/article-cards";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { HIVE_CORE_RULES } from "@/lib/handbook/chat-api";
+import {
+  isAIDisabled,
+  isAIUnavailableError,
+  withAITimeout,
+} from "@/lib/handbook/ai-availability";
 
 /**
  * System prompt for brief generation. When options are linked to the brief's cases,
@@ -335,6 +340,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const ids: string[] = (body.ids ?? []).slice(0, 8);
     const queryContext: string = body.queryContext ?? "";
+    const forceEvidenceMode: boolean = body.forceEvidenceMode === true;
 
     if (ids.length === 0) {
       return NextResponse.json(
@@ -355,10 +361,12 @@ export async function POST(req: NextRequest) {
     }
 
     let sections: GeneratedSection[];
+    let aiUnavailable = false;
     const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
+    if (!apiKey || isAIDisabled(forceEvidenceMode)) {
       sections = generateMockBrief(articles);
+      aiUnavailable = true;
     } else {
       const provider = getHiveDataProvider();
       const chunkResult = await retrieveChunksForTribArticleIds(ids);
@@ -390,19 +398,36 @@ export async function POST(req: NextRequest) {
 
       const systemPrompt = buildBriefSystemPrompt(linkedOptions);
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: userBody,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 3000,
-        response_format: { type: "json_object" },
-      });
+      let completion;
+      try {
+        completion = await withAITimeout(
+          openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: userBody,
+              },
+            ],
+            temperature: 0.3,
+            max_tokens: 3000,
+            response_format: { type: "json_object" },
+          })
+        );
+      } catch (err) {
+        if (isAIUnavailableError(err)) {
+          sections = generateMockBrief(articles);
+          const fallbackSessionId = `session-${Date.now()}`;
+          return NextResponse.json({
+            sessionId: fallbackSessionId,
+            sections,
+            label: `Evidence-only mode from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — AI drafting unavailable`,
+            ai_unavailable: true,
+          });
+        }
+        throw err;
+      }
 
       const raw = completion.choices[0]?.message?.content ?? "{}";
       const parsed = JSON.parse(raw) as { sections?: GeneratedSection[] };
@@ -432,7 +457,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       sessionId,
       sections,
-      label: `AI-generated (beta) from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — review before use`,
+      label: aiUnavailable
+        ? `Evidence-only mode from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — AI drafting unavailable`
+        : `AI-generated (beta) from ${articles.length} case ${articles.length === 1 ? "study" : "studies"} — review before use`,
+      ai_unavailable: aiUnavailable,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
