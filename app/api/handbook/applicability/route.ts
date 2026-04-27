@@ -26,7 +26,12 @@ Rules:
 - If the case has no relevance to the target sector, say so honestly.`;
 
 export async function POST(req: NextRequest) {
-  let body: { article_id?: string; article_text?: string; target_sector?: string } = {};
+  let body: {
+    article_id?: string;
+    article_text?: string;
+    target_sector?: string;
+    forceEvidenceMode?: boolean;
+  } = {};
   try {
     body = await req.json();
     const { article_id, article_text, target_sector } = body;
