@@ -124,7 +124,6 @@ const BACKGROUND_EFFECT_KEY = "hiveBackgroundEffect";
 const STATS_PLACEMENT_KEY = "hiveStatsPlacement";
 const HIDE_BRIEF_KEY = "hiveHideBrief";
 const CHIP_CARD_VIEW_KEY = "hiveChipCardView";
-const EVIDENCE_ONLY_MODE_KEY = "hiveEvidenceOnlyMode";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
@@ -192,15 +191,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(CHIP_CARD_VIEW_KEY, String(v));
     }
   }, []);
-  const [evidenceOnlyMode, setEvidenceOnlyModeState] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(EVIDENCE_ONLY_MODE_KEY) === "true";
-  });
+  const [evidenceOnlyMode, setEvidenceOnlyModeState] = useState<boolean>(false);
   const setEvidenceOnlyMode = useCallback((v: boolean) => {
     setEvidenceOnlyModeState(v);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(EVIDENCE_ONLY_MODE_KEY, String(v));
-    }
   }, []);
   const [statsPlacement, setStatsPlacementState] = useState<"quickstart" | "marquee">(() => {
     if (typeof window === "undefined") return "quickstart";
