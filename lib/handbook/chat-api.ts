@@ -356,7 +356,8 @@ async function retrieveContext(
     }));
 
     // Resolve UUIDs → trib_article_id (e.g. ID_40) so the AI cites human-readable IDs
-    const uniqueUuids = [...new Set(rawChunks.map((c: { article_id: string }) => c.article_id))];
+    // Filter out nulls — guidance chunks have no article_id and don't need resolution
+    const uniqueUuids = [...new Set(rawChunks.map((c: { article_id: string | null }) => c.article_id).filter(Boolean) as string[])];
     let uuidToTrib: Map<string, string> = new Map();
     try {
       const { data: articles } = await sb
@@ -374,18 +375,31 @@ async function retrieveContext(
       console.warn("[HIVE] trib_article_id lookup failed (non-blocking):", lookupErr);
     }
 
-    type RawChunkItem = { article_id: string; section_key: string; chunk_text: string; similarity: number | undefined };
-    const typedChunks: RetrievedChunk[] = rawChunks.map((c: RawChunkItem) => ({
-      article_id: uuidToTrib.get(c.article_id) ?? c.article_id,
-      section_key: c.section_key,
-      chunk_text: c.chunk_text,
-      similarity: c.similarity,
-    }));
+    type RawChunkItem = { article_id: string | null; section_key: string; chunk_text: string; similarity: number | undefined };
+    const typedChunks: RetrievedChunk[] = rawChunks.map((c: RawChunkItem) => {
+      const resolved = c.article_id == null
+        ? null                                   // guidance doc — no case ID
+        : (uuidToTrib.get(c.article_id) ?? c.article_id); // UUID → trib ID or raw UUID fallback
+      return {
+        article_id: resolved ?? "",
+        section_key: c.section_key,
+        chunk_text: c.chunk_text,
+        similarity: c.similarity,
+      };
+    });
 
     const formatted = typedChunks
-      .map(
-        (c) => `[${c.article_id}] (${c.section_key}):\n${c.chunk_text}`
-      )
+      .map((c) => {
+        // Guidance chunks (no article_id) use [Guide: label] so the AI never cites them as [ID_xx]
+        const isGuidance = !c.article_id || c.section_key === "guidance_doc";
+        const isTribId = /^ID_/i.test(c.article_id);
+        const ref = isGuidance
+          ? `[Guide: ${c.section_key}]`
+          : isTribId
+            ? `[${c.article_id}]`
+            : `[Guide: ${c.section_key}]`; // unresolved UUID → treat as guidance, never cite as case ID
+        return `${ref} (${c.section_key}):\n${c.chunk_text}`;
+      })
       .join("\n\n---\n\n");
 
     return { chunks: typedChunks, formatted, mode: "rag" };
@@ -743,9 +757,14 @@ function buildSystemPrompt(
   if (context.result_set) context.result_set.forEach((r) => validIds.add(r.id));
   if (context.brief_case_chunks) context.brief_case_chunks.forEach((c) => validIds.add(c.article_id));
 
-  const citationAllowlist = validIds.size > 0
-    ? `\n<citation_allowlist>Valid case IDs you may cite: ${[...validIds].join(", ")}. Do not cite any other IDs.</citation_allowlist>`
-    : "";
+  // Strip any non-canonical IDs (guidance refs, nulls, UUIDs) from the allowlist
+  const canonicalIds = [...validIds].filter((id) => /^ID_/i.test(id));
+
+  const citationAllowlist = canonicalIds.length > 0
+    ? `\n<citation_allowlist>Valid case IDs you may cite in [ID_xx] format: ${canonicalIds.join(", ")}. Do not cite any other IDs — including IDs you recall from training. If a project has no matching ID in this list, DO NOT mention it.</citation_allowlist>`
+    : retrievalMode === "fallback"
+      ? `\n<citation_allowlist>You are in fallback mode. Only cite case IDs that appear as "id" fields in the JSON data below (format: "id":"ID_xx"). Do not invent or guess any ID not present in that JSON. If unsure, omit the citation.</citation_allowlist>`
+      : "";
 
   let modePrompt: string;
   let modeContext = "";
