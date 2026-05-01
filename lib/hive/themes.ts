@@ -37,7 +37,7 @@ export const THEMES: Record<ThemeKey, Theme> = {
     border: "#e7e5e4",
     borderStrong: "#a8a29e",
     textPrimary: "#1c1917",
-    textSecondary: "#78716c",
+    textSecondary: "#57534e",
     textMuted: "#6b6560",
     accent: "#047857",
     accentBg: "#d1fae5",

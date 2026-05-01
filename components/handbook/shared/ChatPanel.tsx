@@ -898,6 +898,8 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 4,
+                        position: "relative",
+                        zIndex: 10,
                       }}
                     >
                       View {(m.chips?.length ?? 0) >= 2 ? m.chips!.length : resultSet.length} cases ↗

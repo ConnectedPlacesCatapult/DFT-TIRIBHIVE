@@ -1,4 +1,4 @@
-export const AI_TIMEOUT_MS = 12_000;
+export const AI_TIMEOUT_MS = 30_000;
 
 type ErrorWithFields = Error & {
   status?: number;

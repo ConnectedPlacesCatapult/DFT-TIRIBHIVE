@@ -55,7 +55,7 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief, hideBrief }: {
           <span style={{ display: "inline-block", fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 4, background: "#FAEEDA", color: "#633806" }}>
             {card.transport_sector ?? cs.sector}
           </span>
-          <span style={{ fontSize: 12, color: "#888" }}>
+          <span style={{ fontSize: 12, color: "#666" }}>
             {card.organisation ?? cs.organisation} · {card.trib_article_id} · {card.year_range ?? cs.year}
           </span>
         </div>
@@ -81,7 +81,7 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief, hideBrief }: {
 
       {/* Key insight */}
       {card.key_insight && (
-        <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "12px 16px", borderLeft: "3px solid #1D9E75", marginBottom: 16 }}>
+        <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "12px 16px", borderLeft: "3px solid #0A7B57", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 500, color: "#0F6E56", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Key insight</div>
           <p style={{ fontSize: 14, color: "#085041", lineHeight: 1.6, margin: 0 }}>{card.key_insight}</p>
         </div>
@@ -93,14 +93,14 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief, hideBrief }: {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
           <a
             href={`/handbook/${cs.id}`}
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: "#1D9E75", color: "#fff", textDecoration: "none" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: "#0A7B57", color: "#fff", textDecoration: "none" }}
           >
             ↗ View full case study
           </a>
           {!hideBrief && (
           <button
             onClick={() => { onAddToBrief(cs); onClose(); }}
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#1D9E75" : "#1a1a1a", border: inBrief ? "1.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#0A7B57" : "#1a1a1a", border: inBrief ? "1.5px solid #0A7B57" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
           >
             {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
           </button>
@@ -108,11 +108,11 @@ function RichCardBody({ card, cs, onClose, onAddToBrief, inBrief, hideBrief }: {
         </div>
         {/* Secondary row */}
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <a href="/handbook/guidance" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+          <a href="/handbook/guidance" style={{ fontSize: 12, color: "#666", textDecoration: "none" }}>
             Browse additional guidance →
           </a>
           {pdfUrl && (
-            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#666", textDecoration: "none" }}>
               ↗ View original PDF
             </a>
           )}
@@ -259,7 +259,7 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief, hideBrief }: {
 }) {
   return (
     <>
-      <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "12px 16px", borderLeft: "3px solid #1D9E75", marginBottom: 16 }}>
+      <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "12px 16px", borderLeft: "3px solid #0A7B57", marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 500, color: "#0F6E56", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Key insight</div>
         <p style={{ fontSize: 14, color: "#085041", lineHeight: 1.6, margin: 0 }}>{cs.insight}</p>
       </div>
@@ -270,14 +270,14 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief, hideBrief }: {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
           <a
             href={`/handbook/${cs.id}`}
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: "#1D9E75", color: "#fff", textDecoration: "none" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: "#0A7B57", color: "#fff", textDecoration: "none" }}
           >
             ↗ View full case study
           </a>
           {!hideBrief && (
           <button
             onClick={() => { onAddToBrief(cs); onClose(); }}
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#1D9E75" : "#1a1a1a", border: inBrief ? "1.5px solid #1D9E75" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 8, background: inBrief ? "transparent" : "#f7f5f0", color: inBrief ? "#0A7B57" : "#1a1a1a", border: inBrief ? "1.5px solid #0A7B57" : "1px solid rgba(0,0,0,0.15)", cursor: "pointer" }}
           >
             {inBrief ? "✓ In Build Brief" : "+ Add to Build Brief"}
           </button>
@@ -285,11 +285,11 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief, hideBrief }: {
         </div>
         {/* Secondary row */}
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <a href="/handbook/guidance" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+          <a href="/handbook/guidance" style={{ fontSize: 12, color: "#666", textDecoration: "none" }}>
             Browse additional guidance →
           </a>
           {getCaseStudyPdfUrl(cs) && (
-            <a href={getCaseStudyPdfUrl(cs)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+            <a href={getCaseStudyPdfUrl(cs)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#666", textDecoration: "none" }}>
               ↗ View original PDF
             </a>
           )}
@@ -327,12 +327,12 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief, hideBrief }: {
       {/* Cost / period */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
         <div style={{ background: "#f7f5f0", borderRadius: 8, padding: "10px 12px", border: "0.5px solid rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: 11, fontWeight: 500, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Investment</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: "#666", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Investment</div>
           <div style={{ fontSize: 13, fontWeight: 500, color: "#1a1a1a" }}>{cs.cost}</div>
-          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Band: {cs.costBand}</div>
+          <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>Band: {cs.costBand}</div>
         </div>
         <div style={{ background: "#f7f5f0", borderRadius: 8, padding: "10px 12px", border: "0.5px solid rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: 11, fontWeight: 500, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Delivery period</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: "#666", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Delivery period</div>
           <div style={{ fontSize: 13, fontWeight: 500, color: "#1a1a1a" }}>{cs.year}</div>
         </div>
       </div>
@@ -365,7 +365,7 @@ function FallbackBody({ cs, onClose, onAddToBrief, inBrief, hideBrief }: {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 500, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+    <div style={{ fontSize: 11, fontWeight: 500, color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
       {children}
     </div>
   );
@@ -394,7 +394,7 @@ function LinkButton({ href, label }: { href: string; label: string }) {
         alignItems: "center",
         gap: 6,
         fontSize: 13,
-        color: "#1D9E75",
+        color: "#0A7B57",
         textDecoration: "none",
         fontWeight: 600,
       }}
@@ -473,7 +473,7 @@ export function CaseStudyDetail({ cs, onClose, onAddToBrief, inBrief, prefetched
 
         {loading ? (
           <div style={{ padding: 40, textAlign: "center" }}>
-            <div style={{ fontSize: 13, color: "#888" }}>Loading case study...</div>
+            <div style={{ fontSize: 13, color: "#666" }}>Loading case study...</div>
           </div>
         ) : card ? (
           <RichCardBody card={card} cs={cs} onClose={onClose} onAddToBrief={onAddToBrief} inBrief={inBrief} hideBrief={hideBrief} />

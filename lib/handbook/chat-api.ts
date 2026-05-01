@@ -128,9 +128,13 @@ const QUERY_EXPANSION_MAP: Record<string, string> = {
   drainage:   "drainage surface water management SuDS sustainable urban climate adaptation",
   suds:       "sustainable drainage systems SuDS surface water flood adaptation urban",
   heat:       "extreme heat urban heat island temperature adaptation cooling infrastructure",
+  heatwave:   "extreme heat heatwave urban heat island high temperatures adaptation cooling infrastructure",
+  frost:      "frost freeze thaw cold winter low temperatures ice infrastructure resilience adaptation",
   ice:        "ice freeze thaw cold winter infrastructure resilience adaptation",
   snow:       "snow ice winter cold infrastructure resilience adaptation maintenance",
   wind:       "wind storm damage infrastructure resilience protection adaptation",
+  thermal:    "thermal stress heat temperature extreme infrastructure resilience adaptation",
+  wildfire:   "wildfire fire vegetation heat extreme drought adaptation infrastructure resilience",
 };
 
 /**

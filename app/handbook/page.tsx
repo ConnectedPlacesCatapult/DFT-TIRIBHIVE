@@ -309,7 +309,7 @@ const THEMES = {
     key: 'light', label: 'Light',
     bg: '#F7F5F0', surface: '#ffffff', surfaceAlt: '#fafaf9',
     border: '#e7e5e4', borderStrong: '#a8a29e',
-    textPrimary: '#1c1917', textSecondary: '#78716c', textMuted: '#a8a29e',
+    textPrimary: '#1c1917', textSecondary: '#57534e', textMuted: '#6b6560',
     accent: '#047857', accentBg: '#d1fae5', accentText: '#065f46',
     navBg: 'rgba(255,255,255,0.92)', gradFade: '#F7F5F0',
     badgeBg: '#ecfdf5', badgeText: '#065f46', badgeBorder: '#a7f3d0',
@@ -864,7 +864,7 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
       ? { bg: "#d1fae5", text: "#065f46", border: "#a7f3d0" }
       : intensity >= 0.4
         ? { bg: "#ecfdf5", text: "#065f46", border: "#d1fae5" }
-        : { bg: "#f0fdf4", text: "#86efac", border: "#d1fae5" };
+        : { bg: "#f0fdf4", text: "#166534", border: "#d1fae5" };
   };
 
   return (
@@ -2077,7 +2077,7 @@ function HandbookLandingPageContent() {
             : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
           }
           <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginTop: 16 }}>
-            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Browse all cases below · Search above to filter by hazard, sector, or keyword</p>
+            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Search or filter above to explore case studies · Click any card to dive deeper</p>
           </div>
         </div>
 
