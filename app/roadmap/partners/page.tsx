@@ -64,7 +64,6 @@ export default function PartnersPage() {
         <img className="Partner_Image" src={tribAssets.logos.dsit} id="DSIT" alt="DSIT logo" />
         <img className="Partner_Image" src={tribAssets.logos.rssb} id="RSSB" alt="RSSB logo" />
         <img className="Partner_Image" src={tribAssets.logos.ati} id="Aerospace Technology Institute" alt="Aerospace Technology Institute logo" />
-        <img className="Partner_Image" src={tribAssets.logos.govOfficeForScience} id="Government Office for Science" alt="Government Office for Science logo" />
       </div>
     </div>
   );

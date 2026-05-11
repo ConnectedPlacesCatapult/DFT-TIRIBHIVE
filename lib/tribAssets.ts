@@ -31,7 +31,6 @@ export const tribAssets = {
     networkRail: `${R}/Logos/Network_Rail.png`,
     maritimeCoastguard: `${R}/Logos/Maritime_Coastguard_Agency.png`,
     nationalHighways: `${R}/Logos/National_Highways.png`,
-    govOfficeForScience: `${R}/Logos/Government_Office_for_Science.png`,
   },
 
   /** Root `Resources/*` — icons, contributor PNGs, UI chrome (matches `require(\`../Resources/${name}.png\`)`). */

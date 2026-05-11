@@ -158,14 +158,19 @@ No DfT resolution is recorded in the spec. The legal requirement for public sect
 
 ## Q10 — Light-touch onboarding
 **Loren:** Must Fix / Fail
-**Our position:** Partially confirmed. Walkthrough exists as specified; formatting issues acknowledged.
+**Our position:** Confirmed. Walkthrough exists as specified; formatting issues now fixed.
 
 **What the spec says:**
 WP1 deliverable 3: "in-platform tooltip walkthrough (preferred over static manual); brief explainer sufficient; primary goal is intuitive design so users don't need documentation"
 
-**What was built:** 7-step guided tour with spotlight overlay, stored in `sessionStorage`. Potential z-index conflicts with sticky nav being investigated.
+**What was built:** 7-step guided tour with spotlight overlay, stored in `localStorage`. Three formatting/stacking issues have been resolved.
 
-**Action:** Fixing walkthrough z-index layering. The spec explicitly agrees tooltip walkthrough over static manual.
+**Root causes identified and fixed:**
+1. **Stacking context trap** — the `fadeUp` CSS animation ended on `transform:translateY(0)`, which browsers treat as a live transform, permanently locking every section element into its own stacking context. The spotlight's `z-index: 1001` was trapped inside it and couldn't appear above the backdrop. Fixed by changing the animation `to` state to `transform:none`.
+2. **Tour card below spotlight** — card was `z-index: 1000`, spotlighted section was `z-index: 1001`. If a spotlighted section extended to the bottom of the viewport, it rendered over the card. Fixed by raising card to `z-index: 1002`.
+3. **Scroll on dismiss** — `closeTour()` was calling `scrollIntoView` on the current anchor, causing a disorienting page scroll when the user clicked Skip or the backdrop. Removed scroll from `closeTour`; scroll only happens on `Next →`. Also changed `block: "start"` to `block: "center"` so sections scroll to the middle of the viewport rather than behind the sticky nav.
+
+**Action:** **DONE.** File changed: `app/handbook/brief/page.tsx`
 
 ---
 
@@ -295,13 +300,19 @@ We accept the report in good faith — external links can experience temporary o
 
 ## Q21 — Manual filtering: Wales returns no results
 **Loren:** Must Fix / Fail
-**Our position:** Partially confirmed. Data tagging gap, not a code defect.
+**Our position:** Confirmed. Data tagging gap — now fixed.
 
-**Evidence:**
-- Zero case studies have Wales in `ukRegion` or `ukApplicability` structured metadata
-- 7 case studies mention Wales in free-text content but this isn't surfaced by the filter
+**Root cause:** The Wales geography filter checks two fields: `ukRegion` (direct region tag) and `ukApplicability` (array of transfer contexts). ID_16 (Conwy Valley, Wales) was correctly tagged. Four further cases whose source text explicitly references Welsh applicability had no "Wales" entry in their `ukApplicability` arrays — including one (ID_06) that already listed "Welsh Valley lines" but the filter's substring match (`includes("wales")`) doesn't match "welsh".
 
-**Action:** Two options: (a) Tag the 7 relevant cases with Welsh applicability, or (b) Remove Wales from the filter dropdown until data is populated. Recommending option (a).
+**Action:** **DONE.** Added `"Wales"` as the first entry in `ukApplicability` for four cases:
+- **ID_06** (Austrian Federal Railways) — `transferabilityNote` explicitly cites "Welsh valley lines"
+- **ID_31** (Network Rail Drainage) — UK-wide programme covering all Network Rail routes including Wales
+- **ID_42** (Santa Barbara Debris Basin) — source applicability text: "upland areas of Scotland and **Wales**"
+- **ID_81** (Queensland Foamed Bitumen) — source applicability text: "areas of **Wales**, Scotland, Northern Ireland"
+
+Wales filter now returns **5 case studies**: ID_16 (direct), ID_06, ID_31, ID_42, ID_81.
+
+**File changed:** `lib/hive/seed-data.ts`
 
 ---
 
@@ -363,8 +374,8 @@ UI was iterated through weekly DfT review calls per the agile delivery model. Mu
 | Category | Count | Items |
 |---|---|---|
 | **Confirmed pass** | 6 | Q5, Q6, Q7, Q8, Q9, Q24 |
-| **Confirmed + fixed** | 9 | Q1, Q4, Q12, Q13, Q14, Q17, Q18, Q20, Q22 |
-| **Partially confirmed — data issue** | 2 | Q21, Q25 |
+| **Confirmed + fixed** | 11 | Q1, Q4, Q10, Q12, Q13, Q14, Q17, Q18, Q20, Q21, Q22 |
+| **Partially confirmed — data issue** | 1 | Q25 |
 | **Partially confirmed — by design** | 2 | Q10, Q16 |
 | **Scope dispute (needs DfT decision)** | 2 | Q2, Q3 |
 | **Verified working** | 1 | Q19 |
@@ -395,3 +406,5 @@ These were discovered because we built a **30-query reproducible verification ba
 | Q18 z-index | `ChatPanel.tsx` | "View N cases" link given explicit z-index to ensure clickability |
 | Q20 text | `page.tsx` | Misleading "Browse all cases below" reworded |
 | Q22 cost | `seed-data.ts` | ID_06 cost text corrected to reflect adaptation-specific costs |
+| Q10 walkthrough | `app/handbook/brief/page.tsx` | Fixed 3 stacking/scroll issues: `transform:none` in fadeUp animation, card z-index 1000→1002, removed scroll-on-close |
+| Q21 Wales tagging | `seed-data.ts` | Added "Wales" to `ukApplicability` for ID_06, ID_31, ID_42, ID_81 — Wales filter now returns 5 results |
