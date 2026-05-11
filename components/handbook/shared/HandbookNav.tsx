@@ -655,6 +655,8 @@ export function HandbookNav() {
             <ChatTrigger
               onClick={handleChatToggle}
               hasMessages={hasMessages}
+              isOpen={chatOpen}
+              accentColor={hiveWordmarkColor}
               label={chatLabel}
               title={chatTitle}
               data-onboard="chat-trigger"

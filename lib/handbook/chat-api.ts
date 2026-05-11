@@ -97,9 +97,10 @@ export const HEAT_QUERY_REGEX = /\b(heat\s*stress|extreme\s*heat|temperature\s*a
  */
 export function getDynamicThreshold(query: string): number {
   const words = query.trim().split(/\s+/).filter(Boolean);
-  if (words.length <= 2) return 0.25; // single word / two words: cast wide net
-  if (words.length <= 5) return 0.35; // short phrase: standard
-  return 0.45;                        // long question: can be more precise
+  if (words.length <= 2) return 0.25;  // single word / two words: cast wide net
+  if (words.length <= 5) return 0.30;  // short phrase / quick-start (4-5 words): cast a broad net
+  if (words.length <= 10) return 0.35; // conversational phrase: standard precision
+  return 0.40;                         // long natural-language question: higher precision
 }
 
 // ---------------------------------------------------------------------------
@@ -130,11 +131,33 @@ const QUERY_EXPANSION_MAP: Record<string, string> = {
   heat:       "extreme heat urban heat island temperature adaptation cooling infrastructure",
   heatwave:   "extreme heat heatwave urban heat island high temperatures adaptation cooling infrastructure",
   frost:      "frost freeze thaw cold winter low temperatures ice infrastructure resilience adaptation",
+  frozen:     "frozen frost freeze thaw cold winter ice infrastructure resilience adaptation",
   ice:        "ice freeze thaw cold winter infrastructure resilience adaptation",
   snow:       "snow ice winter cold infrastructure resilience adaptation maintenance",
+  cold:       "cold frost freeze thaw winter low temperatures ice infrastructure resilience adaptation",
+  winter:     "winter cold frost freeze thaw ice low temperatures infrastructure resilience adaptation",
   wind:       "wind storm damage infrastructure resilience protection adaptation",
   thermal:    "thermal stress heat temperature extreme infrastructure resilience adaptation",
   wildfire:   "wildfire fire vegetation heat extreme drought adaptation infrastructure resilience",
+};
+
+/**
+ * Pinned case IDs for queries where the knowledge base has thin but specific coverage.
+ * Any query that contains one of these terms will always include the listed case IDs
+ * in hybrid search results, regardless of RRF score. This is a deliberate editorial
+ * guarantee — equivalent to a librarian saying "if you ask about frost, always show Infrabel."
+ * Add entries here when a genuinely relevant case study consistently fails to surface.
+ */
+const QUERY_SEED_IDS: Record<string, string[]> = {
+  frost:       ["ID_10", "ID_06"],
+  frozen:      ["ID_10", "ID_06"],
+  freeze:      ["ID_10", "ID_06"],
+  "freeze-thaw": ["ID_10", "ID_06"],
+  freezethaw:  ["ID_10", "ID_06"],
+  ice:         ["ID_10", "ID_06"],
+  cold:        ["ID_10", "ID_06"],
+  winter:      ["ID_10", "ID_06"],
+  snow:        ["ID_10", "ID_06"],
 };
 
 /**
@@ -149,14 +172,82 @@ export function getEmbeddingQueryForRetrieval(query: string): string {
   if (HEAT_QUERY_REGEX.test(trimmed)) {
     return `${trimmed} extreme heat temperature adaptation infrastructure`;
   }
-  // For short queries, look up domain expansion
+  // For short queries, check every word for a domain expansion hit
+  // (so "extreme frost" triggers the "frost" entry, not just "frost" alone)
   const words = trimmed.split(/\s+/).filter(Boolean);
-  if (words.length <= 2) {
-    const key = words[0].toLowerCase().replace(/[^a-z]/g, "");
-    const expansion = QUERY_EXPANSION_MAP[key];
-    if (expansion) return `${trimmed} ${expansion}`;
+  if (words.length <= 3) {
+    for (const word of words) {
+      const key = word.toLowerCase().replace(/[^a-z]/g, "");
+      const expansion = QUERY_EXPANSION_MAP[key];
+      if (expansion) return `${trimmed} ${expansion}`;
+    }
   }
   return trimmed;
+}
+
+// ---------------------------------------------------------------------------
+// Step 2b: Query condensation — rewrites follow-up messages for retrieval
+// ---------------------------------------------------------------------------
+
+/**
+ * For multi-turn conversations, short follow-up messages ("what about costs?"
+ * "how does this apply to rail?") have no standalone semantic meaning and
+ * retrieve nothing useful from pgvector. This function rewrites the user's
+ * latest message as a self-contained search query using conversation context.
+ *
+ * Only activates when: (a) there are 2+ user messages, and (b) the latest
+ * message is short enough to be a likely follow-up (<= 12 words). Falls back
+ * to the original message on any error.
+ */
+export async function condenseQueryForRetrieval(
+  messages: ChatMessageIn[],
+): Promise<string> {
+  const userMessages = messages.filter((m) => m.role === "user");
+  const lastUserMessage = userMessages[userMessages.length - 1]?.text ?? "";
+
+  // Only condense when this looks like a follow-up in a multi-turn conversation
+  const wordCount = lastUserMessage.trim().split(/\s+/).length;
+  if (userMessages.length <= 1 || wordCount > 12) return lastUserMessage;
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return lastUserMessage;
+
+  try {
+    // Use the last 6 turns (3 exchanges) — enough context, not too much noise
+    const recentMessages = messages.slice(-6);
+    const conversationSnippet = recentMessages
+      .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.text.slice(0, 300)}`)
+      .join("\n");
+
+    const { default: OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      max_tokens: 60,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a search query rewriter for a transport climate adaptation knowledge base. Given a conversation and a follow-up question, rewrite the follow-up as a single standalone search query capturing the full context. Return only the search query text — no explanation, no quotes. Keep it under 20 words.",
+        },
+        {
+          role: "user",
+          content: `Conversation:\n${conversationSnippet}\n\nRewrite the last user message as a standalone search query:`,
+        },
+      ],
+    });
+
+    const condensed = response.choices[0]?.message?.content?.trim() ?? lastUserMessage;
+    if (condensed && condensed !== lastUserMessage) {
+      console.log(`[HIVE] Query condensed: "${lastUserMessage}" → "${condensed}"`);
+    }
+    return condensed || lastUserMessage;
+  } catch (err) {
+    console.warn("[HIVE] Query condensation failed (non-blocking):", err);
+    return lastUserMessage;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -233,12 +324,26 @@ export async function hybridSearchChunks(
   );
 
   // ── Keyword retrieval (runs on CASE_STUDIES metadata, server-side) ───────
+  // Use the expanded query so domain expansions (e.g. "frost" → "freeze thaw cold winter ice")
+  // also drive keyword scoring, not just the vector embedding.
+  const expandedKeywordQuery = getEmbeddingQueryForRetrieval(query);
   const { CASE_STUDIES } = await import("@/lib/hive/seed-data");
   const keywordRanked = CASE_STUDIES
-    .map((cs) => ({ id: cs.id, score: keywordScore(cs, query), cs }))
+    .map((cs) => ({ id: cs.id, score: keywordScore(cs, expandedKeywordQuery), cs }))
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 20);
+
+  // ── Seed IDs: pin known-relevant cases for thin-coverage queries ────────────
+  // For queries like "extreme frost", the vector space may not return enough
+  // variety. Seeded IDs are injected as if they were #1 in both channels.
+  const queryLower = query.toLowerCase();
+  const seededIds = new Set<string>();
+  for (const [term, ids] of Object.entries(QUERY_SEED_IDS)) {
+    if (queryLower.includes(term)) {
+      ids.forEach((id) => seededIds.add(id));
+    }
+  }
 
   // ── RRF merge (k=60 is the standard constant) ────────────────────────────
   const K = 60;
@@ -249,6 +354,13 @@ export async function hybridSearchChunks(
   });
   keywordRanked.forEach((r, i) => {
     rrfScores.set(r.id, (rrfScores.get(r.id) ?? 0) + 1 / (i + 1 + K));
+  });
+
+  // Seeded IDs get a score equivalent to rank-1 in both channels, applied as a
+  // floor (Math.max) so we never reduce a case that already scored higher naturally.
+  seededIds.forEach((id) => {
+    const guaranteed = 2 / (1 + K);
+    rrfScores.set(id, Math.max(rrfScores.get(id) ?? 0, guaranteed));
   });
 
   const sortedIds = [...rrfScores.entries()]
@@ -265,10 +377,13 @@ export async function hybridSearchChunks(
       // Keyword-only article: synthesise a chunk from metadata so LLM has something to cite
       const cs = CASE_STUDIES.find((c) => c.id === id);
       if (!cs) return null;
+      const hazardLine = cs.hazards.cause.length
+        ? ` Climate hazards: ${cs.hazards.cause.join(", ")}.`
+        : "";
       return {
         article_id: id,
         section_key: "general",
-        chunk_text: `${cs.title}: ${cs.summary}${cs.insight ? ` Key insight: ${cs.insight}` : ""}`,
+        chunk_text: `${cs.title}: ${cs.summary}${hazardLine}${cs.insight ? ` Key insight: ${cs.insight}` : ""}`,
         similarity: 0,
       } as RetrievedChunk;
     })
@@ -429,6 +544,96 @@ async function getFallbackCaseJson(): Promise<string> {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Step 4: Cross-encoder re-ranking — LLM scores each (query, chunk) pair
+// ---------------------------------------------------------------------------
+
+/**
+ * Re-ranks candidate chunks by asking gpt-4o-mini to score each one for
+ * relevance to the query. Unlike cosine similarity (which scores the chunk
+ * alone), a cross-encoder scores the query-chunk pair jointly — catching
+ * semantic matches that vector distance misses.
+ *
+ * Only activates when there are >= 6 chunks to re-rank (below that threshold
+ * the original order is returned as-is). Falls back gracefully on any error.
+ */
+async function rerankChunks(
+  query: string,
+  chunks: RetrievedChunk[],
+  options?: { topK?: number },
+): Promise<{ ranked: RetrievedChunk[]; overflow: RetrievedChunk[] }> {
+  const topK = options?.topK ?? Math.min(8, chunks.length);
+
+  // Not enough chunks to benefit from re-ranking — no overflow either
+  if (chunks.length < 6) {
+    return { ranked: chunks.slice(0, topK), overflow: [] };
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return { ranked: chunks.slice(0, topK), overflow: chunks.slice(topK) };
+  }
+
+  try {
+    const { default: OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey });
+
+    // Truncate chunk text for the scoring prompt — enough to judge relevance
+    const chunkList = chunks
+      .map((c, i) => `[${i}] ${c.chunk_text.slice(0, 250)}`)
+      .join("\n\n");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      max_tokens: 120,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            'You are a relevance ranking engine for a transport climate adaptation knowledge base. Given a search query and numbered passages, return a JSON object with key "ranked" containing the passage indices ordered from most to least relevant to the query. Include only the top passages. Example: {"ranked": [2, 0, 5, 1, 3]}',
+        },
+        {
+          role: "user",
+          content: `Query: "${query}"\n\nPassages:\n${chunkList}\n\nReturn the ${topK} most relevant passage indices in order of relevance.`,
+        },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const parsed: { ranked?: unknown } = JSON.parse(content);
+    const rankedIndices = parsed.ranked;
+
+    if (!Array.isArray(rankedIndices) || rankedIndices.length === 0) {
+      return { ranked: chunks.slice(0, topK), overflow: chunks.slice(topK) };
+    }
+
+    const seen = new Set<number>();
+    const reranked: RetrievedChunk[] = [];
+
+    for (const idx of rankedIndices) {
+      if (typeof idx === "number" && idx >= 0 && idx < chunks.length && !seen.has(idx)) {
+        reranked.push(chunks[idx]);
+        seen.add(idx);
+      }
+    }
+
+    // Append any un-ranked chunks to fill topK
+    for (let i = 0; i < chunks.length && reranked.length < topK; i++) {
+      if (!seen.has(i)) reranked.push(chunks[i]);
+    }
+
+    // Overflow: anything that didn't make the top-K cut, preserving RRF order
+    const overflow = chunks.filter((c) => !reranked.includes(c));
+
+    return { ranked: reranked.slice(0, topK), overflow };
+  } catch (err) {
+    console.warn("[HIVE] Re-ranking failed (non-blocking):", err);
+    return { ranked: chunks.slice(0, topK), overflow: chunks.slice(topK) };
+  }
+}
+
 /** Public: run semantic search and return raw chunks with similarity scores. */
 export async function semanticSearchChunks(
   query: string,
@@ -493,7 +698,8 @@ const CONSTRAINTS = `<constraints>
 5. Before suggesting an action (add to brief, filter change), describe what it will do. Never auto-apply changes.
 6. If a query is genuinely ambiguous (unclear domain, unclear intent — e.g. "what's best?" or "can you help with something?"), ask ONE clarifying question. Do NOT ask for clarification on single-word domain terms like "flooding", "heat", "rail" — treat those as "show me what you have on this topic."
 7. SYSTEM AWARENESS: Contextual suggestions appear only at the END of a response, never mid-answer, maximum one per response, and only when genuinely useful. Never repeat a suggestion already shown this session. If the response fully answers the query in 2 sentences, do not pad it with a next action.
-8. CONFIDENCE CALIBRATION: When synthesising across multiple cases, indicate the strength of the pattern. Use: "consistently across X cases..." for 3+ aligned examples; "one case suggests..." for a single data point; "the evidence is mixed..." when cases contradict each other. A DfT professional needs to know whether they're reading a consensus or an outlier.
+8. CONFIDENCE CALIBRATION: When synthesising across multiple cases, indicate the strength of the pattern. Use: "consistently across multiple cases..." for strong patterns; "one case suggests..." for a single data point; "the evidence is mixed..." when cases contradict each other. A DfT professional needs to know whether they're reading a consensus or an outlier.
+9. NEVER STATE TOTAL CASE COUNTS: Do not open with "here are 3 cases" or "I found 2 examples." The interface displays case counts as a data badge — your role is to narrate the evidence, not enumerate it. Avoid any phrase that declares a specific total (e.g. "three relevant cases", "two examples show"). You may reference relative evidence strength ("multiple cases", "the strongest case", "a single case suggests") but never a precise integer total.
 </constraints>`;
 
 // ---------------------------------------------------------------------------
@@ -524,7 +730,11 @@ You MUST only cite case studies present in the retrieved context provided below 
 
 However, you MAY make qualitative synthesis statements drawn from the retrieved cases — e.g. "flooding is the most represented hazard across the retrieved cases" or "costs consistently fall in the £1m–£10m range across these examples." Label these clearly as patterns from the retrieved evidence, not general facts.
 
-If the retrieved context contains no relevant cases at all, say: "The knowledge base doesn't currently have cases matching that query" and use the SEARCH STRATEGIST skill to suggest alternatives. Do not draw on general knowledge about cities, organisations or infrastructure projects not present in the retrieved context.
+SECTOR MISMATCH RULE: If the retrieved context contains cases that address the same hazard or measure type as the query but in a different sector (e.g. rail slope stabilisation cases for a motorway slope query), DO NOT say "no cases exist." Instead, lead with the evidence you DO have and explain its transferability: "While HIVE doesn't yet have motorway-specific cases on this, the strongest transferable evidence is from [rail/other sector case] [ID_xx], which addresses the same geotechnical challenge..." This is far more useful than opening with an absence statement.
+
+Only say "The knowledge base doesn't currently have cases matching that query" when the retrieved context is completely empty or addresses a completely different topic domain.
+
+Do not draw on general knowledge about cities, organisations or infrastructure projects not present in the retrieved context.
 </hallucination_guard>
 
 <capabilities>
@@ -1006,6 +1216,17 @@ export function parseStringContext(raw: string): ChatContext {
 
 export type GetAIResponseOptions = {
   max_tokens?: number;
+  /**
+   * Sampling temperature passed directly to the model.
+   * Use 0 for deterministic synthesis (search results, initial responses).
+   * Defaults to 0.2 for follow-up chat turns.
+   */
+  temperature?: number;
+  /**
+   * OpenAI seed for near-deterministic outputs at the same temperature.
+   * Combine with temperature:0 for fully reproducible search synthesis.
+   */
+  seed?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -1018,6 +1239,8 @@ type PreparedAICall = {
   openaiMessages: Array<{ role: "user" | "assistant"; content: string }>;
   retrieval: { chunks: RetrievedChunk[]; formatted: string; mode: "rag" | "fallback" };
   maxTokens: number;
+  /** Case IDs that scored in the retrieval pool but didn't make the top-K context window. */
+  overflowCaseIds: string[];
 };
 
 async function fetchGuidanceChunks(query: string): Promise<RetrievedChunk[]> {
@@ -1065,6 +1288,7 @@ async function prepareAICall(
     (context.brief_case_chunks?.length || context.brief_sections?.length);
 
   let retrieval: { chunks: RetrievedChunk[]; formatted: string; mode: "rag" | "fallback" };
+  let overflowIds: string[] = [];
   if (synthesisHasPreloaded && context.brief_case_chunks?.length) {
     const formatted = context.brief_case_chunks
       .map((c) => `[${c.article_id}] (${c.section_key}):\n${c.chunk_text}`)
@@ -1098,8 +1322,46 @@ async function prepareAICall(
       mode: "rag",
     };
   } else {
-    const threshold = context.mode === "deep_dive" ? 0.4 : getDynamicThreshold(lastUserMessage);
-    retrieval = await retrieveContext(lastUserMessage, { limit: 12, threshold });
+    // Condense follow-up messages into a standalone search query before retrieval.
+    // This ensures short follow-ups like "what about costs?" correctly retrieve
+    // context from previous conversation turns.
+    const retrievalQuery = await condenseQueryForRetrieval(messages);
+    const threshold = context.mode === "deep_dive" ? 0.4 : getDynamicThreshold(retrievalQuery);
+    // Use hybridSearchChunks (vector + keyword RRF + seed IDs) rather than bare
+    // retrieveContext so both surfaces always share the same retrieval brain.
+    const rawRetrieval = await hybridSearchChunks(retrievalQuery, { limit: 16, threshold });
+
+    // Re-rank the candidate chunks to promote the most relevant to the context window.
+    // Overflow = candidates that scored in the retrieval pool but didn't make the top-K cut.
+    const { ranked: rerankedChunks, overflow: overflowChunks } = await rerankChunks(
+      retrievalQuery,
+      rawRetrieval.chunks,
+      { topK: 8 },
+    );
+    const rerankedFormatted = rerankedChunks
+      .map((c) => {
+        const isGuidance = !c.article_id || c.section_key === "guidance_doc";
+        const isTribId = /^ID_/i.test(c.article_id);
+        const ref = isGuidance
+          ? `[Guide: ${c.section_key}]`
+          : isTribId
+            ? `[${c.article_id}]`
+            : `[Guide: ${c.section_key}]`;
+        return `${ref} (${c.section_key}):\n${c.chunk_text}`;
+      })
+      .join("\n\n---\n\n");
+
+    retrieval = { chunks: rerankedChunks, formatted: rerankedFormatted, mode: rawRetrieval.mode };
+
+    // Collect overflow case IDs (deduplicated, canonical ID_xx only, not already in top-K)
+    const topIds = new Set(rerankedChunks.map((c) => c.article_id));
+    overflowIds = [
+      ...new Set(
+        overflowChunks
+          .map((c) => c.article_id)
+          .filter((id) => /^ID_/i.test(id) && !topIds.has(id)),
+      ),
+    ].slice(0, 5);
   }
 
   // Optionally append guidance document chunks when the user has enabled guidance
@@ -1124,7 +1386,7 @@ async function prepareAICall(
     content: m.text,
   }));
 
-  return { systemPrompt, openaiMessages, retrieval, maxTokens };
+  return { systemPrompt, openaiMessages, retrieval, maxTokens, overflowCaseIds: overflowIds };
 }
 
 /** Extract structured metadata from a completed LLM response. */
@@ -1189,7 +1451,8 @@ export async function getAIResponse(
       openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
-        temperature: 0.2,
+        temperature: options?.temperature ?? 0.2,
+        ...(options?.seed !== undefined ? { seed: options.seed } : {}),
         max_tokens: maxTokens,
       })
     );
@@ -1225,11 +1488,12 @@ export async function streamAIResponse(
 ): Promise<{
   stream: AsyncIterable<import("openai").OpenAI.Chat.Completions.ChatCompletionChunk>;
   retrieval: { chunks: RetrievedChunk[]; mode: "rag" | "fallback" };
+  overflowCaseIds: string[];
 } | null> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || isAIDisabled(context.force_evidence_mode === true)) return null;
 
-  const { systemPrompt, openaiMessages, retrieval, maxTokens } = await prepareAICall(messages, context, options);
+  const { systemPrompt, openaiMessages, retrieval, maxTokens, overflowCaseIds } = await prepareAICall(messages, context, options);
 
   try {
     const { default: OpenAI } = await import("openai");
@@ -1238,12 +1502,13 @@ export async function streamAIResponse(
       openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "system", content: systemPrompt }, ...openaiMessages],
-        temperature: 0.2,
+        temperature: options?.temperature ?? 0.2,
+        ...(options?.seed !== undefined ? { seed: options.seed } : {}),
         max_tokens: maxTokens,
         stream: true,
       })
     );
-    return { stream, retrieval };
+    return { stream, retrieval, overflowCaseIds };
   } catch (err) {
     if (isAIUnavailableError(err)) return null;
     throw err;

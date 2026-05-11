@@ -2,6 +2,105 @@
 import { useEffect, useRef, useState } from "react";
 import { CASE_STUDIES } from "@/lib/hive/seed-data";
 
+// ---------------------------------------------------------------------------
+// Quick-start pre-fetch cache
+//
+// Module-level — survives across React re-renders and client-side navigations.
+// Pre-fetches the four quick-start queries in the background the moment the
+// handbook page loads. When the user clicks one, the result is returned
+// synchronously from memory (0 ms — no debounce, no API call, no cost).
+// ---------------------------------------------------------------------------
+
+/** Canonical quick-start queries, exactly as they appear in the UI. */
+export const QUICK_START_QUERIES = [
+  "flooding on a rail corridor",
+  "heatwave on road bridges",
+  "coastal port storm surge",
+  "slope instability near a motorway",
+] as const;
+
+/** Normalise a query the same way the server does for cache-key matching. */
+function normaliseForCache(q: string): string {
+  return q
+    .toLowerCase()
+    .replace(/\b(i'm|i am|i've|we('re| are)|we've|dealing with|managing|struggling with|worried about|about|related to|regarding|what about|tell me about|show me|cases (about|for|on)|cases|for|on|the|a|an|our|my|some|any|examples of|example of|how (to|do|does|can)|what (is|are)|help (me |us )?(with|understand)?)\b/gi, " ")
+    .replace(/['"?!.,;:]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Module-level in-memory store: normalised query → resolved UnifiedSearchResult.
+ * Populated by prefetchQuickStarts(). Never expires within a browser session —
+ * the quick-start responses are deterministic (temperature 0) so staleness is not
+ * a concern until the underlying data or prompt changes.
+ */
+const prefetchCache = new Map<string, UnifiedSearchResult>();
+
+/** Track in-flight pre-fetch promises so we never duplicate a request. */
+const prefetchInFlight = new Set<string>();
+
+async function fetchAndCache(query: string): Promise<void> {
+  const key = normaliseForCache(query);
+  if (prefetchCache.has(key) || prefetchInFlight.has(key)) return;
+  prefetchInFlight.add(key);
+  try {
+    const res = await fetch("/api/handbook/unified-search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q: query }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const rawCases: UnifiedCase[] = data.cases ?? [];
+    let matchedCases = rawCases
+      .map((r) => {
+        const cs = CASE_STUDIES.find((c) => c.id === r.article_id);
+        return cs ? { ...cs, _similarity: r.similarity, _section: r.section_key } : null;
+      })
+      .filter(Boolean) as typeof CASE_STUDIES;
+
+    const chips: string[] = data.chips ?? [];
+    if (matchedCases.length === 0 && chips.length > 0) {
+      matchedCases = chips
+        .map((id: string) => CASE_STUDIES.find((c) => c.id === id))
+        .filter(Boolean) as typeof CASE_STUDIES;
+    }
+
+    prefetchCache.set(key, {
+      cases: matchedCases,
+      rawCases,
+      synthesis: data.synthesis ?? "",
+      chips,
+      chunks: rawCases.length > 0
+        ? rawCases.map((c) => ({ article_id: c.article_id, section_key: c.section_key, chunk_text: c.chunk_text }))
+        : chips.map((id: string) => ({ article_id: id, section_key: "general", chunk_text: "" })),
+      scenario: data.scenario ?? null,
+      retrieval_mode: data.retrieval_mode ?? null,
+      ai_unavailable: data.ai_unavailable === true,
+      loading: false,
+      error: null,
+    });
+  } catch {
+    // Silent — pre-fetch failure never breaks the UI; the hook will fall back to a live request.
+  } finally {
+    prefetchInFlight.delete(key);
+  }
+}
+
+/**
+ * Fire-and-forget pre-fetch for all quick-start queries.
+ * Call once on handbook page mount. Staggered 200 ms apart to stay within
+ * Supabase and OpenAI rate limits, and to avoid competing with the user's
+ * first real search request.
+ */
+export function prefetchQuickStarts(): void {
+  QUICK_START_QUERIES.forEach((q, i) => {
+    setTimeout(() => fetchAndCache(q), i * 200);
+  });
+}
+
 export type UnifiedCase = {
   article_id: string;
   similarity: number;
@@ -63,6 +162,13 @@ export function useUnifiedSearch(
     const trimmed = query.trim();
     if (!trimmed || trimmed.length < 3) {
       setResult(EMPTY);
+      return;
+    }
+
+    // ── Cache-first: return pre-fetched result immediately (0 ms, no API call) ──
+    const cached = prefetchCache.get(normaliseForCache(trimmed));
+    if (cached) {
+      setResult(cached);
       return;
     }
 

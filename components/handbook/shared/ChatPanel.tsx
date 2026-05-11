@@ -56,6 +56,17 @@ const SUGGESTION_DETECTORS: [string, RegExp][] = [
   ["howto_nudge", /describe your infrastructure challenge/i],
 ];
 
+/** Prefer structured chips from the AI response for ?highlight=; avoid browse-mode grid (~12 ids) when the reply cites fewer cases. */
+function casesPageHighlightIds(
+  m: ChatMessage,
+): string[] {
+  return m.chips ?? [];
+}
+
+function viewCasesLinkLabelCount(m: ChatMessage): number {
+  return m.chips?.length ?? 0;
+}
+
 function getConfig(context: string): ContextConfig {
   if (context.startsWith("case:")) {
     const id = context.replace("case:", "");
@@ -228,6 +239,49 @@ function MessageText({ text }: { text: string }) {
         )
       )}
     </>
+  );
+}
+
+function AlsoCasesDrawer({ ids }: { ids: string[] }) {
+  const [open, setOpen] = useState(false);
+  if (!ids || ids.length === 0) return null;
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          fontSize: 11,
+          color: "#6b7280",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: "inherit",
+        }}
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+        >
+          <path d="M3 2l4 3-4 3" stroke="#9ca3af" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Also in the knowledge base ({ids.length})
+      </button>
+      {open && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
+          {ids.map((id) => (
+            <SourceChip key={id} id={id} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -550,6 +604,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     retrieval_mode: data.retrieval_mode,
                     action: data.action,
                     actionDismissed: false,
+                    also_cases: data.also_cases,
                   };
                 }
                 return updated;
@@ -873,8 +928,10 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     ))}
                   </div>
                 )}
-                {/* Navigation links: view cases or build brief from cited IDs */}
-                {m.role === "ai" && ((m.chips?.length ?? 0) >= 2 || (context === "browse" && resultSet.length >= 2)) && (
+                {/* Navigation links: view cases or build brief from cited IDs.
+                    Only show when this specific message cited 2+ cases — never
+                    on conversational replies that don't surface specific evidence. */}
+                {m.role === "ai" && (m.chips?.length ?? 0) >= 2 && (
                   <div
                     style={{
                       marginTop: 6,
@@ -884,7 +941,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     }}
                   >
                     <Link
-                      href={`/handbook/cases?${sessionIntent ? `q=${encodeURIComponent(sessionIntent)}&` : ""}highlight=${(context === "browse" && resultSet.length >= 2 ? resultSet.map((r) => r.id) : m.chips ?? []).join(",")}`}
+                      href={`/handbook/cases?${sessionIntent ? `q=${encodeURIComponent(sessionIntent)}&` : ""}highlight=${casesPageHighlightIds(m).join(",")}`}
                       style={{
                         padding: "5px 10px",
                         borderRadius: 5,
@@ -902,7 +959,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                         zIndex: 10,
                       }}
                     >
-                      View {(m.chips?.length ?? 0) >= 2 ? m.chips!.length : resultSet.length} cases ↗
+                      View {viewCasesLinkLabelCount(m)} cases ↗
                     </Link>
                     {!hideBrief && (
                     <Link
@@ -934,6 +991,10 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     onApply={() => handleApplyAction(m.action!, messages.indexOf(m))}
                     onDismiss={() => handleDismissAction(messages.indexOf(m))}
                   />
+                )}
+                {/* Overflow cases — collapsed by default, explore mode only */}
+                {m.role === "ai" && (m.also_cases?.length ?? 0) > 0 && (
+                  <AlsoCasesDrawer ids={m.also_cases!} />
                 )}
               </div>
             </div>
@@ -1110,35 +1171,46 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               </svg>
             </button>
           </div>
-          <p
-            style={{
-              fontSize: 10,
-              color: "#9ca3af",
-              margin: "6px 0 0",
-              lineHeight: 1.4,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            {retrievalMode === "rag" && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#059669" }}>
-                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#059669", display: "inline-block" }} />
-                Connected to knowledge base
-              </span>
-            )}
-            {retrievalMode === "fallback" && (
-              <span style={{ color: "#d97706" }}>
-                {aiUnavailable
-                  ? hardEvidenceOnly
-                    ? "Evidence-only mode — AI interpretation unavailable"
-                    : "Last response used evidence-only fallback"
-                  : "Fallback retrieval mode active"}
-              </span>
-            )}
-            {!retrievalMode && "AI-generated · HIVE"}
-            <span style={{ marginLeft: "auto" }}>Review sources before citing</span>
-          </p>
+          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+            <p
+              style={{
+                fontSize: 10,
+                color: "#9ca3af",
+                margin: 0,
+                lineHeight: 1.4,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              {retrievalMode === "rag" && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#059669" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#059669", display: "inline-block" }} />
+                  Connected to knowledge base
+                </span>
+              )}
+              {retrievalMode === "fallback" && (
+                <span style={{ color: "#d97706" }}>
+                  {aiUnavailable
+                    ? hardEvidenceOnly
+                      ? "Evidence-only mode — AI interpretation unavailable"
+                      : "Last response used evidence-only fallback"
+                    : "Fallback retrieval mode active"}
+                </span>
+              )}
+              {!retrievalMode && <span>HIVE</span>}
+            </p>
+            <p
+              style={{
+                fontSize: 10,
+                color: "#9ca3af",
+                margin: 0,
+                lineHeight: 1.4,
+              }}
+            >
+              AI-generated · Grounded in the HIVE knowledge base · Verify critical figures before use
+            </p>
+          </div>
         </div>
       </div>
     </>
