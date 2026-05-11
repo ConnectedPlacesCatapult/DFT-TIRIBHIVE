@@ -1137,6 +1137,8 @@ i.big.angle.right.icon::before { content: " ›"; font-size: 1.5em; line-height:
   max-height: 100px;
   max-width: 200px;
   object-fit: contain;
+  /* Remove dark backgrounds from logo PNGs that have non-transparent fills */
+  mix-blend-mode: multiply;
 }
 .Placeholder {
   display: flex;
