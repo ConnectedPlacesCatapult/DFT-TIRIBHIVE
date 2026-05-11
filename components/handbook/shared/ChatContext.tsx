@@ -28,6 +28,8 @@ export type ChatMessage = {
   /** Structured action from API — requires explicit Apply before any state change */
   action?: ChatActionPayload;
   actionDismissed?: boolean;
+  /** Overflow case IDs — relevant but didn't make the top-K context window. Shown collapsed below the response. */
+  also_cases?: string[];
 };
 
 type HandbookContextType = {
