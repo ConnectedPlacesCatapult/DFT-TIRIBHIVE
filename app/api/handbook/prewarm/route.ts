@@ -16,8 +16,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 
-/** The 25 canonical queries to precompute, ordered by expected traffic */
+/** The canonical queries to precompute, ordered by expected traffic.
+ *  Quick-start queries are Tier 0 — always cached first as they are the most
+ *  likely first queries from new users and have deterministic responses. */
 const PREWARM_QUERIES = [
+  // Tier 0 — UI quick-starts (exact match so Supabase cache keys align)
+  "flooding on a rail corridor",
+  "heatwave on road bridges",
+  "coastal port storm surge",
+  "slope instability near a motorway",
   // Tier 1 — highest traffic, broadest KB coverage
   "flood",
   "flooding",

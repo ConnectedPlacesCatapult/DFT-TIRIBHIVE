@@ -45,6 +45,7 @@ export function OptionsTableView({ options, loading }: OptionsTableViewProps) {
               {COLUMNS.map(({ key, label }) => (
                 <th
                   key={key}
+                  scope="col"
                   className="px-4 py-3 font-semibold text-[#212121] whitespace-nowrap"
                 >
                   {label}

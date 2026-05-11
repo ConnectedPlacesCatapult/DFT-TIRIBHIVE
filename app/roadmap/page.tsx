@@ -19,7 +19,7 @@ export default function RoadmapHomePage() {
     <div className="Home">
       <div ref={focusRef} tabIndex={-1} className="Bordered_Content Vision_Container">
         <div className="Vision">
-          <h1 className="Vision_Title">2035 Vision</h1>
+          <h1 className="h1 Vision_Title">2035 Vision</h1>
           <div className="Vision_Body">
             <p>
               Our Vision is to enable a trusted ecosystem of connected digital twins for multi-modal
@@ -27,7 +27,7 @@ export default function RoadmapHomePage() {
               solutions and deliver efficient, safe, and environmentally conscious mobility for
               people and goods.
             </p>
-            The Roadmap will:
+            <p>The Roadmap will:</p>
             <ul>
               <li>
                 Be an essential tool for engagement and alignment around common strategic priorities

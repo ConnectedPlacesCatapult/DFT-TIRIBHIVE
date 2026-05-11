@@ -11,8 +11,8 @@ export default function AccessibilityPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Accessiblilty_Statement Bordered_Content">
-      <h1 className="Title">Accessibility of our website</h1>
-      <p>This accessibility statement applies to trib-roadmap.azurewebsites.net</p>
+      <h1 className="h1 Title">Accessibility of our website</h1>
+      <p>This accessibility statement applies to the TRIB and HIVE website.</p>
       <p>
         This website is run by CPC, commissioned by Transport Research and Innovation Board (TRIB).
         We want as many people as possible to be able to use this website. For example, that means
@@ -42,7 +42,6 @@ export default function AccessibilityPage() {
             <h3>Content that is not within the scope of the accessibility regulations</h3>
             <ul>
               <li>some links to content will be from third party providers not under our control.</li>
-              <li>the roadmap has been designed to be navigable with using just a keyboard and screen readers.</li>
               <li>some PDF documents may not be fully accessible to screen reader software. The accessibility regulations do not require us to fix PDFs or other documents published before 23 September 2018 if they&rsquo;re not essential to providing our services.</li>
               <li>Any new PDFs or Word documents we publish will meet accessibility standards.</li>
             </ul>
@@ -51,8 +50,11 @@ export default function AccessibilityPage() {
         <div>
           <div>
             <h2>Preparation of this accessibility statement</h2>
-            <p>This statement was prepared on 24th April 2023.</p>
-            <p>This website was last tested on 24th April 2023. The test was carried out by the website delivery team.</p>
+            <p>This statement was prepared on 24 April 2023.</p>
+            <p>
+              This statement was last reviewed on 20 April 2026. A full WCAG 2.2 AA audit is in
+              progress as part of the current pre-release QA cycle.
+            </p>
           </div>
           <div>
             <h2>Feedback and contact information</h2>

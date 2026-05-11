@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CASE_STUDIES as SEED_CASE_STUDIES, getCaseStudyPdfUrl } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { useHandbookSearch } from "@/lib/handbook/useHandbookSearch";
-import { useUnifiedSearch } from "@/lib/handbook/useUnifiedSearch";
+import { useUnifiedSearch, prefetchQuickStarts } from "@/lib/handbook/useUnifiedSearch";
 import { BackgroundEffect } from "@/components/handbook/BackgroundEffect";
 import { HeroImageCycle } from "@/components/handbook/HeroImageCycle";
 import { CaseStudyDetail as CaseStudyDetailShared } from "@/components/hive/CaseStudyDetail";
@@ -309,7 +309,7 @@ const THEMES = {
     key: 'light', label: 'Light',
     bg: '#F7F5F0', surface: '#ffffff', surfaceAlt: '#fafaf9',
     border: '#e7e5e4', borderStrong: '#a8a29e',
-    textPrimary: '#1c1917', textSecondary: '#78716c', textMuted: '#a8a29e',
+    textPrimary: '#1c1917', textSecondary: '#57534e', textMuted: '#6b6560',
     accent: '#047857', accentBg: '#d1fae5', accentText: '#065f46',
     navBg: 'rgba(255,255,255,0.92)', gradFade: '#F7F5F0',
     badgeBg: '#ecfdf5', badgeText: '#065f46', badgeBorder: '#a7f3d0',
@@ -864,7 +864,7 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
       ? { bg: "#d1fae5", text: "#065f46", border: "#a7f3d0" }
       : intensity >= 0.4
         ? { bg: "#ecfdf5", text: "#065f46", border: "#d1fae5" }
-        : { bg: "#f0fdf4", text: "#86efac", border: "#d1fae5" };
+        : { bg: "#f0fdf4", text: "#166534", border: "#d1fae5" };
   };
 
   return (
@@ -1032,6 +1032,8 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
 // ── MAIN COMPONENT (uses useSearchParams — must be inside Suspense) ──
 function HandbookLandingPageContent() {
   const [query, setQuery] = useState("");
+  const [quickStartSimulating, setQuickStartSimulating] = useState(false);
+  const [followUpPulse, setFollowUpPulse] = useState(false);
   const [selectedHazards, setSelectedHazards] = useState([]);
   const [selectedSectors, setSelectedSectors] = useState([]);
   const [selectedRegions, setSelectedRegions] = useState([]);
@@ -1053,7 +1055,7 @@ function HandbookLandingPageContent() {
     "motorway slope instability",
   ];
   // Theme from shared context so nav toggle updates whole page (cards, chat, etc.)
-  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView, evidenceOnlyMode } = useChatContext();
+  const { themeKey, setThemeKey, openChat, setChatContext, viewMode, marqueeView, setDemoCounts, backgroundEffect, suggestedCaseIds, setResultSet, exclusiveFilter, setExclusiveFilter, setMessages, setSemanticChunks, setRetrievalMode, searchMode, setSearchMode, includeGuidance, reviewMode, reviewOverrides, briefIds, addToBrief, removeFromBrief, statsPlacement, hideBrief, chipCardView, evidenceOnlyMode, setThinking, isThinking } = useChatContext();
   const T = THEMES[themeKey];
 
   const SECTOR_CHIP_COLOURS: Record<string, string> = {
@@ -1100,14 +1102,21 @@ function HandbookLandingPageContent() {
 
   // Silently pre-warm the unified-search cache in the background on first page load.
   // Fire-and-forget — no await, no loading state, no user impact.
-  // The 25 queries warm over ~60-90s; subsequent users get ~20ms cache hits.
+  // The 29 queries warm over ~60-90s; subsequent users get ~20ms cache hits.
   useEffect(() => {
     fetch("/api/handbook/prewarm", { method: "POST" }).catch(() => {});
+    // Also pre-fetch the 4 quick-start queries into the client-side in-memory cache.
+    // Staggered 200 ms apart; results land in <3 s so they're ready before most users
+    // click a quick start. Subsequent clicks return instantly (0 ms, no API cost).
+    prefetchQuickStarts();
   }, []);
 
   const [marqueeSelectedId, setMarqueeSelectedId] = useState(null); // caseStudyId or 'PH_SECTOR'
   const inputRef = useRef(null);
-  const resultsRef = useRef(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  // Ref on the synthesis panel — scrolling to this (not the results grid) keeps the
+  // AI answer in view rather than jumping straight past it to the case cards.
+  const synthesisRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -1133,7 +1142,85 @@ function HandbookLandingPageContent() {
   const marqueeMatchingSectors = allActiveSectors;
   const marqueeMatchingHazards = allActiveHazards;
   const marqueeHasFilters = marqueeMatchingSectors.length > 0 || marqueeMatchingHazards.length > 0;
-  const scrollToResults = () => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  // Scroll to the synthesis panel if visible, otherwise the results grid.
+  // block:"nearest" avoids over-scrolling when the target is already on screen.
+  const scrollToResults = () => {
+    const target = synthesisRef.current ?? resultsRef.current;
+    target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  // Mirror unified.loading into a ref so deferred timers can read the latest value
+  // without being trapped in a stale closure.
+  const unifiedLoadingRef = useRef(false);
+  useEffect(() => { unifiedLoadingRef.current = unified.loading; }, [unified.loading]);
+
+  // Holds a deferred scroll that should fire once the unified-search hook has settled.
+  // Without this, pressing Enter snaps the page down to the unfiltered grid while the
+  // debounced API call (~500ms) is still in flight — users can't tell if the search
+  // stalled or is still running.
+  const pendingScrollRef = useRef({
+    active: false,
+    sawLoading: false,
+    softTimer: null as ReturnType<typeof setTimeout> | null,
+    hardTimer: null as ReturnType<typeof setTimeout> | null,
+  });
+
+  const clearPendingScroll = () => {
+    const p = pendingScrollRef.current;
+    if (p.softTimer) clearTimeout(p.softTimer);
+    if (p.hardTimer) clearTimeout(p.hardTimer);
+    p.active = false;
+    p.sawLoading = false;
+    p.softTimer = null;
+    p.hardTimer = null;
+  };
+
+  // Scroll to the results section, but in unified mode wait for the async search to
+  // settle so the user doesn't see the page jump to a stale (37-case) grid mid-search.
+  const scrollToResultsAfterSearch = () => {
+    if (searchMode !== "unified") {
+      scrollToResults();
+      return;
+    }
+    clearPendingScroll();
+    const p = pendingScrollRef.current;
+    p.active = true;
+    p.sawLoading = unifiedLoadingRef.current;
+    // Soft fallback: useUnifiedSearch debounces by 500ms. If loading hasn't started after
+    // 750ms it means nothing was queued (e.g. query unchanged) — just scroll.
+    p.softTimer = setTimeout(() => {
+      const cur = pendingScrollRef.current;
+      if (!cur.active) return;
+      if (!cur.sawLoading && !unifiedLoadingRef.current) {
+        clearPendingScroll();
+        scrollToResults();
+      }
+    }, 750);
+    // Hard safety: never leave the user stranded on the hero — scroll after 5s no matter what.
+    p.hardTimer = setTimeout(() => {
+      if (!pendingScrollRef.current.active) return;
+      clearPendingScroll();
+      scrollToResults();
+    }, 5000);
+  };
+
+  // Fulfil any pending deferred scroll once unified.loading transitions true → false
+  // (i.e. fresh results have just landed in the grid).
+  useEffect(() => {
+    const p = pendingScrollRef.current;
+    if (!p.active) return;
+    if (unified.loading) {
+      p.sawLoading = true;
+      return;
+    }
+    if (p.sawLoading) {
+      clearPendingScroll();
+      requestAnimationFrame(() => scrollToResults());
+    }
+  }, [unified.loading]);
+
+  useEffect(() => () => clearPendingScroll(), []);
+
   const [heatmapPosition, setHeatmapPosition] = useState("above"); // 'above' | 'below'
 
   useEffect(() => {
@@ -1158,6 +1245,9 @@ function HandbookLandingPageContent() {
     }, 3000);
     return () => clearInterval(id);
   }, [searchFocused, query]);
+
+  // Reset pulse whenever the query changes (new search starts)
+  useEffect(() => { setFollowUpPulse(false); }, [query]);
 
   useEffect(() => {
     // In unified mode, results come from the one-brain API — handled in a separate effect below
@@ -1196,22 +1286,32 @@ function HandbookLandingPageContent() {
     setResultSet(rs);
     ga4.searchPerformed(query.trim(), unified.cases.length, "ai");
     if (unified.synthesis) setSynthesis({ text: unified.synthesis, unified: true, count: unified.cases.length });
-    // Pre-populate chat panel so "Ask a follow-up" opens an already-answered panel (no second API call)
+    // Pre-populate chat panel from the unified synthesis — this IS the initial chat response.
+    // No second LLM call is ever needed. Pressing Enter on the search bar just opens the panel;
+    // this effect delivers the answer when it's ready (following Google/Perplexity's
+    // "compute once, render everywhere" pattern).
     if (unified.synthesis) {
       if (unified.chunks.length > 0) setSemanticChunks(unified.chunks);
       if (unified.retrieval_mode) setRetrievalMode(unified.retrieval_mode);
-      setMessages([
-        { role: "user", text: query },
-        {
-          role: "ai",
-          text: unified.synthesis,
-          chips: unified.chips,
-          sources: unified.chips,
-          retrieval_mode: unified.retrieval_mode ?? undefined,
-        },
-      ]);
+      // Clear the thinking spinner and nudge "Ask a follow-up" to signal the answer is ready
+      setThinking(false);
+      setFollowUpPulse(true);
+      setMessages((prev) => {
+        // Don't overwrite if the user is mid-conversation (3+ messages = they've replied)
+        if (prev.length > 2) return prev;
+        return [
+          { role: "user", text: query },
+          {
+            role: "ai",
+            text: unified.synthesis,
+            chips: unified.chips,
+            sources: unified.chips,
+            retrieval_mode: unified.retrieval_mode ?? undefined,
+          },
+        ];
+      });
     }
-  }, [unified.cases, unified.synthesis, unified.loading, unified.chips, unified.chunks, unified.retrieval_mode, query, searchMode, setResultSet, setMessages, setSemanticChunks, setRetrievalMode]);
+  }, [unified.cases, unified.synthesis, unified.loading, unified.chips, unified.chunks, unified.retrieval_mode, query, searchMode, setResultSet, setMessages, setSemanticChunks, setRetrievalMode, setThinking]);
 
   // Prefetch card data for chip cases as soon as chips appear — so overlay opens instantly on click
   useEffect(() => {
@@ -1530,8 +1630,12 @@ function HandbookLandingPageContent() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && query.trim()) {
                     e.preventDefault();
-                    scrollToResults();
-                    routeQueryToChat(query.trim());
+                    // In unified mode, Enter just triggers the search (debounce fires automatically).
+                    // The "Ask a follow-up" button will pulse once the synthesis lands.
+                    // In classic mode, route to chat as before.
+                    if (searchMode !== "unified") {
+                      routeQueryToChat(query.trim());
+                    }
                   }
                 }}
                 className="hive-input"
@@ -1558,9 +1662,19 @@ function HandbookLandingPageContent() {
               </div>
             )}
 
+            {/* Quick-start simulation: show "Searching…" while the 1.5s delay fires */}
+            {quickStartSimulating && (
+              <div style={{ marginTop: 8, padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, animation: "fadeUp 0.2s ease" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 13 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulse 1s infinite" }} />
+                  Searching…
+                </div>
+              </div>
+            )}
+
             {/* Unified mode: inline AI synthesis (auto-renders, no click required) */}
             {searchMode === "unified" && query.trim() && (
-              <div style={{ marginTop: 8, padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, animation: "fadeUp 0.2s ease" }}>
+              <div ref={synthesisRef} style={{ marginTop: 8, padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, animation: "fadeUp 0.2s ease" }}>
                 {unified.ai_unavailable && (
                   <div style={{ marginBottom: 10, padding: "8px 12px", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, color: "#92400e", fontSize: 12, fontWeight: 600 }}>
                     Evidence-only mode: showing curated case studies without AI synthesis.
@@ -1635,7 +1749,8 @@ function HandbookLandingPageContent() {
                     )}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button
-                        onClick={() => { setChatContext("browse"); openChat(); }}
+                        onClick={() => { setFollowUpPulse(false); setChatContext("browse"); openChat(); }}
+                        className={followUpPulse ? "hive-attention-pulse" : undefined}
                         style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 6, background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}
                       >
                         Ask a follow-up →
@@ -1662,7 +1777,11 @@ function HandbookLandingPageContent() {
                 <button
                   onClick={() => {
                     if (query.trim()) {
-                      routeQueryToChat(query.trim());
+                      if (searchMode === "unified") {
+                        openChat("browse");
+                      } else {
+                        routeQueryToChat(query.trim());
+                      }
                     } else {
                       setChatContext("browse");
                       openChat();
@@ -1704,9 +1823,14 @@ function HandbookLandingPageContent() {
                         key={q}
                         type="button"
                         onClick={() => {
-                          setQuery(q);
                           setFiltersOpen(false);
-                          setTimeout(() => scrollToResults(), 50);
+                          // Show a brief "Searching…" simulation before revealing the cached result.
+                          // The prefetch cache returns in 0 ms so we add a small delay for UX.
+                          setQuickStartSimulating(true);
+                          setTimeout(() => {
+                            setQuery(q);
+                            setQuickStartSimulating(false);
+                          }, 1500);
                         }}
                         style={{
                           fontSize: 12,
@@ -2077,7 +2201,7 @@ function HandbookLandingPageContent() {
             : <ScrollVelocityMarquee cases={activeMarqueeCases} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
           }
           <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginTop: 16 }}>
-            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Browse all cases below · Search above to filter by hazard, sector, or keyword</p>
+            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Search or filter above to explore case studies · Click any card to dive deeper</p>
           </div>
         </div>
 

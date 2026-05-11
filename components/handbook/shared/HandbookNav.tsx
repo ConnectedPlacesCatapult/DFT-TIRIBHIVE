@@ -10,7 +10,7 @@ import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 const DEMO_UNLOCK_KEY = "hiveDemoUnlocked";
 const DEMO_PASSWORD = "1234";
 
-const NAV_LINKS: { href: string; label: string; title: string }[] = [
+const STATIC_NAV_LINKS: { href: string; label: string; title: string }[] = [
   {
     href: "/handbook/cases",
     label: "Case Studies",
@@ -237,7 +237,12 @@ export function HandbookNav() {
               role="list"
               aria-label="Primary"
             >
-              {NAV_LINKS.filter((link) => !(hideBrief && link.href === "/handbook/brief")).map((link) => {
+              {STATIC_NAV_LINKS.map((link) => {
+                if (link.href === "/handbook/brief" && briefCount > 0) {
+                  link = { ...link, href: `/handbook/brief?ids=${briefIds.join(",")}` };
+                }
+                return link;
+              }).filter((link) => !(hideBrief && link.href.startsWith("/handbook/brief"))).map((link) => {
                 const isActive =
                   link.href === "/handbook/cases"
                     ? pathname === "/handbook/cases" || pathname?.startsWith("/handbook/cases/")
@@ -650,6 +655,8 @@ export function HandbookNav() {
             <ChatTrigger
               onClick={handleChatToggle}
               hasMessages={hasMessages}
+              isOpen={chatOpen}
+              accentColor={hiveWordmarkColor}
               label={chatLabel}
               title={chatTitle}
               data-onboard="chat-trigger"

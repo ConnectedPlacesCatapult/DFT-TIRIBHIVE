@@ -3,6 +3,8 @@
 interface ChatTriggerProps {
   onClick: () => void;
   hasMessages: boolean;
+  isOpen?: boolean;
+  accentColor?: string;
   label?: string;
   title?: string;
   "data-onboard"?: string;
@@ -11,6 +13,8 @@ interface ChatTriggerProps {
 export function ChatTrigger({
   onClick,
   hasMessages,
+  isOpen = false,
+  accentColor = "#006853",
   label = "Ask HIVE",
   title,
   "data-onboard": dataOnboard,
@@ -30,12 +34,12 @@ export function ChatTrigger({
         fontWeight: 600,
         padding: "6px 12px",
         borderRadius: 6,
-        background: "#1d70b8",
+        background: isOpen ? "#1d70b8" : accentColor,
         color: "#fff",
         border: "none",
         cursor: "pointer",
         fontFamily: "inherit",
-        transition: "background 0.15s",
+        transition: "background 0.2s",
         flexShrink: 0,
         whiteSpace: "nowrap",
       }}

@@ -176,12 +176,6 @@ const Scenario_Html = [
   </>,
 ];
 
-/** Rows = impact (high → low); columns = intelligence (siloed → connected). Matches live trib.org.uk layout. */
-const SCENARIO_MATRIX: { scenarioId: number }[][] = [
-  [{ scenarioId: 0 }, { scenarioId: 1 }],
-  [{ scenarioId: 2 }, { scenarioId: 3 }],
-];
-
 const SCENARIO_DEFS: Record<number, { letter: string; name: string; subtitle: string }> = {
   0: { letter: "A", name: "Localised action", subtitle: "High environmental and social impact, siloed intelligence" },
   1: { letter: "B", name: "United smart systems", subtitle: "High environmental and social impact, connected intelligence" },
@@ -189,12 +183,6 @@ const SCENARIO_DEFS: Record<number, { letter: string; name: string; subtitle: st
   3: { letter: "D", name: "Full throttle", subtitle: "Low environmental and social impact, connected intelligence" },
 };
 
-const COL_AXIS_LABELS = ["Siloed intelligence", "Connected intelligence"] as const;
-
-const ROW_AXIS_LABELS = [
-  "High environmental and social impact",
-  "Low environmental and social impact",
-] as const;
 
 export default function FutureScenariosPage() {
   const [Scenario_ID, Set_Scenario_ID] = useState(-1);
@@ -212,7 +200,7 @@ export default function FutureScenariosPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Future_Scenarios Bordered_Content">
-      <h1>Future scenarios</h1>
+      <h1 className="h1">Future scenarios</h1>
       <div className="Scenario General_Scenario">
         <div className="General_Scenario_Content">
           <div className="General_Scenario_Top_Group">
@@ -293,43 +281,35 @@ export default function FutureScenariosPage() {
               Click on each scenario to view details.
             </p>
             <div
-              className="ScenarioMatrix"
-              role="grid"
+              className="Scenario_Selector_Navigation"
+              role="group"
               aria-labelledby="scenario-matrix-label"
             >
-              <div className="ScenarioMatrix_corner" aria-hidden />
-              {COL_AXIS_LABELS.map((label) => (
-                <div key={label} className="ScenarioMatrix_colLabel" role="columnheader">
-                  {label}
-                </div>
-              ))}
-              {SCENARIO_MATRIX.map((row, ri) => (
-                <React.Fragment key={ROW_AXIS_LABELS[ri]}>
-                  <div className="ScenarioMatrix_rowLabel" role="rowheader">
-                    {ROW_AXIS_LABELS[ri]}
-                  </div>
-                  {row.map(({ scenarioId }) => {
-                    const def = SCENARIO_DEFS[scenarioId];
-                    const selected = Scenario_ID === scenarioId;
-                    return (
-                      <button
-                        key={scenarioId}
-                        type="button"
-                        role="gridcell"
-                        className={`ScenarioMatrix_cell${selected ? " is-selected" : ""}`}
-                        aria-pressed={selected}
-                        aria-label={`Scenario ${def.letter}: ${def.name}. ${def.subtitle}.`}
-                        onClick={() => Set_Scenario_ID(scenarioId)}
-                      >
-                        <span className="ScenarioMatrix_cellLetter">{def.letter}</span>
-                        <span className="ScenarioMatrix_cellKicker">Scenario {def.letter}</span>
-                        <span className="ScenarioMatrix_cellName">{def.name}</span>
-                        <span className="ScenarioMatrix_cellSubtitle">{def.subtitle}</span>
-                      </button>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
+              {/* Axis labels — absolutely positioned around the 2×2 grid */}
+              <label id="Scenario_Label_1">High environmental<br />and social impact</label>
+              <label id="Scenario_Label_2">Connected<br />intelligence</label>
+              <label id="Scenario_Label_3">Low environmental<br />and social impact</label>
+              <label id="Scenario_Label_4">Siloed<br />intelligence</label>
+              {/* Axis arrows removed — axis lines replaced by box borders */}
+              {/* 4 scenario buttons in 2×2 order: A(0), B(1), C(2), D(3) */}
+              {[0, 1, 2, 3].map((scenarioId) => {
+                const def = SCENARIO_DEFS[scenarioId];
+                const selected = Scenario_ID === scenarioId;
+                return (
+                  <button
+                    key={scenarioId}
+                    type="button"
+                    className={`Scenario_Selector_Button Button_${scenarioId + 1}${selected ? " is-selected" : ""}`}
+                    aria-pressed={selected}
+                    aria-label={`Scenario ${def.letter}: ${def.name}. ${def.subtitle}.`}
+                    onClick={() => Set_Scenario_ID(scenarioId)}
+                  >
+                    <span className="Scenario_Label_Kicker">Scenario {def.letter}</span>
+                    <span className="Scenario_Label_Title">{def.name}</span>
+                    <span className="Scenario_Label_Subtitle">{def.subtitle}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

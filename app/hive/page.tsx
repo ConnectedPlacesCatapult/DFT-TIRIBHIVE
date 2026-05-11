@@ -328,7 +328,7 @@ const B_UK_REGIONS = ["London & South East","East of England","East Midlands","N
 const B_COST_BANDS = ["Under £1m","£1m–£10m","£10m–£100m","£100m+","Large programme"];
 
 const B_THEMES = {
-  light:{ key:'light',label:'Light',bg:'#F7F5F0',surface:'#ffffff',surfaceAlt:'#fafaf9',border:'#e7e5e4',borderStrong:'#a8a29e',textPrimary:'#1c1917',textSecondary:'#78716c',textMuted:'#a8a29e',accent:'#047857',accentBg:'#d1fae5',accentText:'#065f46',navBg:'rgba(255,255,255,0.92)',gradFade:'#F7F5F0',badgeBg:'#ecfdf5',badgeText:'#065f46',badgeBorder:'#a7f3d0',inputBg:'#ffffff',inputBorder:'#d6d3d1',sectionBg:'#f5f5f4' },
+  light:{ key:'light',label:'Light',bg:'#F7F5F0',surface:'#ffffff',surfaceAlt:'#fafaf9',border:'#e7e5e4',borderStrong:'#a8a29e',textPrimary:'#1c1917',textSecondary:'#57534e',textMuted:'#6b6560',accent:'#047857',accentBg:'#d1fae5',accentText:'#065f46',navBg:'rgba(255,255,255,0.92)',gradFade:'#F7F5F0',badgeBg:'#ecfdf5',badgeText:'#065f46',badgeBorder:'#a7f3d0',inputBg:'#ffffff',inputBorder:'#d6d3d1',sectionBg:'#f5f5f4' },
   dark:{ key:'dark',label:'Dark',bg:'#0d1117',surface:'#161b27',surfaceAlt:'#1e2535',border:'#2d3446',borderStrong:'#4a5568',textPrimary:'#e2e8f0',textSecondary:'#94a3b8',textMuted:'#64748b',accent:'#34d399',accentBg:'#064e3b',accentText:'#34d399',navBg:'rgba(13,17,23,0.96)',gradFade:'#0d1117',badgeBg:'#064e3b',badgeText:'#34d399',badgeBorder:'#065f46',inputBg:'#1e2535',inputBorder:'#2d3446',sectionBg:'#161b27' },
   dft:{ key:'dft',label:'DfT',bg:'#f3f2f1',surface:'#ffffff',surfaceAlt:'#f8f8f8',border:'#b1b4b6',borderStrong:'#505a5f',textPrimary:'#0b0c0c',textSecondary:'#505a5f',textMuted:'#6f777b',accent:'#1d70b8',accentBg:'#e8f1fb',accentText:'#003a70',navBg:'rgba(255,255,255,0.97)',gradFade:'#f3f2f1',badgeBg:'#e8f1fb',badgeText:'#003a70',badgeBorder:'#99c4e8',inputBg:'#ffffff',inputBorder:'#0b0c0c',sectionBg:'#f8f8f8',dftGreen:'#006853' },
 };
@@ -455,13 +455,13 @@ const B_FilterPill = ({ label, selected, onClick, color }) => (
 const B_MarqueeCard = ({ c, onClick, dimmed, highlighted }) => {
   const [hovered, setHovered] = useState(false);
   const secBg = { Rail:"#EBF4FF",Aviation:"#F3EEF9",Maritime:"#E6F5EE",Highways:"#FDF0E5",Energy:"#F5F0FD",Multiple:"#F5F5F4" };
-  const secCol = { Rail:"#1A4A8A",Aviation:"#5B3FA0",Maritime:"#156840",Highways:"#9A4812",Energy:"#6B3FA0",Multiple:"#78716c" };
+  const secCol = { Rail:"#1A4A8A",Aviation:"#5B3FA0",Maritime:"#156840",Highways:"#9A4812",Energy:"#6B3FA0",Multiple:"#57534e" };
   return (
     <div role="button" tabIndex={0} aria-label={c.title} onClick={() => onClick(c)} onKeyDown={e=>(e.key==="Enter"||e.key===" ")&&onClick(c)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{ flexShrink:0,width:280,cursor:"pointer",borderRadius:16,border:`1px solid ${highlighted?'var(--b-accent)':'var(--b-border)'}`,background:highlighted?'var(--b-accent-bg)':'var(--b-surface)',padding:"14px 16px",opacity:dimmed?0.45:1,transition:"all 0.25s",transform:hovered&&!highlighted?"translateY(-3px) scale(1.03)":highlighted?"translateY(-2px)":"none",boxShadow:hovered?"0 8px 24px rgba(0,0,0,0.12)":highlighted?"0 2px 12px rgba(0,0,0,0.10)":"none",fontFamily:"'DM Sans',sans-serif" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,gap:8 }}>
         <h4 style={{ fontSize:13,fontWeight:600,lineHeight:1.35,color:'var(--b-text-primary)',flex:1 }}>{c.title}</h4>
-        <span style={{ fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,border:`1px solid ${(secCol[c.sector]||"#78716c")}44`,background:secBg[c.sector]||"#f5f5f4",color:secCol[c.sector]||"#78716c",whiteSpace:"nowrap",flexShrink:0 }}>{c.sector}</span>
+        <span style={{ fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,border:`1px solid ${(secCol[c.sector]||"#57534e")}44`,background:secBg[c.sector]||"#f5f5f4",color:secCol[c.sector]||"#57534e",whiteSpace:"nowrap",flexShrink:0 }}>{c.sector}</span>
       </div>
       <p style={{ fontSize:11,color:'var(--b-text-muted)',marginBottom:6,lineHeight:1.3,display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical",overflow:"hidden" }}>{c.measure}</p>
       <p style={{ fontSize:11,fontWeight:600,color:'var(--b-accent)' }}>{c.hook}</p>
@@ -752,7 +752,7 @@ function DirectionB() {
           </div>
           <input ref={inputRef} value={query} onChange={e=>setQuery(e.target.value)}
             aria-label="Search case studies"
-            placeholder="e.g. flooding on a rail corridor, heatwave on road bridges, coastal port storm surge..."
+            placeholder="e.g. rail flooding, road heatwave, coastal storm surge"
             className="b-input"
             style={{ width:"100%",paddingLeft:44,paddingRight:40,paddingTop:15,paddingBottom:15,fontSize:15,borderRadius:16,border:`1.5px solid ${query?T.accent:T.inputBorder}`,outline:"none",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",transition:"border-color 0.2s",boxShadow:"0 2px 12px rgba(0,0,0,0.06)" }}/>
           {query&&<button onClick={()=>setQuery("")} aria-label="Clear search" style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.textMuted }}>
@@ -764,9 +764,25 @@ function DirectionB() {
         <div style={{ maxWidth:700,marginBottom:16 }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
             <p style={{ fontSize:11,color:T.textMuted }}>Search describes your situation. Filters narrow by category. Both work together.</p>
-            <button onClick={()=>setFiltersOpen(!filtersOpen)} style={{ fontSize:11,fontWeight:600,color:T.accent,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:"'DM Sans',sans-serif" }}>
+            <button
+              onClick={()=>setFiltersOpen(!filtersOpen)}
+              style={{
+                fontSize:12,
+                fontWeight:700,
+                color:filtersOpen ? "#fff" : T.accent,
+                background:filtersOpen ? T.accent : T.accentBg,
+                border:`1px solid ${T.accent}`,
+                borderRadius:999,
+                padding:"6px 12px",
+                cursor:"pointer",
+                display:"flex",
+                alignItems:"center",
+                gap:6,
+                fontFamily:"'DM Sans',sans-serif"
+              }}
+            >
               {filtersOpen?"Hide filters":"Show filters"}
-              {activeFilterCount>0&&<span style={{ background:T.accent,color:"#fff",fontSize:10,fontWeight:700,borderRadius:10,padding:"1px 7px" }}>{activeFilterCount}</span>}
+              {activeFilterCount>0&&<span style={{ background:"#fff",color:T.accent,fontSize:10,fontWeight:700,borderRadius:10,padding:"1px 7px" }}>{activeFilterCount}</span>}
               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ transform:filtersOpen?"rotate(180deg)":"none",transition:"transform 0.2s" }}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
           </div>
@@ -919,7 +935,7 @@ function DirectionB() {
 
       {!hasActiveFilters&&(
         <div style={{ maxWidth:1200,margin:"0 auto",padding:"0 24px 80px" }}>
-          <div style={{ marginTop:8,paddingTop:32,borderTop:`1px solid ${T.border}`,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:24 }}>
+          <div style={{ marginTop:20,paddingTop:36,borderTop:`1px solid ${T.borderStrong || T.border}`,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:24 }}>
             {[["50","Case Studies","in this prototype"],["4","Transport Sectors","rail · aviation · maritime · highways"],["12","Climate Hazards","first and second order"],["8","UK Regions","with geography-specific notes"]].map(([v,l,s])=>(
               <div key={l}>
                 <div style={{ fontSize:28,fontWeight:600,color:T.textPrimary,fontFamily:"'DM Serif Display',serif" }}>{v}</div>
@@ -1122,11 +1138,12 @@ function DirectionD() {
               <div style={{ display:"flex",gap:6,marginBottom:12 }}>
                 {chips[c.sector]&&<span style={{ background:chips[c.sector][0],color:chips[c.sector][1],fontSize:11,fontWeight:700,borderRadius:4,padding:"3px 9px",fontFamily:"'Syne',sans-serif" }}>{c.sector}</span>}
               </div>
-              <h3 style={{ fontSize:14,fontWeight:700,lineHeight:1.4,marginBottom:9,fontFamily:"'Syne',sans-serif" }}>{c.title}</h3>
-              <p style={{ fontSize:12,fontWeight:600,color:F.green,marginBottom:8 }}>{c.hook}</p>
+              <p style={{ fontSize:11,color:F.textDim,marginBottom:8,fontWeight:600 }}>{c.location} · {c.year?.split("–")[0]}</p>
+              <h3 style={{ fontSize:15,fontWeight:700,lineHeight:1.45,marginBottom:10,fontFamily:"'Syne',sans-serif",color:F.text }}>{c.title}</h3>
+              <p style={{ fontSize:12,fontWeight:700,color:F.green,marginBottom:10 }}>{c.hook}</p>
               <p style={{ fontSize:13,color:F.textMid,lineHeight:1.65 }}>{c.summary}</p>
               <div style={{ marginTop:16,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-                <span style={{ fontSize:11,color:F.textDim }}>{c.location} · {c.year?.split("–")[0]}</span>
+                <span style={{ fontSize:11,color:F.textDim }}>UK applicability: {c.transferability || "Medium"}</span>
                 <span style={{ fontSize:12,color:F.green,fontWeight:700,cursor:"pointer" }}>View →</span>
               </div>
             </div>

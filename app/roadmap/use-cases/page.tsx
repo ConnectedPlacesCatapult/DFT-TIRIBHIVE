@@ -14,7 +14,7 @@ export default function UseCasesPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Use_Cases Bordered_Content">
-      <h1>Use Cases</h1>
+      <h1 className="h1">Use Cases</h1>
       <p className="Use_Case_Intro p1">
         To bring the Vision and Roadmap to life, a selection of companies were engaged to develop
         digital twin use cases for transport, with input from industry. These do not cover all the

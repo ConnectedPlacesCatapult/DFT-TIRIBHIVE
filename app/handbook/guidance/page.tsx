@@ -13,13 +13,14 @@ const GUIDANCE_GROUPS = [
       },
       {
         title: "Climate Risk Assessment Guidance",
-        description: "Official guidance on conducting climate change risk assessments for infrastructure.",
-        url: "https://www.gov.uk/guidance/climate-change-risk-assessment-guidance",
+        description:
+          "EA guidance on climate change risk assessment and adaptation planning in your management system (environmental permits).",
+        url: "https://www.gov.uk/guidance/climate-change-risk-assessment-and-adaptation-planning-in-your-management-system",
       },
       {
         title: "HS2 Learning Legacy — Climate Change",
         description: "Lessons and publications from the HS2 programme on climate resilience and adaptation.",
-        url: "https://learninglegacy.hs2.co.uk/categories/climate-change/",
+        url: "https://learninglegacy.hs2.org.uk/document-themes/climate-change/",
       },
     ],
   },
@@ -34,7 +35,7 @@ const GUIDANCE_GROUPS = [
       {
         title: "DARe Publications",
         description: "Research publications from the Decarbonisation and Resilience (DARe) programme.",
-        url: "https://dare-uk.org/publications/",
+        url: "https://dare.ac.uk/publications/",
       },
     ],
   },
@@ -60,37 +61,37 @@ const GUIDANCE_GROUPS = [
       {
         title: "PIARC Climate Change Adaptation Framework 2023",
         description: "International framework for climate change adaptation in road infrastructure — Technical Report.",
-        url: "https://www.piarc.org/en/order-library/42628-en-PIARC%20International%20Climate%20Change%20Adaptation%20Framework%202023%20%E2%80%93%20TechnicalReport",
+        url: "https://www.piarc.org/en/order-library/42628-en-PIARC%20International%20Climate%20Change%20Adaptation%20Framework%202023%20%E2%80%93%20TechnicalReport?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
       {
         title: "PIARC Climate Change, Resilience and Disaster Management for Roads",
         description: "Seminar proceedings on resilience and disaster management for road networks.",
-        url: "https://www.piarc.org/en/order-library/42098-en-Climate%20Change,%20Resilience%20and%20Disaster%20Management%20forRoads%20-%20Seminar",
+        url: "https://www.piarc.org/en/order-library/42098-en-Climate%20Change,%20Resilience%20and%20Disaster%20Management%20forRoads%20-%20Seminar?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
       {
         title: "PIARC Ensuring the Network Remains Operational",
         description: "Panel discussion proceedings from Highways UK 2024 on maintaining operations under unprecedented conditions.",
-        url: "https://www.piarc.org/en/order-library/45857-en-Ensuring%20theNetwork%20Remains%20Operational%20during%20Unprecedented%20Conditions%20-%20Proceedings%20fromPiarc%20Panel%20Discussion%20at%20Highways%20UK%20in%20October%202024",
+        url: "https://www.piarc.org/en/order-library/45857-en-Ensuring%20theNetwork%20Remains%20Operational%20during%20Unprecedented%20Conditions%20-%20Proceedings%20fromPiarc%20Panel%20Discussion%20at%20Highways%20UK%20in%20October%202024?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
       {
         title: "PIARC Case Studies — Climate Change, Hazards and Road Network Resilience",
         description: "Collection of international case studies on climate hazards and road network resilience.",
-        url: "https://www.piarc.org/en/order-library/39873-en-Climate%20Change,%20Other%20Hazards%20and%20Resilience%20of%20Road%20Networks%20-%20Collection%20of%20Case%20Studies",
+        url: "https://www.piarc.org/en/order-library/39873-en-Climate%20Change,%20Other%20Hazards%20and%20Resilience%20of%20Road%20Networks%20-%20Collection%20of%20Case%20Studies?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
       {
         title: "PIARC Road Bridges — Climate Change Adaptation",
         description: "Literature review on measures for increasing road bridge adaptability to climate change.",
-        url: "https://www.piarc.org/en/order-library/38687-en-Measures%20for%20Increasing%20the%20Adaptability%20of%20Road%20Bridges%20to%20Climate%20Change%20-%20Literature%20Review",
+        url: "https://www.piarc.org/en/order-library/38687-en-Measures%20for%20Increasing%20the%20Adaptability%20of%20Road%20Bridges%20to%20Climate%20Change%20-%20Literature%20Review?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
       {
         title: "PIARC Preserve Earthworks and Rural Roads",
         description: "Technical report on preserving earthworks and rural roads from the impact of climate change.",
-        url: "https://www.piarc.org/en/order-library/34433-en-Preserve%20Earthworks%20and%20Rural%20Roads%20from%20the%20Impact%20ofClimate%20Changes%20-%20Technical%20Report",
+        url: "https://www.piarc.org/en/order-library/34433-en-Preserve%20Earthworks%20and%20Rural%20Roads%20from%20the%20Impact%20ofClimate%20Changes%20-%20Technical%20Report?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
       {
         title: "PIARC Adaptation Methodologies and Strategies",
         description: "Technical report on adaptation methodologies to increase road network resilience to climate change.",
-        url: "https://www.piarc.org/en/order-library/31335-en-Adaptation%20Methodologies%20and%20Strategies%20to%20Increase%20the%20Resilience%20of%20Roads%20to%20Climate%20Change%20-%20Technical%20Report",
+        url: "https://www.piarc.org/en/order-library/31335-en-Adaptation%20Methodologies%20and%20Strategies%20to%20Increase%20the%20Resilience%20of%20Roads%20to%20Climate%20Change%20-%20Technical%20Report?directory=%7B%22domains%22%3A%2220%22%2C%22sort%22%3A%22date%22%2C%22size%22%3A%2210%22%7D",
       },
     ],
   },
@@ -211,7 +212,7 @@ export default function GuidancePage() {
                   >
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "#1D9E75" }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "#0A7B57" }}>
                           External guidance
                         </span>
                         <span style={{ fontSize: 10, color: "var(--text-muted, #888)" }}>· {group.label}</span>
@@ -238,7 +239,7 @@ export default function GuidancePage() {
                       </div>
                     </div>
                     <svg
-                      style={{ width: 14, height: 14, color: "#1D9E75", flexShrink: 0, marginTop: 2 }}
+                      style={{ width: 14, height: 14, color: "#0A7B57", flexShrink: 0, marginTop: 2 }}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

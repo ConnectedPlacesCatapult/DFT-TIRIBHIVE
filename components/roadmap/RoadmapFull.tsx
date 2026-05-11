@@ -373,8 +373,12 @@ const RoadmapFull = (props: RoadmapFullProps) => {
             <i className="big angle right icon" />
           </Link>
 
-          <table className="Roadmap">
-            <thead>
+          <p className="Roadmap_Scroll_Hint p2" aria-hidden="true">
+            Swipe left/right to view the full timeline.
+          </p>
+          <div className="Roadmap_Table_Scroll" role="region" aria-label="Roadmap timeline table">
+            <table className="Roadmap">
+              <thead>
               <tr>
                 <th className="Roadmap_Header_1">Workstream</th>
                 <th className="Roadmap_Header_2">Component</th>
@@ -689,8 +693,9 @@ const RoadmapFull = (props: RoadmapFullProps) => {
                   );
                 });
               })}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

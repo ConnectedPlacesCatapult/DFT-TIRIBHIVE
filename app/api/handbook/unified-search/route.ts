@@ -31,12 +31,15 @@ function normaliseQuery(q: string): string {
     .trim();
 }
 
-/** SHA-256 hash of the normalised query — used as the primary key */
+/** SHA-256 hash of the normalised query + cache version — used as the primary key */
 function hashQuery(q: string): string {
-  return createHash("sha256").update(normaliseQuery(q)).digest("hex");
+  return createHash("sha256").update(`${CACHE_VERSION}:${normaliseQuery(q)}`).digest("hex");
 }
 
 const CACHE_TTL_HOURS = 24;
+
+// Bump this whenever retrieval logic or prompt changes — forces old cache entries to miss.
+const CACHE_VERSION = "v3";
 
 async function getCachedResponse(hash: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -158,6 +161,10 @@ export async function POST(req: NextRequest) {
     const guidanceChunks = includeGuidance ? await fetchGuidanceChunks(query) : [];
 
     // ── Step 2: LLM synthesis ────────────────────────────────────────────────
+    // temperature:0 + a query-derived seed ensures the same retrieved context
+    // always produces the same synthesis text, chips, and case count — so the
+    // search badge and chat "View X cases" button always agree.
+    const querySeed = parseInt(hash.slice(0, 8), 16) % 2147483647;
     const aiResult = await getAIResponse(
       [{ role: "user", text: query }],
       {
@@ -172,7 +179,8 @@ export async function POST(req: NextRequest) {
         ],
         session_intent: query,
         force_evidence_mode: forceEvidenceMode,
-      }
+      },
+      { temperature: 0, seed: querySeed }
     );
 
     const response = {
