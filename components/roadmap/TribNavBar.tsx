@@ -51,6 +51,13 @@ const TribNavBar = ({ Set_Tab_Expanded, windowWidth }: TribNavBarProps) => {
     <>
       <Link
         className="Navigation_Item"
+        style={{ fontWeight: pathname === "/" ? 700 : 400 }}
+        href="/"
+      >
+        Vision
+      </Link>
+      <Link
+        className="Navigation_Item"
         style={{ fontWeight: pathname === "/roadmap/about" ? 700 : 400 }}
         href="/roadmap/about"
       >
@@ -117,6 +124,9 @@ const TribNavBar = ({ Set_Tab_Expanded, windowWidth }: TribNavBarProps) => {
                 <img alt="Close Hamburger Menu" src={tribAssets.root("Close.png")} />
               </button>
               {windowWidth <= 600 ? Navigation_Items : null}
+              <Link className="Hamburger_Item" style={{ fontWeight: pathname === "/" ? 700 : 400 }} href="/">
+                Vision
+              </Link>
               <Link
                 className="Hamburger_Item"
                 style={{ fontWeight: pathname === "/roadmap/partners" ? 700 : 400 }}

@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { NavPill } from "@/components/NavPill";
-import { ObjectivesToggle } from "@/components/ObjectivesToggle";
 
 const DESKTOP_NAV = [
   { href: "/#about", label: "About" },
   { href: "/#projects", label: "Projects" },
   { href: "/#members", label: "Our members" },
+] as const;
+
+// Live trib.org.uk shows all six objectives inline (no toggle).
+const OBJECTIVES = [
+  "join-up leaders: identify priority areas; areas with most promise and where to focus effort",
+  "join-up activities: co-ordinate activities to meet shared strategic needs, improving value from existing and planned work",
+  "leverage funding: enable the funding of larger-scale, more ambitious projects",
+  "facilitate demonstrators: accelerating ideas and testing them in practice to bring them to market sooner",
+  "engage globally: seize an advantage in the rapidly evolving and economically strategic transport technology sector",
+  "create a line of sight to government priorities: understand the priorities of the Secretaries of State of the Department for Transport (DfT) and other relevant departments.",
 ] as const;
 
 const PROJECTS = [
@@ -19,11 +28,19 @@ const PROJECTS = [
   },
   {
     href: "/handbook",
-    img: "/images/trib/HIVE.c66281bf20b95c630434.png",
+    img: "/images/trib/handbook-preview.png",
     title: "Climate Adaptation Handbook",
     slug: "/handbook",
     description:
       "Filter and browse case studies by sector, asset type, and climate hazard. Use the table view or case study cards to explore and contribute resources.",
+  },
+  {
+    href: "/drones",
+    img: "/images/trib/drones-workshop.png",
+    title: "Drones: Barriers and Pathways to Adoption",
+    slug: "/drones",
+    description:
+      "This report summarises the outcomes of the drones barriers and pathways workshop, providing insights to support future cross-sector collaboration and research.",
   },
 ] as const;
 
@@ -50,61 +67,74 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-[#212121]">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="bg-[#21808B] text-white sticky top-0 z-40 shadow-sm">
-        <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-base font-bold tracking-tight leading-tight">
+      <header className="bg-white sticky top-0 z-40 border-b border-gray-200">
+        <div className="max-w-[1320px] mx-auto px-8 h-[72px] flex items-center justify-between gap-8">
+          {/* Site title — black, bold */}
+          <Link
+            href="/"
+            className="text-[#212121] no-underline font-bold text-lg tracking-tight leading-tight shrink-0"
+          >
             Transport Research and Innovation Board
-          </span>
+          </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-7 text-sm font-medium" aria-label="Primary">
-            {DESKTOP_NAV.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-white/85 hover:text-white no-underline transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
+          {/* Desktop nav + accessibility icon */}
+          <div className="hidden md:flex items-center gap-10">
+            <nav className="flex items-center gap-10 text-sm font-medium" aria-label="Primary">
+              {DESKTOP_NAV.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-[#212121] hover:text-[#21808B] no-underline transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+            {/* Accessibility icon */}
+            <a
+              href="/roadmap/accessibility"
+              aria-label="Accessibility statement"
+              className="text-[#212121] hover:text-[#21808B] transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none" />
+                <path d="M9 12h6" />
+                <path d="M10 16l-1 3" />
+                <path d="M14 16l1 3" />
+                <path d="M12 12v4" />
+              </svg>
+            </a>
+          </div>
 
           {/* Mobile nav */}
-          <div className="md:hidden">
-            <NavPill variant="dark" pillClassName="border border-white/30" />
+          <div className="md:hidden shrink-0">
+            <NavPill variant="light" />
           </div>
         </div>
       </header>
 
       <main>
 
-        {/* ── Hero ───────────────────────────────────────────────────────── */}
-        <section className="bg-white pt-14 pb-10 px-6">
-          <div className="max-w-[680px] mx-auto text-center">
-            <h1 className="text-[28px] font-bold text-[#21808B] mb-3 leading-tight">
-              Transport Research and Innovation Board
-            </h1>
-            <p className="text-base text-gray-500 leading-relaxed">
-              Connecting the organisations that fund, shape, and deliver
-              transport innovation in the UK.
-            </p>
-          </div>
-        </section>
-
         {/* ── About banner ───────────────────────────────────────────────── */}
-        <section id="about" className="scroll-mt-16">
-          <div className="bg-[#21808B] py-3 text-center">
-            <h2 className="text-xl font-bold text-white tracking-wide">About</h2>
+        {/* Mirrors live .homepage .about: full-bleed teal h2 banner, then content
+            constrained to max-w-[1200px] to match .about p / .about ul rules. */}
+        <section id="about" className="scroll-mt-20">
+          <div className="bg-[#21808B] py-2.5 text-center">
+            <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
+              About
+            </h2>
           </div>
 
-          <div className="bg-[#f7f7f7] py-10 px-6">
-            <div className="max-w-[900px] mx-auto">
-              <p className="text-sm leading-relaxed text-gray-700 mb-4">
+          <div className="bg-white pt-10 pb-12 px-6">
+            <div className="max-w-[1200px] mx-auto">
+              <p className="text-base leading-relaxed text-[#212121] mb-4">
                 The Transport Research and Innovation Board (TRIB) brings together
                 representatives from key organisations that fund and carry out
                 research and innovation in the UK, as well as government departments
                 with an interest in transport.
-                <br />
+              </p>
+              <p className="text-base leading-relaxed text-[#212121] mb-5">
                 For more information about TRIB, please{" "}
                 <a
                   href="https://www.gov.uk/government/groups/transport-research-and-innovation-board"
@@ -115,30 +145,53 @@ export default function HomePage() {
                   see more.
                 </a>
               </p>
-              <ObjectivesToggle />
+              <p className="text-base leading-relaxed text-[#212121] mb-3">
+                The objectives of the board are to:
+              </p>
+              <ul
+                className="text-base leading-relaxed text-[#212121] mb-5 space-y-2"
+                style={{ listStyleType: "disc", paddingLeft: "1.5rem" }}
+              >
+                {OBJECTIVES.map((obj) => (
+                  <li key={obj} style={{ display: "list-item" }}>{obj}</li>
+                ))}
+              </ul>
+              <p className="text-base leading-relaxed text-[#212121] mb-4">
+                DfT provides the secretariat for the TRIB Board.
+              </p>
+              <p className="text-base leading-relaxed text-[#212121] mb-4">
+                The TRIB Board has awarded Connected Places Catapult (CPC) a grant
+                to develop this shared 2035 Vision and Roadmap.
+              </p>
+              <p className="text-base leading-relaxed text-[#212121]">
+                We would like to thank the following organisations for their
+                contribution to the project.
+              </p>
             </div>
           </div>
         </section>
 
         {/* ── Projects banner ────────────────────────────────────────────── */}
-        <section id="projects" className="scroll-mt-16">
-          <div className="bg-[#21808B] py-3 text-center">
-            <h2 className="text-xl font-bold text-white tracking-wide">Projects</h2>
+        <section id="projects" className="scroll-mt-20">
+          <div className="bg-[#21808B] py-2.5 text-center">
+            <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
+              Projects
+            </h2>
           </div>
 
-          <div className="bg-white py-10 px-6">
+          <div className="bg-white py-12 px-6">
             <div className="max-w-[900px] mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {PROJECTS.map((p) => (
                   <Link
                     key={p.href}
                     href={p.href}
-                    className="group flex gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 no-underline text-inherit
+                    className="group flex flex-col sm:flex-row gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 no-underline text-inherit
                                transition-all duration-150
                                hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-0.5"
                   >
                     {/* Thumbnail */}
-                    <span className="flex-shrink-0 w-[120px] h-[80px] block bg-gray-100 rounded overflow-hidden">
+                    <span className="flex-shrink-0 w-full sm:w-[120px] h-[180px] sm:h-[80px] block bg-gray-100 rounded overflow-hidden">
                       <img
                         src={p.img}
                         alt=""
@@ -171,12 +224,14 @@ export default function HomePage() {
         </section>
 
         {/* ── Our Members banner ─────────────────────────────────────────── */}
-        <section id="members" className="scroll-mt-16">
-          <div className="bg-[#21808B] py-3 text-center">
-            <h2 className="text-xl font-bold text-white tracking-wide">Our Members</h2>
+        <section id="members" className="scroll-mt-20">
+          <div className="bg-[#21808B] py-2.5 text-center">
+            <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
+              Our Members
+            </h2>
           </div>
 
-          <div className="bg-white py-10 px-6">
+          <div className="bg-white py-12 px-6">
             <div className="max-w-[800px] mx-auto">
               <p className="text-center text-sm text-gray-400 mb-8">
                 Bringing together government, industry, and research to drive
@@ -202,7 +257,14 @@ export default function HomePage() {
       </main>
 
       <footer className="bg-[#21808B] text-white py-4 px-6 text-center text-sm">
-        www.trib.org.uk
+        <a
+          href="https://www.trib.org.uk"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white underline underline-offset-2 hover:no-underline"
+        >
+          www.trib.org.uk
+        </a>
       </footer>
     </div>
   );

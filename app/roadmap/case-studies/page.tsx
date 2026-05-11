@@ -26,7 +26,7 @@ export default function CaseStudiesPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Case_Studies Bordered_Content">
-      <h1>Case Studies</h1>
+      <h1 className="h1">Case Studies</h1>
       <p className="Case_Studies_Intro p1">
         The TRIB Roadmap case studies page showcases a range of pioneering digital twin initiatives
         transforming transport management across the UK. Each case study illustrates real-world
@@ -40,6 +40,7 @@ export default function CaseStudiesPage() {
       <div className="Case_Studies_Container">
         {data.Case_Studies.map((cs, i) => (
           <div key={i} tabIndex={0} className="Case_Study_Card">
+            <h1 className="h4">{cs.title}</h1>
             {cs.image ? (
               <div className="Case_Study_Hero">
                 <img src={tribAssets.root(cs.image)} alt="" />
@@ -49,7 +50,6 @@ export default function CaseStudiesPage() {
                 <img src={tribAssets.root(cs.illustration)} alt="" />
               </div>
             ) : null}
-            <h1 className="h4">{cs.title}</h1>
             {cs.body.map((paragraph, pi) => (
               <p key={pi} className="p1">{paragraph}</p>
             ))}

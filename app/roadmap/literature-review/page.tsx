@@ -45,7 +45,7 @@ export default function LiteratureReviewPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Literature_Review Bordered_Content">
-      <h1>Relevant Publications</h1>
+      <h1 className="h1">Relevant Publications</h1>
       <p className="Intro p1">
         To understand the landscape of existing and emerging digital twins, a literature review was
         conducted of 58 documents including academic research, market analysis and the UK&rsquo;s
@@ -55,34 +55,41 @@ export default function LiteratureReviewPage() {
         components these apply to, in addition to guiding principles for the development of digital
         twins amongst other key themes which have been represented in the Roadmap.
       </p>
-      <table className="Lit_Table">
-        <thead>
-          <tr>
-            {cols.map((c) => (
-              <th key={c.key} onClick={() => handleSort(c.key)} style={{ cursor: "pointer" }}>
-                {c.label} {sortKey === c.key ? (sortAsc ? "▲" : "▼") : ""}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              <td className="p1">{row.Name}</td>
-              <td>
-                {row.Source ? (
-                  <a href={row.Source} target="_blank" rel="noreferrer">
-                    <img src={tribAssets.root("Link.png")} alt="Link" />
-                  </a>
-                ) : null}
-              </td>
-              <td className="p1">{row.Author}</td>
-              <td className="p1">{row["Publication date"]}</td>
-              <td className="p1">{row.Description}</td>
+      <p className="p1" style={{ marginTop: "16px" }}>
+        For more information on the literature review performed as part of the roadmap development,
+        please contact{" "}
+        <a href="mailto:contact@trib.org.uk">contact@trib.org.uk</a>
+      </p>
+      <div className="Lit_Table_Scroll">
+        <table className="Lit_Table">
+          <thead>
+            <tr>
+              {cols.map((c) => (
+                <th key={c.key} onClick={() => handleSort(c.key)} style={{ cursor: "pointer" }}>
+                  {c.label} {sortKey === c.key ? (sortAsc ? "▲" : "▼") : ""}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i}>
+                <td className="p1">{row.Name}</td>
+                <td>
+                  {row.Source ? (
+                    <a href={row.Source} target="_blank" rel="noreferrer">
+                      <img src={tribAssets.root("Link.png")} alt="Link" />
+                    </a>
+                  ) : null}
+                </td>
+                <td className="p1">{row.Author}</td>
+                <td className="p1">{row["Publication date"]}</td>
+                <td className="p1">{row.Description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

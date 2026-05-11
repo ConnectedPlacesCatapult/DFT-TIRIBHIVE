@@ -14,7 +14,7 @@ export default function StakeholdersPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Stakeholders Bordered_Content">
-      <h1 className="Stakeholders_Title">Stakeholders</h1>
+      <h1 className="h1 Stakeholders_Title">Stakeholders</h1>
       <p className="Stakeholders_Intro p1">
         Involvement and collaboration from a wide range of stakeholders has been critical for the
         development of the vision and roadmap and reviews of drafts. Over 80 organisations have been

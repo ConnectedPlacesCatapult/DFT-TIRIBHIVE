@@ -15,7 +15,7 @@
   },
   {
     "Name": "Digital Twins: Ethics and the Gemini Principles​",
-    "Source": "https://digitaltwinhub.co.uk/files/file/100-digital-twins-ethics-and-the-gemini-principles/",
+    "Source": "https://digitaltwinhub.co.uk/download/digital-twins-ethics-and-the-gemini-principles/",
     "Author": "CDBB​",
     "Publication date": "2021-12",
     "Description": "Industry paper into the ethics of connected digital twins, in relation to the Gemini Principles."
@@ -64,14 +64,14 @@
   },
   {
     "Name": "The Future of the Automotive Industry through Digitalisation​",
-    "Source": "https://roadmap.ide.uk/",
+    "Source": "https://www.ideuk.org/digitalisation-roadmap",
     "Author": "Institute of Digital Engineering​",
     "Publication date": "2021​",
     "Description": "The IDE roadmap will maximise opportunities offered by new technology transitions and set a course to advance the automotive industry through digitalisation"
   },
   {
     "Name": "Digital Twin Toolkit​",
-    "Source": "https://digitaltwinhub.co.uk/files/file/62-digital-twin-toolkit/",
+    "Source": "https://digitaltwinhub.co.uk/download/digital-twin-toolkit/",
     "Author": "CDBB",
     "Publication date": "2021-02",
     "Description": "Report from the DT Hub on annual progress towards objectives, lessons learned and opportunities for growth."
@@ -92,21 +92,21 @@
   },
   {
     "Name": "The key components of connected digital twins – NDTp roadmap V2.0​",
-    "Source": "https://digitaltwinhub.co.uk/archive/components-for-connected-digital-twins/​",
+    "Source": "https://digitaltwinhub.co.uk/download/the-gemini-principles/",
     "Author": "CDBB​",
     "Publication date": "2022​",
     "Description": "A roadmap to enable effective, secure, resilience and meaningful information sharing across organisational and sectoral boundaries on a national scale"
   },
   {
     "Name": "New standard for Digital Twins - powered by Digital Engineering​",
-    "Source": "https://digitaltwinhub.co.uk/forums/topic/570-new-standard-for-digital-twins-powered-by-digital-engineering/",
+    "Source": "https://digitaltwinhub.co.uk/media/dt-hub-working-group-2-open-standards-and-interoperability/",
     "Author": "Rail innovation Board​",
     "Publication date": "2022-02",
     "Description": "Sets out new standard for digital engineering in rail. The document is out for consultation but provides background information of existing standards, key data challenges, principles, opportunities and need for digital ecosystems."
   },
   {
     "Name": "Tomorrow’s Engineering Research Challenges​",
-    "Source": "https://www.ukri.org/wp-content/uploads/2022/07/EPSRC-090822-TERCReport.pdf​",
+    "Source": "https://www.ukri.org/wp-content/uploads/2022/07/EPSRC-090822-TERCReport.pdf",
     "Author": "UKRI​",
     "Publication date": "2022-07",
     "Description": "Report to identify the most important challenges that face engineers in the over the next 10-15 years and inform future research strategy for a variety of audiences."
@@ -134,7 +134,7 @@
   },
   {
     "Name": "Areas of Research Interest 2021, Research and Evidence",
-    "Source": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1009521/areas-of-research-interest-2021.pdf",
+    "Source": "https://www.gov.uk/government/collections/areas-of-research-interest",
     "Author": "DfT​",
     "Publication date": "2021",
     "Description": "Lists areas of research interest in the transportation sector"
@@ -148,7 +148,7 @@
   },
   {
     "Name": "Data for the public good",
-    "Source": "https://nic.org.uk/app/uploads/Data-for-the-Public-Good-NIC-Report.pdf",
+    "Source": "https://www.gov.uk/government/publications/data-for-the-public-good-government-response",
     "Author": "National Infrastructure Commission",
     "Publication date": "2017",
     "Description": "Identifies the need for data/ digitalisation across sectors"
@@ -197,7 +197,7 @@
   },
   {
     "Name": "Maritime digital twin architecture",
-    "Source": "https://www.degruyter.com/document/doi/10.1515/auto-2021-0082/html?lang=en",
+    "Source": "https://doi.org/10.1515/auto-2021-0082",
     "Author": "De Gruyter",
     "Publication date": "2021",
     "Description": "Provides brief insight into the current state of the maritime industry and shows possible use-cases for DT Ship applications throughout the entire product lifecycle"
@@ -274,14 +274,14 @@
   },
   {
     "Name": "digital-twin-institute-position-paper",
-    "Source": "https://www.aiaa.org/docs/default-source/uploadedfiles/issues-and-advocacy/policy-papers/digital-twin-institute-position-paper-(december-2020).pdf",
+    "Source": "https://www.aiaa.org/wp-content/uploads/2024/12/digital-twin-institute-position-paper-december-2020.pdf",
     "Author": "AIAA",
     "Publication date": "2020",
     "Description": "Paper provides an aerospace industry (including civil, military, and commercial) perspectives on the Digital Twin and the significant benefits and rationale to accelerate embracing the fourth industrial revolution referred to as digital transformation."
   },
   {
     "Name": "Introducing digital roads",
-    "Source": "https://nationalhighways.co.uk/media/2chotw13/introducing-digital-roads.pdf",
+    "Source": "https://nationalhighways.co.uk/our-work/digital-data-and-technology/digital-roads/",
     "Author": "National highways",
     "Publication date": "",
     "Description": "Industry report and vision document for digital roads on the strategic road network and applications for digital twins."
@@ -334,7 +334,7 @@
   },
   {
     "Name": "Untangling the requirements of a Digital Twin",
-    "Source": "https://www.amrc.co.uk/pages/digital-twin-report",
+    "Source": "https://www.amrc.co.uk/files/document/406/1605271035_1604658922_AMRC_Digital_Twin_AW.pdf",
     "Author": "AMRC",
     "Publication date": "2021-03"
   },
@@ -355,7 +355,7 @@
 
   {
     "Name": "Manufacturing Sector net Zero Roadmap",
-    "Source": "https://www.makeuk.org/insights/reports/manufacturing-sector-net-zero-roadmap",
+    "Source": "https://www.makeuk.org/insights/reports/2021/11/19/manufacturing-sector-net-zero-roadmap",
     "Author": "MAKE UK",
     "Publication date": "2022-01"
   }

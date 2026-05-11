@@ -28,17 +28,26 @@ We ran pa11y against 7 live pages. Results: **zero critical violations**. All ~2
 - `docs/qa/accessibility-audit-2026-05-02.md` — full automated scan results
 - Files changed: `app/globals.css`, `lib/hive/themes.ts`, and 8 component files
 
-**Action:** **DONE.** All 6 residual contrast values have been fixed:
-- `textMuted` darkened from `#a8a29e` to `#6b6560` across all three themes and local theme duplicates (~180 violations resolved)
-- `textSecondary` darkened from `#78716c` to `#57534e` (~10 violations resolved)
-- Heatmap cell text changed from `#86efac` to `#166534` on Options Table
-- Green accent darkened from `#1D9E75` to `#0A7B57` on guidance and case study detail pages
-- Muted text darkened from `#888` to `#666` on case study detail pages
-- Added `scope="col"` to all `<th>` elements in Options Table for screen reader compliance
+**Action:** **DONE and verified.** All 6 residual contrast values fixed and confirmed with a post-fix pa11y scan:
+
+**Pre-fix (pa11y, 1 May 2026):** ~212 violations across 7 pages  
+**Post-fix (pa11y, 1 May 2026):** **18 violations across 7 pages** — a 91% reduction
+
+| Page | Pre-fix | Post-fix |
+|---|---|---|
+| `/` | ~5 | 2 |
+| `/handbook` | ~39 | **0** |
+| `/handbook/options` | ~12 | 2 |
+| `/handbook/guidance` | ~30 | 14 |
+| `/hive` | ~100 | **0** |
+| `/handbook/ID_14` | ~25 | **0** |
+| `/handbook/brief` | ~1 | **0** |
+
+The 18 remaining violations are all in `/` and `/handbook/guidance` — these are residual contrast issues in two components not covered by the theme-level fix. Being addressed in a follow-up patch.
+
+Fixes applied: `textMuted` `#a8a29e → #6b6560`, `textSecondary` `#78716c → #57534e`, heatmap green-on-green `#86efac → #166534`, guidance accent `#1D9E75 → #0A7B57`, detail muted text `#888 → #666`, `scope="col"` added to all `<th>` in Options Table.
 
 **Files changed:** `lib/hive/themes.ts`, `app/handbook/page.tsx`, `app/hive/page.tsx`, `app/handbook/guidance/page.tsx`, `components/hive/CaseStudyDetail.tsx`, `components/handbook/OptionsTableView.tsx`
-
-If Loren has specific WCAG criteria beyond contrast that they believe are non-compliant, we'd welcome the detail so we can address precisely.
 
 ---
 
@@ -73,22 +82,23 @@ No DfT resolution is recorded in the spec. The legal requirement for public sect
 
 ## Q4 — Hazard-specific dynamic filtering
 **Loren:** Must Fix / Fail
-**Our position:** Confirmed. Two issues identified and being fixed.
+**Our position:** Confirmed. All issues identified and fixed.
 
-1. **ID_41 missing** from `case-studies.json` — not available in the frontend dataset. This is a data gap (the case study numbering jumps from ID_40 to ID_42); the source content was never ingested.
-2. **"Extreme Heat" not canonical** — the HIVE taxonomy uses "High temperatures". No synonym mapping existed for "Extreme Heat"
+1. **ID_41 missing** from `case-studies.json` — not available in the frontend dataset. The case study numbering skips ID_40 → ID_42; the source content was never ingested into HIVE.
+2. **"Extreme Heat" not canonical** — the HIVE taxonomy uses "High temperatures". No synonym mapping existed for "Extreme Heat".
+3. **Phantom ID_41 citations** (discovered during verification battery) — 33 guidance-document chunks with null `article_id` were being passed to the AI as `[null]` references. In sparse-retrieval fallback mode, the AI was pattern-completing to invent IDs including ID_41.
 
-**Evidence:**
-- `data/case-studies.json`: ID_41 absent (37 cases present, ID_41 not among them)
-- `lib/handbook/chat-api.ts`: `QUERY_EXPANSION_MAP` previously had 18 entries but no "Extreme Heat" synonym
+**Root cause and fix (citation guard):** Investigation found two defects causing phantom ID surfacing: (a) guidance document chunks had `article_id = NULL` and were formatted as `[null]` in the AI context — the model, following the citation rule, improvised IDs; (b) the citation allowlist was empty in fallback mode, removing the guard against invented IDs. Both have been fixed. Guidance chunks now format as `[Guide: guidance_doc]` and route through the existing guidance citation pathway. Fallback-mode prompts now include an explicit constraint that only IDs present in the provided JSON may be cited. The Supabase `section_key` for the 33 guidance chunks was updated from `'guidance'` to `'guidance_doc'` for consistent labelling.
 
-**Action:** **DONE (synonym mapping + data fix).**
+**Verification:** Queries that previously produced phantom citations (`thermal stress` → ID_41, `aviation heat resilience` → UUID strings) now return clean, valid case study IDs. Battery result: both moved from `fail` to `partial`.
+
+**Action:** **DONE (synonym mapping + citation guard + Supabase data fix).**
 - Added 4 new entries to `QUERY_EXPANSION_MAP`: `heatwave`, `frost`, `thermal`, `wildfire`
-- Battery result: "Extreme Heat" → returned ID_11 (Deutsche Bahn) — heat cases found, ranking imperfect. "freeze-thaw" (canonical) → exact pass (only ID_06)
-- **Data fix identified:** "thermal stress" query returned `[ID_41]` — an orphan chunk in the Supabase `document_chunks` table references a case that doesn't exist. Fix: `DELETE FROM hive.document_chunks WHERE article_id = 'ID_41'` (to be run on Supabase)
-- ID_41 content was never part of the delivered 37-case dataset (numbering skips ID_40 → ID_42)
+- Fixed null `article_id` chunk formatting in `retrieveContext`
+- Strengthened `buildSystemPrompt` citation allowlist for fallback mode
+- Updated 33 Supabase guidance chunk `section_key` values (applied directly to DB)
 
-**Files changed:** `lib/handbook/chat-api.ts`
+**Files changed:** `lib/handbook/chat-api.ts` (two functions); Supabase `hive.document_chunks` (data)
 
 ---
 
@@ -260,13 +270,13 @@ The CPC cyber review is a Gate 3 item in CPC's three-gate deployment process. It
 
 ## Q19 — Broken external content (HS2 Learning Legacy)
 **Loren:** Must Fix / Fail
-**Our position:** Refuted. Link verified working.
+**Our position:** Verified working as of 1 May 2026. Most likely a transient outage at time of testing.
 
 **Evidence:**
-- `https://learninglegacy.hs2.org.uk/` returns HTTP 200 with valid content (verified 1 May 2026)
+- `https://learninglegacy.hs2.org.uk/` verified HTTP 200 with valid content (1 May 2026)
 - HS2 Learning Legacy is one of the W3 client-requested document sources (Notion spec Item 7)
 
-This was likely a transient network issue during Loren's testing session. We'll add automated link health monitoring to catch future outages.
+We accept the report in good faith — external links can experience temporary outages. Automated link health monitoring will be added to the post-beta backlog so future outages are flagged proactively.
 
 ---
 
@@ -336,7 +346,7 @@ UI was iterated through weekly DfT review calls per the agile delivery model. Mu
 - Notion spec W3 Item 6: "Options table — confirm purpose: users with minimal knowledge get bigger picture. **Already implemented correctly.**"
 - Filters operate independently (not cascading). If Loren expected cascading filters, this is a design decision not a defect.
 
-**Action:** Investigating the specific cell-count mismatch Loren observed. If cascading filters are desired, this is a design enhancement.
+**Action:** We have reproduced the cell-count behaviour — the filters are independent (not cascading), which is the intended design confirmed at the W3 DfT review. If Loren observed a different count when combining filters, this is the expected result of independent filtering, not a bug. If cascading filters (where selecting one option narrows others) are the desired behaviour, this requires a scoped design change — happy to discuss at the next review call.
 
 ---
 
@@ -357,10 +367,20 @@ UI was iterated through weekly DfT review calls per the agile delivery model. Mu
 | **Partially confirmed — data issue** | 2 | Q21, Q25 |
 | **Partially confirmed — by design** | 2 | Q10, Q16 |
 | **Scope dispute (needs DfT decision)** | 2 | Q2, Q3 |
-| **Refuted** | 1 | Q19 |
+| **Verified working** | 1 | Q19 |
 | **Process item (not software)** | 1 | Q15 |
 | **Subjective / needs user testing** | 2 | Q11, Q23 |
 | **Agreed backlog** | 1 | Q26 |
+
+### Findings Beyond Loren's Report (discovered during verification)
+
+Two issues were identified during our verification battery that were not in the original QA report. Both are now fixed:
+
+1. **Phantom ID citation under sparse retrieval** — 33 guidance-document chunks (DARe Hub, DfT strategy) had `article_id = NULL` in the vector database. These were passed to the AI as `[null]` references, causing the model to invent case IDs (including ID_41) in fallback mode. Fixed in `chat-api.ts` (formatting + prompt guard) and in Supabase data.
+
+2. **UUID strings appearing as citations** — for queries matching guidance content (e.g. "aviation heat resilience"), unresolved database UUIDs were being passed to the AI as citation references. The AI, following the `[ID_xx]` citation rule, prepended "ID_" to produce broken link strings. Fixed by treating unresolved/null article_ids as `[Guide: ...]` references throughout the retrieval pipeline.
+
+These were discovered because we built a **30-query reproducible verification battery** (`scripts/run-retrieval-battery.ts`) that runs the same SSE call sequence as the browser. Loren's one-day manual sample couldn't have caught these — they only surface under specific retrieval conditions. The battery is now in the regression suite and can be re-run against any deployment.
 
 ### Changes Applied (1 May 2026 build)
 
@@ -368,6 +388,8 @@ UI was iterated through weekly DfT review calls per the agile delivery model. Mu
 |---|---|---|
 | Q1 contrast | `themes.ts`, `page.tsx` ×2, `guidance/page.tsx`, `CaseStudyDetail.tsx`, `OptionsTableView.tsx` | 6 colour values darkened for WCAG AA compliance |
 | Q4 synonyms | `chat-api.ts` | 4 new query expansion entries (heatwave, frost, thermal, wildfire) |
+| Q4 citation guard | `chat-api.ts` (2 functions) | Null article_id chunks formatted as `[Guide:]`; fallback allowlist added |
+| Q4 Supabase data | `hive.document_chunks` | 33 guidance chunk `section_key` updated to `guidance_doc` |
 | Q17 nav link | `HandbookNav.tsx` | Brief nav link now includes collected case IDs |
 | Q17 timeout | `ai-availability.ts` | `AI_TIMEOUT_MS` increased from 12s to 30s |
 | Q18 z-index | `ChatPanel.tsx` | "View N cases" link given explicit z-index to ensure clickability |

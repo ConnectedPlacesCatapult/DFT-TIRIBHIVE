@@ -12,7 +12,7 @@ export default function PartnersPage() {
 
   return (
     <div ref={focusRef} tabIndex={-1} className="Partners Bordered_Content">
-      <h1 className="Title">Project partners</h1>
+      <h1 className="h1 Title">Project partners</h1>
       <div className="Intro">
         <p className="p1">
           <b>Transport Research and Innovation Board</b>
@@ -51,21 +51,20 @@ export default function PartnersPage() {
       <div className="Logos">
         <img className="Partner_Image" src={tribAssets.logos.dft} id="DfT" alt="DfT logo" />
         <img className="Partner_Image" src={tribAssets.logos.cpc} id="CPC" alt="CPC logo" />
-        <div className="Placeholder">Maritime &amp; Coastguard Agency</div>
-        <div className="Placeholder">Network Rail</div>
+        <img className="Partner_Image" src={tribAssets.logos.maritimeCoastguard} id="Maritime Coastguard Agency" alt="Maritime &amp; Coastguard Agency logo" />
+        <img className="Partner_Image" src={tribAssets.logos.networkRail} id="Network Rail" alt="Network Rail logo" />
         <img className="Partner_Image" src={tribAssets.logos.ukri} id="UKRI" alt="UKRI logo" />
-        <div className="Placeholder">Economic and Social Research Council</div>
         <img className="Partner_Image" src={tribAssets.logos.ndtpBlue} id="National Digital Twin Programme" alt="National Digital Twin Programme logo" />
         <img className="Partner_Image" src={tribAssets.logos.hvmCatapult} id="HVM Catapult" alt="HVM Catapult logo" />
-        <div className="Placeholder">National Highways</div>
+        <img className="Partner_Image" src={tribAssets.logos.nationalHighways} id="National Highways" alt="National Highways logo" />
         <img className="Partner_Image" src={tribAssets.logos.adept} id="ADEPT" alt="ADEPT logo" />
         <img className="Partner_Image" src={tribAssets.logos.hs2} id="HS2" alt="HS2 logo" />
         <img className="Partner_Image" src={tribAssets.logos.innovateUk} id="Innovate UK" alt="Innovate UK logo" />
         <img className="Partner_Image" src={tribAssets.logos.epsrc} id="EPSRC" alt="EPSRC logo" />
-        <div className="Placeholder">Government Office for Science</div>
         <img className="Partner_Image" src={tribAssets.logos.dsit} id="DSIT" alt="DSIT logo" />
         <img className="Partner_Image" src={tribAssets.logos.rssb} id="RSSB" alt="RSSB logo" />
         <img className="Partner_Image" src={tribAssets.logos.ati} id="Aerospace Technology Institute" alt="Aerospace Technology Institute logo" />
+        <img className="Partner_Image" src={tribAssets.logos.govOfficeForScience} id="Government Office for Science" alt="Government Office for Science logo" />
       </div>
     </div>
   );
