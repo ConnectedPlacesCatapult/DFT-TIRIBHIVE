@@ -26,13 +26,13 @@ export const HEATMAP_HAZARDS: HeatmapHazard[] = [
 export type HeatmapMatrix = Record<HeatmapSector, Record<string, number>>;
 
 export const HEATMAP_MATRIX: HeatmapMatrix = {
-  Roads:    { heat: 3, rain: 5, flooding: 5, storms: 3, sealevel: 3, drought: 2 },
-  Rail:     { heat: 6, rain: 6, flooding: 4, storms: 1, sealevel: 4, drought: 2 },
-  Aviation: { heat: 7, rain: 3, flooding: 4, storms: 5, sealevel: 2, drought: 1 },
-  Maritime: { heat: 6, rain: 2, flooding: 3, storms: 6, sealevel: 5, drought: 3 },
+  Roads:    { heat: 3, rain: 5, flooding: 11, storms: 3,  sealevel: 3, drought: 2 },
+  Rail:     { heat: 6, rain: 10, flooding: 14, storms: 2, sealevel: 5, drought: 2 },
+  Aviation: { heat: 10, rain: 4, flooding: 7,  storms: 7, sealevel: 1, drought: 1 },
+  Maritime: { heat: 10, rain: 2, flooding: 7,  storms: 11, sealevel: 9, drought: 3 },
 };
 
-export const HEATMAP_MAX = 7;
+export const HEATMAP_MAX = 14;
 
 export type CellColors = {
   bg: string;

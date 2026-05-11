@@ -30,7 +30,7 @@ const SOURCES = [
   {
     id: "fd308382-991f-4e6f-8836-aa0b6ea3cf00",
     title: "HS2 Learning Legacy — Climate Change",
-    url: "https://learninglegacy.hs2.co.uk/categories/climate-change/",
+    url: "https://learninglegacy.hs2.org.uk/document-themes/climate-change/",
     source_type: "guidance_doc",
   },
   {

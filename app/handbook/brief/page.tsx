@@ -23,7 +23,7 @@ const FONT = `
   * { box-sizing:border-box; margin:0; padding:0; }
   ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-thumb{background:#e4e0d8;border-radius:2px}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
   @keyframes dotBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
   .appear{animation:fadeUp 0.32s ease forwards}
@@ -306,6 +306,35 @@ function setBriefCache(ids: string[], sections: BriefSection[], label: string) {
   }
 }
 
+// ── Persistent localStorage brief cache ────────────────────────────────────
+// Survives browser sessions so quick-start and repeat briefs never re-run the
+// LLM. Keyed by sorted IDs so order doesn't matter.
+
+function localBriefKey(ids: string[]): string {
+  return `hiveBriefV1_${[...ids].sort().join("_")}`;
+}
+
+function getLocalBrief(ids: string[]): { sections: BriefSection[]; label: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(localBriefKey(ids));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { sections: BriefSection[]; label: string };
+    return Array.isArray(parsed.sections) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function setLocalBrief(ids: string[], sections: BriefSection[], label: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(localBriefKey(ids), JSON.stringify({ sections, label }));
+  } catch {
+    // localStorage full or blocked — fail silently
+  }
+}
+
 function briefCacheMatches(cache: { ids: string[] }, ids: string[]): boolean {
   if (cache.ids.length !== ids.length) return false;
   const a = [...cache.ids].sort();
@@ -379,6 +408,7 @@ export default function HIVEBriefWithChat() {
   const [briefCases, setBriefCases] = useState<BriefCase[]>([]);
   const [sections, setSections] = useState<BriefSection[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [simulating, setSimulating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiLabel, setAiLabel] = useState<string | null>(null);
   const [isExampleMode, setIsExampleMode] = useState(false);
@@ -469,6 +499,8 @@ export default function HIVEBriefWithChat() {
       setSections(newSections);
       setAiLabel(newLabel);
       setBriefCache(ids, newSections, newLabel);
+      // Persist to localStorage so repeat visits (same IDs) never re-run the LLM
+      setLocalBrief(ids, newSections, newLabel);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate brief");
     } finally {
@@ -495,12 +527,22 @@ export default function HIVEBriefWithChat() {
       setBriefCases(resolved.map(cs => normaliseCaseForBrief(cs)));
       setIsExampleMode(false);
 
-      const cache = getBriefCache();
-      if (cache && briefCacheMatches(cache, ids)) {
-        setSections(cache.sections);
-        setAiLabel(cache.label);
+      // Check persistent localStorage cache first — never re-runs the LLM for
+      // the same set of cases. Show a brief simulation screen so it feels live.
+      const localCache = getLocalBrief(ids);
+      if (localCache) {
+        setSections(localCache.sections);
+        setAiLabel(localCache.label);
+        setSimulating(true);
+        setTimeout(() => setSimulating(false), 1500);
       } else {
-        generateBrief(ids);
+        const cache = getBriefCache();
+        if (cache && briefCacheMatches(cache, ids)) {
+          setSections(cache.sections);
+          setAiLabel(cache.label);
+        } else {
+          generateBrief(ids);
+        }
       }
     } else {
       // No cases: load static prebuilt example brief instantly — no OpenAI call
@@ -788,10 +830,10 @@ export default function HIVEBriefWithChat() {
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {loading && (
+            {(loading || simulating) && (
               <span style={{ fontSize: 12, color: T.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.green, display: "inline-block", animation: "pulse 1s infinite" }} />
-                Generating&hellip;
+                {simulating ? "Loading\u2026" : "Generating\u2026"}
               </span>
             )}
             {isExampleMode && !loading && sections && (
@@ -803,10 +845,10 @@ export default function HIVEBriefWithChat() {
                 ▶ Start walkthrough
               </button>
             )}
-            {briefCases.length > 0 && !loading && (
+            {briefCases.length > 0 && !loading && !simulating && (
               <button type="button" onClick={clearBrief} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: T.textSec, cursor: "pointer" }}>Clear</button>
             )}
-            <button type="button" onClick={handleExportPDF} disabled={loading || !sections?.length} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: loading || !sections?.length ? T.textMuted : T.textSec, cursor: loading || !sections?.length ? "not-allowed" : "pointer", opacity: loading || !sections?.length ? 0.6 : 1 }}>
+            <button type="button" onClick={handleExportPDF} disabled={loading || simulating || !sections?.length} style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "transparent", color: loading || simulating || !sections?.length ? T.textMuted : T.textSec, cursor: loading || simulating || !sections?.length ? "not-allowed" : "pointer", opacity: loading || simulating || !sections?.length ? 0.6 : 1 }}>
               &darr; PDF
             </button>
           </div>
@@ -823,8 +865,8 @@ export default function HIVEBriefWithChat() {
         </div>
       )}
 
-      {/* ── Full-page loading ───────────────────────────────────────────── */}
-      {loading && (
+      {/* ── Full-page loading / simulation ──────────────────────────────── */}
+      {(loading || simulating) && (
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "120px 24px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 16 }}>
@@ -833,10 +875,12 @@ export default function HIVEBriefWithChat() {
               ))}
             </div>
             <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 22, fontWeight: 400, color: T.text, marginBottom: 8 }}>
-              Generating brief from {briefCases.length} case {briefCases.length === 1 ? "study" : "studies"}&hellip;
+              {simulating ? "Building brief" : "Generating brief"} from {briefCases.length} case {briefCases.length === 1 ? "study" : "studies"}&hellip;
             </h2>
             <p style={{ fontSize: 13, color: T.textSec, lineHeight: 1.6 }}>
-              Retrieving evidence, synthesising findings, and assessing confidence levels.
+              {simulating
+                ? "Assembling evidence and cross-case findings."
+                : "Retrieving evidence, synthesising findings, and assessing confidence levels."}
             </p>
           </div>
           <div className="loading-bar" style={{ width: "100%", maxWidth: 300 }} />
@@ -1068,13 +1112,16 @@ export default function HIVEBriefWithChat() {
             <div style={{ background: T.surface, borderRadius: 10, border: `1px solid ${T.border}`, padding: "16px" }}>
               <SLabel>Confidence key</SLabel>
               {[
-                { level: "High", desc: "2+ cases directly support", color: T.green, bg: T.greenLight },
-                { level: "Partial", desc: "1 case or indirect evidence", color: T.amber, bg: T.amberLight },
-                { level: "Indicative", desc: "Limited evidence, reasoned inference", color: T.red, bg: T.redLight },
-              ].map(c => (
-                <div key={c.level} style={{ padding: "7px 10px", background: c.bg, borderRadius: 5, marginBottom: 5 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: c.color, marginBottom: 1 }}>{c.level}</div>
-                  <div style={{ fontSize: 11, color: T.textSec }}>{c.desc}</div>
+                { level: "High", desc: "2+ cases directly support", color: T.green },
+                { level: "Partial", desc: "1 case or indirect evidence", color: T.amber },
+                { level: "Indicative", desc: "Limited evidence, reasoned inference", color: T.red },
+              ].map((c, i, arr) => (
+                <div key={c.level} style={{ display: "flex", alignItems: "flex-start", gap: 8, paddingBottom: i < arr.length - 1 ? 8 : 0, marginBottom: i < arr.length - 1 ? 8 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: c.color, flexShrink: 0, marginTop: 3 }} />
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec }}>{c.level}</div>
+                    <div style={{ fontSize: 10, color: T.textMuted, lineHeight: 1.4 }}>{c.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1089,16 +1136,13 @@ export default function HIVEBriefWithChat() {
         const closeTour = () => {
           setTourOpen(false);
           try { window.localStorage.setItem(TOUR_LS_KEY, "1"); } catch { /* ignore */ }
-          if (step.anchor) {
-            sectionRefs.current[step.anchor]?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
         };
         const next = () => {
           if (isLast) { closeTour(); return; }
           const nextStep = TOUR_STEPS[tourStep + 1];
           setTourStep(tourStep + 1);
           if (nextStep.anchor) {
-            setTimeout(() => sectionRefs.current[nextStep.anchor!]?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+            setTimeout(() => sectionRefs.current[nextStep.anchor!]?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
           }
         };
         const prev = () => { if (tourStep > 0) setTourStep(tourStep - 1); };
@@ -1112,7 +1156,7 @@ export default function HIVEBriefWithChat() {
             {/* Card */}
             <div style={{
               position: "fixed", bottom: 36, left: "50%", transform: "translateX(-50%)",
-              zIndex: 1000, background: T.surface, border: `1px solid ${T.border}`,
+              zIndex: 1002, background: T.surface, border: `1px solid ${T.border}`,
               borderRadius: 14, boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
               padding: "28px 32px", maxWidth: 520, width: "calc(100% - 48px)",
             }}>

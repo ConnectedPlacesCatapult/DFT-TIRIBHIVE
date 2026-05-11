@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { stream, retrieval } = prepared;
+  const { stream, retrieval, overflowCaseIds } = prepared;
   const encoder = new TextEncoder();
 
   const readable = new ReadableStream({
@@ -120,6 +120,10 @@ export async function POST(req: NextRequest) {
         }
         // Stream complete — post-process and send final metadata
         const meta = postProcessChatText(fullText, retrieval);
+        // Strip overflow IDs that the AI already cited — no need to surface them again
+        const citedIds = new Set(meta.chips ?? []);
+        const alsoCases = overflowCaseIds.filter((id) => !citedIds.has(id));
+
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({
@@ -130,6 +134,7 @@ export async function POST(req: NextRequest) {
               sources: meta.sources,
               action: meta.action,
               retrieval_mode: meta.retrieval_mode,
+              also_cases: alsoCases.length > 0 ? alsoCases : undefined,
               ai_unavailable: false,
             })}\n\n`
           )

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { HeatmapPanel } from "@/components/handbook/shared/HeatmapPanel";
 import { OptionRow } from "@/components/handbook/options/OptionRow";
-import { OPTIONS_DATA, SECTOR_MAP, HAZARD_MAP } from "@/lib/handbook/options-data";
+import { OPTIONS_DATA, SECTOR_MAP, HAZARD_MAP, HAZARD_EFFECT_MAP } from "@/lib/handbook/options-data";
 import { HEATMAP_SECTORS, HEATMAP_HAZARDS } from "@/lib/handbook/heatmap-data";
 import type { OptionRow as OptionRowType } from "@/lib/handbook/options-data";
 
@@ -20,6 +20,7 @@ function OptionsLibraryContent() {
 
   const [sector, setSector] = useState(searchParams.get("sector") ?? "");
   const [hazard, setHazard] = useState(searchParams.get("hazard") ?? "");
+  const [effect, setEffect] = useState(searchParams.get("effect") ?? "");
   const [asset, setAsset] = useState("");
   const [expanded, setExpanded] = useState<number | string | null>(null);
 
@@ -83,21 +84,24 @@ function OptionsLibraryContent() {
     return options.filter((row) => {
       if (sector && row.transport_subsector?.toLowerCase() !== (SECTOR_MAP[sector] ?? sector).toLowerCase()) return false;
       if (hazard && !row.climate_hazard_cause?.toLowerCase().includes((HAZARD_MAP[hazard] ?? hazard).toLowerCase())) return false;
+      if (effect && !row.climate_hazard_effect?.toLowerCase().includes((HAZARD_EFFECT_MAP[effect] ?? effect).toLowerCase())) return false;
       if (asset && row.transport_assets !== asset) return false;
       return true;
     });
-  }, [options, sector, hazard, asset]);
+  }, [options, sector, hazard, effect, asset]);
 
   const updateFilters = useCallback(
-    (newSector: string, newHazard: string, newAsset?: string) => {
+    (newSector: string, newHazard: string, newAsset?: string, newEffect?: string) => {
       setSector(newSector);
       setHazard(newHazard);
       if (newAsset !== undefined) setAsset(newAsset);
+      if (newEffect !== undefined) setEffect(newEffect);
       setExpanded(null);
       const params = new URLSearchParams();
       if (themeKey) params.set("theme", themeKey);
       if (newSector) params.set("sector", newSector);
       if (newHazard) params.set("hazard", newHazard);
+      if (newEffect !== undefined && newEffect) params.set("effect", newEffect);
       const query = params.toString();
       router.push(`/handbook/options${query ? `?${query}` : ""}`, { scroll: false });
     },
@@ -115,6 +119,7 @@ function OptionsLibraryContent() {
 
   const clearFilters = () => {
     setAsset("");
+    setEffect("");
     updateFilters("", "");
   };
 
@@ -238,7 +243,30 @@ function OptionsLibraryContent() {
                 </option>
               ))}
             </select>
-            {(sector || hazard || asset) && (
+            <select
+              value={effect}
+              onChange={(e) => { setEffect(e.target.value); setExpanded(null); }}
+              aria-label="Climate hazard effect"
+              style={{
+                fontSize: 13,
+                padding: "6px 10px",
+                border: `1px solid ${effect ? T.accent : T.inputBorder}`,
+                borderRadius: 3,
+                background: effect ? T.accentBg : T.inputBg,
+                color: effect ? T.accent : T.textPrimary,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                minWidth: 200,
+              }}
+            >
+              <option value="">Climate hazard (effect): All</option>
+              {Object.entries(HAZARD_EFFECT_MAP).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            {(sector || hazard || asset || effect) && (
               <button
                 onClick={clearFilters}
                 style={{
@@ -255,6 +283,25 @@ function OptionsLibraryContent() {
                 Clear filters
               </button>
             )}
+          </div>
+
+          {/* Disclaimer */}
+          <div
+            style={{
+              background: T.accentBg,
+              border: `1px solid ${T.border}`,
+              borderRadius: 4,
+              padding: "14px 18px",
+              marginBottom: 20,
+              fontSize: 12,
+              color: T.textSecondary,
+              lineHeight: 1.7,
+            }}
+          >
+            <span style={{ fontWeight: 700, color: T.textPrimary }}>Disclaimer: </span>
+            If you do not select any filters, the full options library will be shown. Any number of filters can be selected to refine the options returned.{" "}
+            <span style={{ color: T.accent }}>Please note</span> that the selected hazard cause and hazard effect may not always be compatible — if non-complementary causes and effects are chosen and no multi-adaptation options exist for the combination, the query may return no results.{" "}
+            Before selecting the right adaptation method, it is important that you conduct a full climate risk assessment.
           </div>
 
           <HeatmapPanel

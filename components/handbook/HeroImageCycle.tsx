@@ -18,7 +18,7 @@ const HERO_IMAGES = [
   },
 ];
 
-const CYCLE_MS = 7500;
+const CYCLE_MS = 15000;
 const CROSSFADE_MS = 2000;
 const FADE_START = (CYCLE_MS - CROSSFADE_MS) / CYCLE_MS;
 

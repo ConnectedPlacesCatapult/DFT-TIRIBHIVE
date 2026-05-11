@@ -175,7 +175,7 @@ export function OptionRow({ row, isExpanded, onToggle }: OptionRowProps) {
                 Climate risk to assets
               </p>
               <p
-                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}
+                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-line" }}
               >
                 {row.climate_risk_to_assets}
               </p>
@@ -194,7 +194,7 @@ export function OptionRow({ row, isExpanded, onToggle }: OptionRowProps) {
                 Adaptation measure
               </p>
               <p
-                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}
+                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-line" }}
               >
                 {row.adaptation_measure_description}
               </p>
@@ -213,7 +213,7 @@ export function OptionRow({ row, isExpanded, onToggle }: OptionRowProps) {
                 Response &amp; Recovery
               </p>
               <p
-                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}
+                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-line" }}
               >
                 {row.response_and_recovery_measures}
               </p>
@@ -245,7 +245,7 @@ export function OptionRow({ row, isExpanded, onToggle }: OptionRowProps) {
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 6 }}>
                   KEY QUESTIONS TO CONSIDER
                 </div>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0, lineHeight: 1.7 }}>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0, lineHeight: 1.7, whiteSpace: "pre-line" }}>
                   {row.prompts_assumptions_comments}
                 </p>
               </div>

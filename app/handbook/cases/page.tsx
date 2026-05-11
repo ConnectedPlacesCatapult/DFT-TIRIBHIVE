@@ -66,6 +66,17 @@ function scoreCase(cs, query) {
   return score;
 }
 
+function passesPillFilters(cs, { sectors, hazards, transferability, costBands }) {
+  if (sectors.length && !sectors.includes(cs.sector)) return false;
+  if (hazards.length) {
+    const all = [...cs.hazards.cause, ...cs.hazards.effect];
+    return hazards.some(h => all.some(ch => ch.toLowerCase().includes(h.toLowerCase())));
+  }
+  if (transferability.length && !transferability.includes(cs.transferability)) return false;
+  if (costBands.length && !costBands.includes(cs.costBand)) return false;
+  return true;
+}
+
 function filterAndSort(cases, { query, sectors, hazards, transferability, costBands, sort }) {
   let r = [...cases];
   if (sectors.length) r = r.filter(cs => sectors.includes(cs.sector));
@@ -541,17 +552,32 @@ function CasesPageContent() {
     [query, sectors, hazards, transferability, costBands, sort]
   );
 
-  // Semantic-boosted merge: intersect semantic ordering with pill-filtered set
+  // Semantic-boosted merge: intersect semantic ordering with pill-filtered set.
+  // Chat "View N cases" passes ?highlight=id1,id2 — those IDs must still appear when `q` is
+  // natural language (substring search scores 0 for every case).
   const results = useMemo(() => {
+    let merged;
     if (semanticResults.length > 0 && query.trim()) {
       const intersection = semanticResults
         .map(sr => keywordResults.find(cs => cs.id === sr.article_id))
         .filter(Boolean) as typeof keywordResults;
-      // Fall back to keyword if intersection is empty (e.g. semantic missed all filtered cases)
-      return intersection.length > 0 ? intersection : keywordResults;
+      merged = intersection.length > 0 ? intersection : keywordResults;
+    } else {
+      merged = keywordResults;
     }
-    return keywordResults;
-  }, [semanticResults, keywordResults, query]);
+
+    const hl = effectiveHighlighted.filter(Boolean);
+    if (hl.length === 0) return merged;
+
+    const pillOpts = { sectors, hazards, transferability, costBands };
+    const byId = new Map(merged.map(cs => [cs.id, cs]));
+    for (const id of hl) {
+      if (byId.has(id)) continue;
+      const cs = CASE_STUDIES_NORMALISED.find(c => c.id === id);
+      if (cs && passesPillFilters(cs, pillOpts)) byId.set(id, cs);
+    }
+    return Array.from(byId.values());
+  }, [semanticResults, keywordResults, query, effectiveHighlighted, sectors, hazards, transferability, costBands]);
 
   // Sync resultSet for chat context (same shape as landing) — stable JSON comparison prevents extra renders
   const resultSetRef = useRef<string>("");
