@@ -1,9 +1,9 @@
-name: 🚀 Deploy to Production (Hive-staging)
+name: 🧪 Deploy to Dev (trib-dev)
 
 on:
   push:
     branches:
-      - main
+      - develop
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.DEV_APP_URL }}
 
       - name: Prepare standalone deployment
         run: |
@@ -53,10 +53,10 @@ jobs:
         with:
           name: node-app
 
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App - trib-dev
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'Hive-staging'
+          app-name: 'trib-dev'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2430DF2D06004C83AF487394C07C0D15 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_TRIB_DEV }}
