@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyHiveAdminSessionToken, HIVE_ADMIN_COOKIE } from "@/lib/admin-session";
-import { getFeedbackPool, hasAzureFeedbackConfig, type FeedbackRow } from "@/lib/feedback-db";
+import { getFeedbackPool, hasAzureFeedbackConfig, isPgUndefinedTable, type FeedbackRow } from "@/lib/feedback-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +29,10 @@ export async function GET(request: Request) {
 
   const pool = await getFeedbackPool();
   if (!pool) {
-    return NextResponse.json({ error: "No database pool" }, { status: 503 });
+    return NextResponse.json(
+      { error: "No database pool", rows: [], total: 0, summary: { positive: 0, negative: 0, unscored: 0 } },
+      { status: 503 }
+    );
   }
 
   const conditions: string[] = [];
@@ -80,6 +83,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ rows, total, summary, page, limit });
   } catch (e) {
     console.error("[admin/feedback] query error:", e);
+    if (isPgUndefinedTable(e)) {
+      return NextResponse.json(
+        {
+          error: "feedback_table_missing",
+          hint: "Run scripts/migrate-hive-feedback.sql on this Azure PostgreSQL server (schema hive).",
+          rows: [],
+          total: 0,
+          summary: { positive: 0, negative: 0, unscored: 0 },
+        },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "query_failed" }, { status: 500 });
   }
 }

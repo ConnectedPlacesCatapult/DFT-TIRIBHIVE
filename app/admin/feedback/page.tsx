@@ -57,8 +57,15 @@ export default function AdminFeedbackPage() {
         window.location.href = `/admin/login?next=${encodeURIComponent("/admin/feedback")}`;
         return;
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = payload as { error?: string; hint?: string };
+        const parts = [`HTTP ${res.status}`];
+        if (err?.error) parts.push(err.error);
+        if (err?.hint) parts.push(err.hint);
+        throw new Error(parts.join(" — "));
+      }
+      setData(payload as ApiResponse);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {

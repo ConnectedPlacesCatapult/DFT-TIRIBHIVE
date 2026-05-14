@@ -28,6 +28,7 @@ export function FeedbackPanel({
   const [userMessage, setUserMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -35,6 +36,7 @@ export function FeedbackPanel({
     setCategory("");
     setUserMessage("");
     setToast(null);
+    setSendError(null);
   }, [isOpen, initialSentiment]);
 
   const prevPathRef = useRef(pathname);
@@ -70,8 +72,11 @@ export function FeedbackPanel({
   const submit = async () => {
     if (submitting) return;
     setSubmitting(true);
+    setSendError(null);
     const page_url =
       typeof window !== "undefined" ? window.location.href.slice(0, 4000) : "";
+    const controller = new AbortController();
+    const t = window.setTimeout(() => controller.abort(), 25000);
     try {
       const res = await fetch("/api/feedback", {
         method: "POST",
@@ -84,17 +89,43 @@ export function FeedbackPanel({
           trigger_source: triggerSource,
           chat_context: chatContext,
         }),
+        signal: controller.signal,
       });
-      const data = (await res.json()) as { success?: boolean };
+      let data: { success?: boolean; code?: string; hint?: string } = {};
+      try {
+        data = (await res.json()) as typeof data;
+      } catch {
+        setSendError("Server returned an invalid response. Try again in a moment.");
+        return;
+      }
       if (data.success) {
         setToast("Thanks — feedback recorded.");
         setTimeout(() => {
           onClose();
         }, 1500);
+        return;
       }
-    } catch {
-      /* silent */
+      if (data.code === "missing_table" && data.hint) {
+        setSendError(`Feedback storage is not set up yet. ${data.hint}`);
+        return;
+      }
+      if (data.code === "db_unavailable") {
+        setSendError("Could not reach the database. Check Azure Postgres is reachable from this app.");
+        return;
+      }
+      if (!res.ok) {
+        setSendError(`Could not send (${res.status}). Please try again later.`);
+        return;
+      }
+      setSendError("Could not record feedback. Please try again.");
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") {
+        setSendError("Request timed out — the server may be busy. Try again.");
+      } else {
+        setSendError("Network error — check your connection and try again.");
+      }
     } finally {
+      window.clearTimeout(t);
       setSubmitting(false);
     }
   };
@@ -228,6 +259,24 @@ export function FeedbackPanel({
         <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "right", marginBottom: 12 }}>
           {userMessage.length}/{MAX_MSG}
         </div>
+
+        {sendError && (
+          <div
+            role="alert"
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              color: "#991b1b",
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              padding: "8px 10px",
+              borderRadius: 8,
+              marginBottom: 10,
+            }}
+          >
+            {sendError}
+          </div>
+        )}
 
         {toast && (
           <div

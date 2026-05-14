@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getFeedbackPool, hasAzureFeedbackConfig } from "@/lib/feedback-db";
+import { getFeedbackPool, hasAzureFeedbackConfig, isPgUndefinedTable } from "@/lib/feedback-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
   const pool = await getFeedbackPool();
   if (!pool) {
-    return NextResponse.json({ success: false });
+    return NextResponse.json({ success: false, code: "db_unavailable" });
   }
 
   try {
@@ -102,6 +102,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, id: id ?? null });
   } catch (e) {
     console.error("[feedback] insert error:", e);
-    return NextResponse.json({ success: false });
+    if (isPgUndefinedTable(e)) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "missing_table",
+          hint: "Run scripts/migrate-hive-feedback.sql on Azure PostgreSQL (hive schema).",
+        },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ success: false, code: "insert_failed" });
   }
 }
