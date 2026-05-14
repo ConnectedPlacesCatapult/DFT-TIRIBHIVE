@@ -213,6 +213,76 @@ function SyncCard({ onSync }: { onSync: () => void }) {
   );
 }
 
+function RunMigrationCard() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [ok, setOk] = useState<boolean | null>(null);
+
+  const run = async () => {
+    setRunning(true);
+    setResult(null);
+    setOk(null);
+    try {
+      const res = await fetch("/api/admin/run-migration", { method: "POST" });
+      const data = (await res.json()) as { success?: boolean; error?: string; table_exists?: boolean };
+      if (data.success) {
+        setOk(true);
+        setResult("hive.feedback table is ready.");
+      } else {
+        setOk(false);
+        setResult(data.error ?? "Migration failed");
+      }
+    } catch {
+      setOk(false);
+      setResult("Network error");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12,
+      padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10,
+      flex: "1 1 260px", minWidth: 260,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 22 }}>🗃️</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Feedback migration</div>
+          <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em" }}>One-time setup</div>
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, margin: 0 }}>
+        Creates <code style={{ fontSize: 11 }}>hive.feedback</code> on Azure PostgreSQL if it does not already exist. Safe to run multiple times.
+      </p>
+      <button
+        onClick={run}
+        disabled={running}
+        style={{
+          marginTop: 4, padding: "8px 16px", fontSize: 13, fontWeight: 600,
+          borderRadius: 8, border: "none",
+          background: running ? "#e5e7eb" : ok === true ? "#10b981" : "#6366f1",
+          color: running ? "#9ca3af" : "#fff",
+          cursor: running ? "not-allowed" : "pointer",
+        }}
+      >
+        {running ? "Running…" : ok === true ? "✓ Done" : "Run migration"}
+      </button>
+      {result && (
+        <div style={{
+          fontSize: 12, padding: "6px 10px", borderRadius: 6,
+          background: ok ? "#f0fdf4" : "#fef2f2",
+          color: ok ? "#065f46" : "#991b1b",
+          border: `1px solid ${ok ? "#bbf7d0" : "#fecaca"}`,
+        }}>
+          {result}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SyncFeedbackCard() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -419,6 +489,7 @@ export default function StatusPage() {
                 result={services.openai}
               />
               <SyncCard onSync={refresh} />
+              <RunMigrationCard />
               <SyncFeedbackCard />
             </>
           ) : loading ? (
