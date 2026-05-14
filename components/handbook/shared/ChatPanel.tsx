@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { useFeedback } from "@/components/feedback/FeedbackTrigger";
 import { useChatContext, type ChatMessage, type ChatActionPayload } from "./ChatContext";
 import { CASE_STUDIES } from "@/lib/hive/seed-data";
 
@@ -423,7 +424,21 @@ function SectionUpdateCard({
   );
 }
 
+function buildChatContextForIndex(messages: ChatMessage[], endIdx: number) {
+  const out: { role: "user" | "assistant"; content: string }[] = [];
+  for (let j = endIdx; j >= 0 && out.length < 3; j--) {
+    const m = messages[j];
+    if (m.role !== "user" && m.role !== "ai") continue;
+    out.push({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.text.slice(0, 500),
+    });
+  }
+  return out.reverse();
+}
+
 export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
+  const { openFeedback } = useFeedback();
   const {
     messages,
     setMessages,
@@ -450,6 +465,7 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState(false);
+  const [feedbackThumb, setFeedbackThumb] = useState<Record<number, "up" | "down">>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const config = getConfig(context);
@@ -991,6 +1007,73 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
                     onApply={() => handleApplyAction(m.action!, messages.indexOf(m))}
                     onDismiss={() => handleDismissAction(messages.indexOf(m))}
                   />
+                )}
+                {m.role === "ai" && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      aria-label="Mark helpful"
+                      onClick={() => {
+                        const idx = i;
+                        setFeedbackThumb((prev) => ({ ...prev, [idx]: "up" }));
+                        openFeedback({
+                          triggerSource: "chat_message",
+                          initialSentiment: "positive",
+                          chatContext: buildChatContextForIndex(messages, idx),
+                        });
+                      }}
+                      style={{
+                        fontSize: 12,
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        border:
+                          feedbackThumb[i] === "up"
+                            ? "2px solid #059669"
+                            : "1px solid #e5e7eb",
+                        background: feedbackThumb[i] === "up" ? "#ecfdf5" : "#fff",
+                        cursor: "pointer",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      👍
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Mark not helpful"
+                      onClick={() => {
+                        const idx = i;
+                        setFeedbackThumb((prev) => ({ ...prev, [idx]: "down" }));
+                        openFeedback({
+                          triggerSource: "chat_message",
+                          initialSentiment: "negative",
+                          chatContext: buildChatContextForIndex(messages, idx),
+                        });
+                      }}
+                      style={{
+                        fontSize: 12,
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        border:
+                          feedbackThumb[i] === "down"
+                            ? "2px solid #b91c1c"
+                            : "1px solid #e5e7eb",
+                        background: feedbackThumb[i] === "down" ? "#fef2f2" : "#fff",
+                        cursor: "pointer",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      👎
+                    </button>
+                    <span style={{ fontSize: 11, color: "#9ca3af" }}>Was this helpful?</span>
+                  </div>
                 )}
                 {/* Overflow cases — collapsed by default, explore mode only */}
                 {m.role === "ai" && (m.also_cases?.length ?? 0) > 0 && (

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "sync-feedback": "tsx scripts/sync-feedback-azure-to-supabase.ts",
     "export:hive": "tsx scripts/validate-hive-db.ts --export-only"
   },
   "dependencies": {

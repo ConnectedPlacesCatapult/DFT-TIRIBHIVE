@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useChatContext } from "./ChatContext";
 import { ChatTrigger } from "./ChatTrigger";
+import { useFeedback } from "@/components/feedback/FeedbackTrigger";
 import { THEMES, type ThemeKey } from "@/lib/hive/themes";
 
 const DEMO_UNLOCK_KEY = "hiveDemoUnlocked";
-const DEMO_PASSWORD = "1234";
 
 const STATIC_NAV_LINKS: { href: string; label: string; title: string }[] = [
   {
@@ -62,6 +62,7 @@ export function HandbookNav() {
     evidenceOnlyMode,
     setEvidenceOnlyMode,
   } = useChatContext();
+  const { openFeedback } = useFeedback();
 
   const [demoOpen, setDemoOpen] = useState(false);
   const [demoUnlockOpen, setDemoUnlockOpen] = useState(false);
@@ -126,9 +127,25 @@ export function HandbookNav() {
     setDemoError("");
   };
 
-  const handleDemoUnlock = () => {
-    if (demoPassword.trim() !== DEMO_PASSWORD) {
-      setDemoError("Incorrect password");
+  const handleDemoUnlock = async () => {
+    setDemoError("");
+    try {
+      const res = await fetch("/api/admin/demo-unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: demoPassword }),
+      });
+      const data = (await res.json()) as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        if (res.status === 503) {
+          setDemoError("Server not configured");
+        } else {
+          setDemoError("Incorrect password");
+        }
+        return;
+      }
+    } catch {
+      setDemoError("Could not verify password");
       return;
     }
     setDemoUnlocked(true);
@@ -290,8 +307,31 @@ export function HandbookNav() {
             </div>
           </div>
 
-          {/* Right: demo options + Ask HIVE */}
+          {/* Right: Feedback + demo options + Ask HIVE */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => openFeedback({ triggerSource: "nav" })}
+              title="Share feedback about HIVE"
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "6px 10px",
+                borderRadius: 8,
+                border: `1px solid ${T.border}`,
+                background: "transparent",
+                color: T.textSecondary,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span aria-hidden style={{ fontSize: 13 }}>
+                🚩
+              </span>
+              <span className="hive-show-md">Feedback</span>
+            </button>
             <div ref={demoRef} style={{ position: "relative" }}>
               <button
                 type="button"
@@ -627,7 +667,7 @@ export function HandbookNav() {
                         : "AI mode active (default) → switch to evidence-only"}
                     </button>
                     <a
-                      href="/admin/status"
+                      href={`/admin/login?next=${encodeURIComponent("/admin/status")}`}
                       style={{
                         display: "flex",
                         alignItems: "center",

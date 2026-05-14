@@ -213,6 +213,76 @@ function SyncCard({ onSync }: { onSync: () => void }) {
   );
 }
 
+function SyncFeedbackCard() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleSync = async () => {
+    setRunning(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/admin/sync-feedback", { method: "POST" });
+      const data = (await res.json()) as { upserted?: number; error?: string; ok?: boolean };
+      if (!res.ok) {
+        setResult(data.error ?? "Sync failed");
+      } else {
+        setResult(`Upserted ${data.upserted ?? 0} row(s) to Supabase`);
+      }
+    } catch {
+      setResult("Network error — sync failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12,
+      padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10,
+      flex: "1 1 260px", minWidth: 260,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 22 }}>💬</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Sync feedback → Supabase</div>
+          <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em" }}>Optional mirror</div>
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, margin: 0 }}>
+        Copies <code style={{ fontSize: 11 }}>hive.feedback</code> from Azure to Supabase (upsert by id). Requires{" "}
+        <code style={{ fontSize: 11 }}>HIVE_SUPABASE_SERVICE_ROLE_KEY</code> and the feedback table on Supabase.
+      </p>
+      <button
+        onClick={handleSync}
+        disabled={running}
+        style={{
+          marginTop: 4,
+          padding: "8px 16px",
+          fontSize: 13,
+          fontWeight: 600,
+          borderRadius: 8,
+          border: "none",
+          background: running ? "#e5e7eb" : "#0d9488",
+          color: running ? "#9ca3af" : "#fff",
+          cursor: running ? "not-allowed" : "pointer",
+        }}
+      >
+        {running ? "Syncing…" : "Sync feedback"}
+      </button>
+      {result && (
+        <div style={{
+          fontSize: 12, padding: "6px 10px", borderRadius: 6,
+          background: result.includes("failed") || result.includes("error") || result.includes("required") ? "#fef2f2" : "#f0fdf4",
+          color: result.includes("failed") || result.includes("error") || result.includes("required") ? "#991b1b" : "#065f46",
+          border: `1px solid ${result.includes("failed") || result.includes("error") || result.includes("required") ? "#fecaca" : "#bbf7d0"}`,
+        }}>
+          {result}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StatusPage() {
   const [data, setData] = useState<StatusData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -252,6 +322,37 @@ export default function StatusPage() {
               Last checked {new Date(data.checkedAt).toLocaleTimeString()}
             </span>
           )}
+          <a
+            href="/admin/feedback"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#1d70b8",
+              textDecoration: "none",
+              padding: "6px 12px",
+              border: "1px solid #bfdbfe",
+              borderRadius: 8,
+              background: "#eff6ff",
+            }}
+          >
+            Feedback →
+          </a>
+          <form action="/api/admin/logout?redirect=/admin/login" method="post" style={{ margin: 0 }}>
+            <button
+              type="submit"
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "1px solid #d1d5db",
+                background: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              Log out
+            </button>
+          </form>
           <button
             onClick={refresh}
             disabled={loading}
@@ -318,6 +419,7 @@ export default function StatusPage() {
                 result={services.openai}
               />
               <SyncCard onSync={refresh} />
+              <SyncFeedbackCard />
             </>
           ) : loading ? (
             <div style={{ color: "#9ca3af", fontSize: 14, padding: 24 }}>Checking all connections…</div>
@@ -336,6 +438,7 @@ export default function StatusPage() {
             {[
               { label: "Source candidates", href: "/admin/sources" },
               { label: "Eval runs", href: "/admin/evals" },
+              { label: "Feedback", href: "/admin/feedback" },
               { label: "Handbook", href: "/handbook" },
             ].map((l) => (
               <a key={l.href} href={l.href} style={{

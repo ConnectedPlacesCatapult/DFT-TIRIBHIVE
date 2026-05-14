@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { FeedbackProvider } from "@/components/feedback/FeedbackTrigger";
 import { ChatProvider } from "@/components/handbook/shared/ChatContext";
 import { HandbookLayoutClient } from "@/components/handbook/shared/HandbookLayoutClient";
 import { GA4Script } from "@/components/handbook/shared/GA4Script";
@@ -13,9 +14,11 @@ export default function HandbookLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <GA4Script />
-      <ChatProvider>
-        <HandbookLayoutClient>{children}</HandbookLayoutClient>
-      </ChatProvider>
+      <FeedbackProvider>
+        <ChatProvider>
+          <HandbookLayoutClient>{children}</HandbookLayoutClient>
+        </ChatProvider>
+      </FeedbackProvider>
     </>
   );
 }
