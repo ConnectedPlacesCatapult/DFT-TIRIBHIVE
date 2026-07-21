@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NavPill } from "@/components/NavPill";
 import { tribAssets } from "@/lib/tribAssets";
+import type { CSSProperties } from "react";
 
 const DESKTOP_NAV = [
   { href: "/#about", label: "About" },
@@ -8,7 +9,6 @@ const DESKTOP_NAV = [
   { href: "/#members", label: "Our members" },
 ] as const;
 
-// Live trib.org.uk shows all six objectives inline (no toggle).
 const OBJECTIVES = [
   "join-up leaders: identify priority areas; areas with most promise and where to focus effort",
   "join-up activities: co-ordinate activities to meet shared strategic needs, improving value from existing and planned work",
@@ -45,8 +45,6 @@ const PROJECTS = [
   },
 ] as const;
 
-// Use real files under public/images/trib/Logos (via tribAssets) — old CRA
-// hashed /static/media filenames 404 after the Next.js cutover.
 const MEMBER_LOGOS = [
   { src: tribAssets.logos.dft, alt: "DfT logo" },
   { src: tribAssets.logos.cpc, alt: "CPC logo" },
@@ -66,23 +64,53 @@ const MEMBER_LOGOS = [
 ] as const;
 
 /**
- * Centred page frame with equal side margins.
- * About uses a narrower reading column so the text block sits in the middle
- * (left-aligned copy inside a centred column — clearer than centre-aligned
- * multi-line paragraphs).
+ * Inline layout styles — Tailwind arbitrary max-widths were not landing in the
+ * production CSS bundle, which left the page flush-left. Inline styles are
+ * reliable for the page frame.
  */
-const SHELL =
-  "mx-auto w-full max-w-[1000px] px-6 sm:px-10 lg:px-14";
-const ABOUT =
-  "mx-auto w-full max-w-[40rem]";
+const shellStyle: CSSProperties = {
+  width: "100%",
+  maxWidth: 960,
+  marginLeft: "auto",
+  marginRight: "auto",
+  paddingLeft: 24,
+  paddingRight: 24,
+  boxSizing: "border-box",
+};
+
+const aboutStyle: CSSProperties = {
+  width: "100%",
+  maxWidth: 640,
+  marginLeft: "auto",
+  marginRight: "auto",
+  textAlign: "center",
+};
+
+const listWrapStyle: CSSProperties = {
+  display: "inline-block",
+  textAlign: "left",
+  margin: "0 auto 1.5rem",
+};
+
+const membersGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+  gap: "2rem 1.5rem",
+  justifyItems: "center",
+  alignItems: "center",
+  maxWidth: 800,
+  marginLeft: "auto",
+  marginRight: "auto",
+};
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-[#212121]">
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200">
-        <div className={`${SHELL} h-[72px] flex items-center justify-between gap-8`}>
+        <div
+          style={{ ...shellStyle, height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32 }}
+        >
           <Link
             href="/"
             className="text-[#212121] no-underline font-bold text-lg tracking-tight leading-tight shrink-0"
@@ -126,7 +154,6 @@ export default function HomePage() {
 
       <main>
 
-        {/* ── About ──────────────────────────────────────────────────────── */}
         <section id="about" className="scroll-mt-20">
           <div className="bg-[#21808B] py-2.5 text-center">
             <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
@@ -135,15 +162,15 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white pt-12 pb-14">
-            <div className={`${SHELL}`}>
-              <div className={`${ABOUT} text-left`}>
-                <p className="text-base leading-relaxed text-[#212121] mb-4 text-center sm:text-left">
+            <div style={shellStyle}>
+              <div style={aboutStyle}>
+                <p className="text-base leading-relaxed text-[#212121] mb-4">
                   The Transport Research and Innovation Board (TRIB) brings together
                   representatives from key organisations that fund and carry out
                   research and innovation in the UK, as well as government departments
                   with an interest in transport.
                 </p>
-                <p className="text-base leading-relaxed text-[#212121] mb-5 text-center sm:text-left">
+                <p className="text-base leading-relaxed text-[#212121] mb-5">
                   For more information about TRIB, please{" "}
                   <a
                     href="https://www.gov.uk/government/groups/transport-research-and-innovation-board"
@@ -157,22 +184,24 @@ export default function HomePage() {
                 <p className="text-base leading-relaxed text-[#212121] mb-3 font-medium">
                   The objectives of the board are to:
                 </p>
-                <ul
-                  className="text-base leading-relaxed text-[#212121] mb-6 space-y-2"
-                  style={{ listStyleType: "disc", paddingLeft: "1.5rem" }}
-                >
-                  {OBJECTIVES.map((obj) => (
-                    <li key={obj} style={{ display: "list-item" }}>{obj}</li>
-                  ))}
-                </ul>
-                <p className="text-base leading-relaxed text-[#212121] mb-4 text-center sm:text-left">
+                <div style={listWrapStyle}>
+                  <ul
+                    className="text-base leading-relaxed text-[#212121] space-y-2 m-0"
+                    style={{ listStyleType: "disc", paddingLeft: "1.25rem" }}
+                  >
+                    {OBJECTIVES.map((obj) => (
+                      <li key={obj} style={{ display: "list-item" }}>{obj}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-base leading-relaxed text-[#212121] mb-4">
                   DfT provides the secretariat for the TRIB Board.
                 </p>
-                <p className="text-base leading-relaxed text-[#212121] mb-4 text-center sm:text-left">
+                <p className="text-base leading-relaxed text-[#212121] mb-4">
                   The TRIB Board has awarded Connected Places Catapult (CPC) a grant
                   to develop this shared 2035 Vision and Roadmap.
                 </p>
-                <p className="text-base leading-relaxed text-[#212121] text-center sm:text-left">
+                <p className="text-base leading-relaxed text-[#212121] mb-0">
                   We would like to thank the following organisations for their
                   contribution to the project.
                 </p>
@@ -181,7 +210,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Projects ───────────────────────────────────────────────────── */}
         <section id="projects" className="scroll-mt-20">
           <div className="bg-[#21808B] py-2.5 text-center">
             <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
@@ -190,8 +218,14 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white py-12">
-            <div className={SHELL}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5 lg:gap-6">
+            <div style={shellStyle}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                  gap: 24,
+                }}
+              >
                 {PROJECTS.map((p) => (
                   <Link
                     key={p.href}
@@ -209,7 +243,6 @@ export default function HomePage() {
                         className="w-full h-full object-cover"
                       />
                     </span>
-
                     <span className="flex-1 min-w-0 flex flex-col items-center">
                       <span className="text-[18px] font-semibold text-[#212121] mb-1 leading-snug">
                         {p.title}
@@ -231,7 +264,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Our Members ────────────────────────────────────────────────── */}
         <section id="members" className="scroll-mt-20">
           <div className="bg-[#21808B] py-2.5 text-center">
             <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
@@ -240,12 +272,12 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white py-12">
-            <div className={SHELL}>
-              <p className="text-center text-sm text-gray-400 mb-10 max-w-md mx-auto">
+            <div style={shellStyle}>
+              <p className="text-center text-sm text-gray-400 mb-10" style={{ maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
                 Bringing together government, industry, and research to drive
                 transport innovation.
               </p>
-              <div className="mx-auto max-w-[880px] grid justify-items-center gap-x-8 gap-y-10 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+              <div style={membersGridStyle}>
                 {MEMBER_LOGOS.map((logo) => (
                   <div key={logo.src} className="flex h-12 w-full items-center justify-center">
                     <img
@@ -264,7 +296,7 @@ export default function HomePage() {
       </main>
 
       <footer className="bg-[#21808B] text-white py-4 text-center text-sm">
-        <div className={SHELL}>
+        <div style={shellStyle}>
           <a
             href="https://www.trib.org.uk"
             target="_blank"
