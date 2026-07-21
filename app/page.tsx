@@ -65,13 +65,17 @@ const MEMBER_LOGOS = [
   { src: tribAssets.logos.ati, alt: "Aerospace Technology Institute logo" },
 ] as const;
 
+/** Shared homepage column — keeps header/about/projects/members left edges aligned. */
+const CONTENT =
+  "mx-auto w-full max-w-[1120px] px-8";
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-[#212121]">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200">
-        <div className="max-w-[1320px] mx-auto px-8 h-[72px] flex items-center justify-between gap-8">
+        <div className={`${CONTENT} h-[72px] flex items-center justify-between gap-8`}>
           {/* Site title — black, bold */}
           <Link
             href="/"
@@ -119,9 +123,7 @@ export default function HomePage() {
 
       <main>
 
-        {/* ── About banner ───────────────────────────────────────────────── */}
-        {/* Mirrors live .homepage .about: full-bleed teal h2 banner, then content
-            constrained to max-w-[1200px] to match .about p / .about ul rules. */}
+        {/* ── About ──────────────────────────────────────────────────────── */}
         <section id="about" className="scroll-mt-20">
           <div className="bg-[#21808B] py-2.5 text-center">
             <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
@@ -129,8 +131,8 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="bg-white pt-10 pb-12 px-6">
-            <div className="max-w-[1200px] mx-auto">
+          <div className="bg-white pt-10 pb-12">
+            <div className={CONTENT}>
               <p className="text-base leading-relaxed text-[#212121] mb-4">
                 The Transport Research and Innovation Board (TRIB) brings together
                 representatives from key organisations that fund and carry out
@@ -174,7 +176,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Projects banner ────────────────────────────────────────────── */}
+        {/* ── Projects ───────────────────────────────────────────────────── */}
         <section id="projects" className="scroll-mt-20">
           <div className="bg-[#21808B] py-2.5 text-center">
             <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
@@ -182,29 +184,28 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="bg-white py-12 px-6">
-            <div className="max-w-[900px] mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white py-12">
+            <div className={CONTENT}>
+              {/* 3-up on desktop so three cards share one row (no orphan left card). */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {PROJECTS.map((p) => (
                   <Link
                     key={p.href}
                     href={p.href}
-                    className="group flex flex-col sm:flex-row gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 no-underline text-inherit
+                    className="group flex flex-col gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 no-underline text-inherit
                                transition-all duration-150
                                hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-0.5"
                   >
-                    {/* Thumbnail */}
-                    <span className="flex-shrink-0 w-full sm:w-[120px] h-[180px] sm:h-[80px] block bg-gray-100 rounded overflow-hidden">
+                    <span className="flex-shrink-0 w-full h-[120px] block bg-gray-100 rounded overflow-hidden">
                       <img
                         src={p.img}
                         alt=""
-                        width={120}
-                        height={80}
+                        width={320}
+                        height={120}
                         className="w-full h-full object-cover"
                       />
                     </span>
 
-                    {/* Text */}
                     <span className="flex-1 min-w-0 flex flex-col">
                       <span className="text-[18px] font-semibold text-[#212121] mb-1 leading-snug">
                         {p.title}
@@ -226,7 +227,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Our Members banner ─────────────────────────────────────────── */}
+        {/* ── Our Members ────────────────────────────────────────────────── */}
         <section id="members" className="scroll-mt-20">
           <div className="bg-[#21808B] py-2.5 text-center">
             <h2 className="text-[26px] font-semibold text-white leading-tight m-0">
@@ -234,20 +235,19 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="bg-white py-12 px-6">
-            <div className="max-w-[800px] mx-auto">
+          <div className="bg-white py-12">
+            <div className={CONTENT}>
               <p className="text-center text-sm text-gray-400 mb-8">
                 Bringing together government, industry, and research to drive
                 transport innovation.
               </p>
-              <div className="grid gap-6"
-                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
+              <div className="grid justify-items-center gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                 {MEMBER_LOGOS.map((logo) => (
-                  <div key={logo.src} className="flex items-center justify-center">
+                  <div key={logo.src} className="flex h-12 w-full items-center justify-center">
                     <img
                       src={logo.src}
                       alt={logo.alt}
-                      className="max-h-[40px] max-w-[110px] w-auto object-contain
+                      className="max-h-10 max-w-[120px] w-auto object-contain
                                  grayscale-[20%] hover:grayscale-0 transition-all duration-200"
                     />
                   </div>
@@ -259,15 +259,17 @@ export default function HomePage() {
 
       </main>
 
-      <footer className="bg-[#21808B] text-white py-4 px-6 text-center text-sm">
-        <a
-          href="https://www.trib.org.uk"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-white underline underline-offset-2 hover:no-underline"
-        >
-          www.trib.org.uk
-        </a>
+      <footer className="bg-[#21808B] text-white py-4 text-center text-sm">
+        <div className={CONTENT}>
+          <a
+            href="https://www.trib.org.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white underline underline-offset-2 hover:no-underline"
+          >
+            www.trib.org.uk
+          </a>
+        </div>
       </footer>
     </div>
   );
