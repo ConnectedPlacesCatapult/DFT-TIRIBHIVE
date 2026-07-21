@@ -65,9 +65,16 @@ const MEMBER_LOGOS = [
   { src: tribAssets.logos.ati, alt: "Aerospace Technology Institute logo" },
 ] as const;
 
-/** Shared homepage column — keeps header/about/projects/members left edges aligned. */
-const CONTENT =
-  "mx-auto w-full max-w-[1120px] px-8";
+/**
+ * Centred page frame with equal side margins.
+ * About uses a narrower reading column so the text block sits in the middle
+ * (left-aligned copy inside a centred column — clearer than centre-aligned
+ * multi-line paragraphs).
+ */
+const SHELL =
+  "mx-auto w-full max-w-[1000px] px-6 sm:px-10 lg:px-14";
+const ABOUT =
+  "mx-auto w-full max-w-[40rem]";
 
 export default function HomePage() {
   return (
@@ -75,8 +82,7 @@ export default function HomePage() {
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200">
-        <div className={`${CONTENT} h-[72px] flex items-center justify-between gap-8`}>
-          {/* Site title — black, bold */}
+        <div className={`${SHELL} h-[72px] flex items-center justify-between gap-8`}>
           <Link
             href="/"
             className="text-[#212121] no-underline font-bold text-lg tracking-tight leading-tight shrink-0"
@@ -84,7 +90,6 @@ export default function HomePage() {
             Transport Research and Innovation Board
           </Link>
 
-          {/* Desktop nav + accessibility icon */}
           <div className="hidden md:flex items-center gap-10">
             <nav className="flex items-center gap-10 text-sm font-medium" aria-label="Primary">
               {DESKTOP_NAV.map((link) => (
@@ -97,7 +102,6 @@ export default function HomePage() {
                 </a>
               ))}
             </nav>
-            {/* Accessibility icon */}
             <a
               href="/roadmap/accessibility"
               aria-label="Accessibility statement"
@@ -114,7 +118,6 @@ export default function HomePage() {
             </a>
           </div>
 
-          {/* Mobile nav */}
           <div className="md:hidden shrink-0">
             <NavPill variant="light" />
           </div>
@@ -131,47 +134,49 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="bg-white pt-10 pb-12">
-            <div className={CONTENT}>
-              <p className="text-base leading-relaxed text-[#212121] mb-4">
-                The Transport Research and Innovation Board (TRIB) brings together
-                representatives from key organisations that fund and carry out
-                research and innovation in the UK, as well as government departments
-                with an interest in transport.
-              </p>
-              <p className="text-base leading-relaxed text-[#212121] mb-5">
-                For more information about TRIB, please{" "}
-                <a
-                  href="https://www.gov.uk/government/groups/transport-research-and-innovation-board"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#21808B] hover:underline"
+          <div className="bg-white pt-12 pb-14">
+            <div className={`${SHELL}`}>
+              <div className={`${ABOUT} text-left`}>
+                <p className="text-base leading-relaxed text-[#212121] mb-4 text-center sm:text-left">
+                  The Transport Research and Innovation Board (TRIB) brings together
+                  representatives from key organisations that fund and carry out
+                  research and innovation in the UK, as well as government departments
+                  with an interest in transport.
+                </p>
+                <p className="text-base leading-relaxed text-[#212121] mb-5 text-center sm:text-left">
+                  For more information about TRIB, please{" "}
+                  <a
+                    href="https://www.gov.uk/government/groups/transport-research-and-innovation-board"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#21808B] hover:underline"
+                  >
+                    see more.
+                  </a>
+                </p>
+                <p className="text-base leading-relaxed text-[#212121] mb-3 font-medium">
+                  The objectives of the board are to:
+                </p>
+                <ul
+                  className="text-base leading-relaxed text-[#212121] mb-6 space-y-2"
+                  style={{ listStyleType: "disc", paddingLeft: "1.5rem" }}
                 >
-                  see more.
-                </a>
-              </p>
-              <p className="text-base leading-relaxed text-[#212121] mb-3">
-                The objectives of the board are to:
-              </p>
-              <ul
-                className="text-base leading-relaxed text-[#212121] mb-5 space-y-2"
-                style={{ listStyleType: "disc", paddingLeft: "1.5rem" }}
-              >
-                {OBJECTIVES.map((obj) => (
-                  <li key={obj} style={{ display: "list-item" }}>{obj}</li>
-                ))}
-              </ul>
-              <p className="text-base leading-relaxed text-[#212121] mb-4">
-                DfT provides the secretariat for the TRIB Board.
-              </p>
-              <p className="text-base leading-relaxed text-[#212121] mb-4">
-                The TRIB Board has awarded Connected Places Catapult (CPC) a grant
-                to develop this shared 2035 Vision and Roadmap.
-              </p>
-              <p className="text-base leading-relaxed text-[#212121]">
-                We would like to thank the following organisations for their
-                contribution to the project.
-              </p>
+                  {OBJECTIVES.map((obj) => (
+                    <li key={obj} style={{ display: "list-item" }}>{obj}</li>
+                  ))}
+                </ul>
+                <p className="text-base leading-relaxed text-[#212121] mb-4 text-center sm:text-left">
+                  DfT provides the secretariat for the TRIB Board.
+                </p>
+                <p className="text-base leading-relaxed text-[#212121] mb-4 text-center sm:text-left">
+                  The TRIB Board has awarded Connected Places Catapult (CPC) a grant
+                  to develop this shared 2035 Vision and Roadmap.
+                </p>
+                <p className="text-base leading-relaxed text-[#212121] text-center sm:text-left">
+                  We would like to thank the following organisations for their
+                  contribution to the project.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -185,14 +190,13 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white py-12">
-            <div className={CONTENT}>
-              {/* 3-up on desktop so three cards share one row (no orphan left card). */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={SHELL}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5 lg:gap-6">
                 {PROJECTS.map((p) => (
                   <Link
                     key={p.href}
                     href={p.href}
-                    className="group flex flex-col gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 no-underline text-inherit
+                    className="group flex flex-col gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 text-center no-underline text-inherit
                                transition-all duration-150
                                hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-0.5"
                   >
@@ -206,7 +210,7 @@ export default function HomePage() {
                       />
                     </span>
 
-                    <span className="flex-1 min-w-0 flex flex-col">
+                    <span className="flex-1 min-w-0 flex flex-col items-center">
                       <span className="text-[18px] font-semibold text-[#212121] mb-1 leading-snug">
                         {p.title}
                       </span>
@@ -236,12 +240,12 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white py-12">
-            <div className={CONTENT}>
-              <p className="text-center text-sm text-gray-400 mb-8">
+            <div className={SHELL}>
+              <p className="text-center text-sm text-gray-400 mb-10 max-w-md mx-auto">
                 Bringing together government, industry, and research to drive
                 transport innovation.
               </p>
-              <div className="grid justify-items-center gap-x-6 gap-y-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+              <div className="mx-auto max-w-[880px] grid justify-items-center gap-x-8 gap-y-10 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                 {MEMBER_LOGOS.map((logo) => (
                   <div key={logo.src} className="flex h-12 w-full items-center justify-center">
                     <img
@@ -260,7 +264,7 @@ export default function HomePage() {
       </main>
 
       <footer className="bg-[#21808B] text-white py-4 text-center text-sm">
-        <div className={CONTENT}>
+        <div className={SHELL}>
           <a
             href="https://www.trib.org.uk"
             target="_blank"
