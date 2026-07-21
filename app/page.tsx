@@ -78,18 +78,13 @@ const shellStyle: CSSProperties = {
   boxSizing: "border-box",
 };
 
+/** Mid-page column; text stays left-aligned (avoids centred “triangle” bullets). */
 const aboutStyle: CSSProperties = {
   width: "100%",
   maxWidth: 640,
   marginLeft: "auto",
   marginRight: "auto",
-  textAlign: "center",
-};
-
-const listWrapStyle: CSSProperties = {
-  display: "inline-block",
   textAlign: "left",
-  margin: "0 auto 1.5rem",
 };
 
 const membersGridStyle: CSSProperties = {
@@ -184,16 +179,14 @@ export default function HomePage() {
                 <p className="text-base leading-relaxed text-[#212121] mb-3 font-medium">
                   The objectives of the board are to:
                 </p>
-                <div style={listWrapStyle}>
-                  <ul
-                    className="text-base leading-relaxed text-[#212121] space-y-2 m-0"
-                    style={{ listStyleType: "disc", paddingLeft: "1.25rem" }}
-                  >
-                    {OBJECTIVES.map((obj) => (
-                      <li key={obj} style={{ display: "list-item" }}>{obj}</li>
-                    ))}
-                  </ul>
-                </div>
+                <ul
+                  className="text-base leading-relaxed text-[#212121] space-y-2 mb-6 mt-0"
+                  style={{ listStyleType: "disc", paddingLeft: "1.5rem" }}
+                >
+                  {OBJECTIVES.map((obj) => (
+                    <li key={obj} style={{ display: "list-item" }}>{obj}</li>
+                  ))}
+                </ul>
                 <p className="text-base leading-relaxed text-[#212121] mb-4">
                   DfT provides the secretariat for the TRIB Board.
                 </p>
