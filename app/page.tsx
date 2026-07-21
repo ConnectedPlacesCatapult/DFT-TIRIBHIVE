@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NavPill } from "@/components/NavPill";
+import { tribAssets } from "@/lib/tribAssets";
 
 const DESKTOP_NAV = [
   { href: "/#about", label: "About" },
@@ -20,7 +21,7 @@ const OBJECTIVES = [
 const PROJECTS = [
   {
     href: "/roadmap",
-    img: "/images/trib/roadmap.8694b7edb2a21f05066f.png",
+    img: tribAssets.images.background,
     title: "Roadmap and Vision",
     slug: "/roadmap",
     description:
@@ -44,23 +45,25 @@ const PROJECTS = [
   },
 ] as const;
 
-const TRIB_STATIC = "https://trib.org.uk/static/media";
+// Use real files under public/images/trib/Logos (via tribAssets) — old CRA
+// hashed /static/media filenames 404 after the Next.js cutover.
 const MEMBER_LOGOS = [
-  "DfT_3298_AW%20(002).3c2a74265186dc09b768.png",
-  "CPC_Logo_RGB_green.2e844a0ec0f236955a2e.png",
-  "MCA.ee49a64ef695f2a790ae.png",
-  "Network_Rail.7f9e82f680eb52f17be1.jpg",
-  "UKRI-Logo_Horiz-RGB.18cd2fdd3d8cc787ac7d.png",
-  "HVM_Catapult.4512adeec38d48394518.jpg",
-  "NDTP-logo-v3-HM%20Gov-Blue.1f9900163c2670069e34.jpg",
-  "National_Highways.9317ede34501e1baea9b.png",
-  "Adept_Master_Logo_RGB_HR.bec5bf910613036e29ae.png",
-  "Innovate_UK.82d14e83727652da2230.png",
-  "UKRI_EPSR_Council-Logo_Horiz-RGB.cbe3fd283578f5f43971.png",
-  "DSIT_Colour_Main.f6d14a64802789dbbecd.png",
-  "RSSB_MASTER_LOGO_DIGITAL_LR.2d41fffa42a484cc0019.png",
-  "__sitelogo__Hi%20Res%20Logo.536f7b02f91c9dc16f81.png",
-];
+  { src: tribAssets.logos.dft, alt: "DfT logo" },
+  { src: tribAssets.logos.cpc, alt: "CPC logo" },
+  { src: tribAssets.logos.maritimeCoastguard, alt: "Maritime & Coastguard Agency logo" },
+  { src: tribAssets.logos.networkRail, alt: "Network Rail logo" },
+  { src: tribAssets.logos.ukri, alt: "UKRI logo" },
+  { src: tribAssets.logos.hvmCatapult, alt: "HVM Catapult logo" },
+  { src: tribAssets.logos.ndtpBlue, alt: "NDTP logo" },
+  { src: tribAssets.logos.nationalHighways, alt: "National Highways logo" },
+  { src: tribAssets.logos.adept, alt: "ADEPT logo" },
+  { src: tribAssets.logos.hs2, alt: "HS2 logo" },
+  { src: tribAssets.logos.innovateUk, alt: "Innovate UK logo" },
+  { src: tribAssets.logos.epsrc, alt: "EPSRC logo" },
+  { src: tribAssets.logos.dsit, alt: "DSIT logo" },
+  { src: tribAssets.logos.rssb, alt: "RSSB logo" },
+  { src: tribAssets.logos.ati, alt: "Aerospace Technology Institute logo" },
+] as const;
 
 export default function HomePage() {
   return (
@@ -239,11 +242,11 @@ export default function HomePage() {
               </p>
               <div className="grid gap-6"
                 style={{ gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
-                {MEMBER_LOGOS.map((file) => (
-                  <div key={file} className="flex items-center justify-center">
+                {MEMBER_LOGOS.map((logo) => (
+                  <div key={logo.src} className="flex items-center justify-center">
                     <img
-                      src={`${TRIB_STATIC}/${file}`}
-                      alt=""
+                      src={logo.src}
+                      alt={logo.alt}
                       className="max-h-[40px] max-w-[110px] w-auto object-contain
                                  grayscale-[20%] hover:grayscale-0 transition-all duration-200"
                     />
