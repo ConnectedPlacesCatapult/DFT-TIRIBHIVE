@@ -43,6 +43,15 @@ const PROJECTS = [
     description:
       "This report summarises the outcomes of the drones barriers and pathways workshop, providing insights to support future cross-sector collaboration and research.",
   },
+  {
+    href: "/transport-infrastructure-information-management",
+    img: "/images/trib/information-management-card.png",
+    title: "Transport Infrastructure Information Management",
+    slug: "/information-management",
+    description:
+      "Two reports setting out a direction for UK transport infrastructure information management — a shared vision developed with DfT and its Arm's-Length Bodies, and observations from a DfT visit to Norway.",
+    imgPosition: "top",
+  },
 ] as const;
 
 const MEMBER_LOGOS = [
@@ -210,33 +219,39 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="bg-white py-12">
+          <div className="bg-white" style={{ paddingTop: 48, paddingBottom: 56 }}>
             <div style={shellStyle}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: 24,
-                }}
-              >
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 32 }}>
                 {PROJECTS.map((p) => (
                   <Link
                     key={p.href}
                     href={p.href}
-                    className="group flex flex-col gap-4 bg-white border border-[#e5e7eb] rounded-lg p-5 text-center no-underline text-inherit
+                    className="group flex flex-col bg-white border border-[#e5e7eb] rounded-lg text-center no-underline text-inherit
                                transition-all duration-150
                                hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-0.5"
+                    style={{ padding: 24, gap: 20 }}
                   >
-                    <span className="flex-shrink-0 w-full h-[120px] block bg-gray-100 rounded overflow-hidden">
+                    <span
+                      className="flex-shrink-0 w-full block rounded overflow-hidden"
+                      style={{
+                        height: 200,
+                        backgroundColor:
+                          "imgPosition" in p && p.imgPosition === "top" ? "#1b4332" : "#f3f4f6",
+                      }}
+                    >
                       <img
                         src={p.img}
                         alt=""
                         width={320}
-                        height={120}
+                        height={200}
                         className="w-full h-full object-cover"
+                        style={{
+                          objectPosition:
+                            "imgPosition" in p && p.imgPosition === "top" ? "top center" : "center",
+                        }}
                       />
                     </span>
-                    <span className="flex-1 min-w-0 flex flex-col items-center">
+                    <span className="flex-1 min-w-0 flex flex-col items-center text-center">
                       <span className="text-[18px] font-semibold text-[#212121] mb-1 leading-snug">
                         {p.title}
                       </span>
