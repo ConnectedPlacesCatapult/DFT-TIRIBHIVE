@@ -25,7 +25,8 @@ CPC cyber Gate 3 is a governance process, not a missing feature. Full enumeratio
 
 **Enclosed artefacts**  
 - `docs/qa/loren-qa-final-package-2026-05-14.md` (this file — narrative + framing)  
-- `docs/qa/loren-qa-tracker-final-2026-05-14.csv` (**import into Excel** — one row per Loren row, extra columns for response, changes, evidence, open actions)  
+- **`docs/qa/loren-qa-tracker-excel-format-2026-05-14.csv`** — **use this in Excel**: Loren’s original column names (Location/Page, Title, What I checked, Status, Issue description, etc.) plus six CPC response columns  
+- `docs/qa/loren-qa-tracker-final-2026-05-14.csv` (alternate compact column names, same 26 rows)  
 - Existing detail remains in `docs/qa/loren-qa-response-2026-05-02.md` and `docs/qa/accessibility-audit-2026-05-02.md`  
 
 If anything in the CSV does not match what you see on staging after a hard refresh, tell us the exact URL and step sequence — we will treat that as a reproducible defect, not a debate.
@@ -86,13 +87,27 @@ If “legal accessibility” is read as **the 2018 regulations**, the artefact i
 
 ## 4. Excel-sized tracker (CSV)
 
-For Loren (or Liz) to **sort, filter, and add columns**, use:
+**Primary file (matches Loren’s spreadsheet headers):**
 
-**`docs/qa/loren-qa-tracker-final-2026-05-14.csv`**
+**`docs/qa/loren-qa-tracker-excel-format-2026-05-14.csv`**
 
-Columns include: Loren status/severity, short issue text, **our response status**, **what we built**, **changes since Loren’s review**, **evidence**, **spec/scope note**, **open actions**. Import into Excel with UTF-8.
+| Loren’s columns (unchanged labels) | CPC columns (added) |
+|-----------------------------------|---------------------|
+| Location/Page | Our response status |
+| Title | Our position and what is built |
+| What I checked | Changes since Loren's review |
+| Sub-Category | Evidence / how to verify |
+| Status | Spec or scope note |
+| Issue description | Open actions / reviewer check |
+| How to reproduce (if relevant) | |
+| Severity (Must Fix / Backlog) | |
+| Notes | |
 
-The row order matches the existing internal mapping **Q1–Q26** aligned to `docs/qa/loren-qa-tracker-2026-05-02.csv`.
+- **26 rows** (Q1–Q26), same order as Loren’s QA sheet.  
+- **Import:** Excel → Data → From Text/CSV → UTF-8 → comma delimiter.  
+- Internal reference column **ID** (Q1…Q26) is column A for cross-linking to the narrative response.
+
+Compact alternate: `docs/qa/loren-qa-tracker-final-2026-05-14.csv`.
 
 ---
 

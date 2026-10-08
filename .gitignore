@@ -42,6 +42,9 @@ yarn-error.log*
 /scripts/logs/
 /logs/ingest_progress.txt
 
+# local MCP server config (machine-specific paths, not shared)
+/.mcp.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
